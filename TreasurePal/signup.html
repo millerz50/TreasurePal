@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TreasurePal Auth</title>
+    <link rel="stylesheet" href="signup.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
+<body>
+    <div id="result"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        getIpLocation();
+    });
+    
+    function getIpLocation() {
+        const url = 'https://ipinfo.io/json';
+    
+        // Fetch IP location data
+        $.getJSON(url)
+            .done(function(data) {
+                // Display the result
+                $('#result').text(`
+                    IP: ${data.ip}
+                    Country: ${data.country}
+                    Region: ${data.region}
+                    City: ${data.city}
+                    Latitude: ${data.loc.split(',')[0]}
+                    Longitude: ${data.loc.split(',')[1]}
+                `);
+                // Store location data
+                storeLocationData(data);
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Error fetching IP location:', textStatus, errorThrown);
+                $('#result').text('Error fetching IP location.'); // Optional: Inform the user
+            });
+    }
+    
+    function storeLocationData(data) {
+        $.ajax({
+            url: 'userIp/userIps.php',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(result) {
+                console.log('Success:', result);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Error storing location data:', textStatus, errorThrown);
+            }
+        });
+    }
+    </script>
+
+    <div class="form">
+        <div class="title">Welcome</div>
+        <div class="subtitle">Let's Explore property Now!</div>
+
+        <form action="Auth/createAccount.php" method="post">
+            <div class="input-container ic1">
+                <input id="fullname" class="input" type="text" name="fullname" placeholder=" " required />
+                <div class="cut"></div>
+                <label for="fullname" class="placeholder" id="fullnameLabel">Full name</label>
+            </div>
+            <div class="input-container ic2">
+                <input id="email" class="input" type="email" name="email" placeholder=" " required />
+                <div class="cut cut-short"></div>
+                <label for="email" class="placeholder" id="EmailLabel">Email</label>
+            </div>
+            <div class="input-container ic2">
+                <input id="pass1" class="input" type="password" name="pass1" placeholder=" " required />
+                <div class="cut"></div>
+                <label for="pass1" class="placeholder" id="firstPassLabel">Password</label>
+            </div>
+            <div class="input-container ic2">
+                <input id="pass2" class="input" type="password" name="pass2" placeholder=" " required />
+                <div class="cut"></div>
+                <label for="pass2" class="placeholder" id="lastPassLabel">Repeat Password</label>
+            </div>
+            <button type="button" id="Location" onclick="getIpLocation()">Get My Location</button>
+            <button type="submit" class="submit" id="register" name="register">Submit</button>
+
+           
+        </form>
+        <div id="message" style="margin-top: 10px;"></div>
+    </div>
+
+    <script src="signup.js"></script>
+</body>
+</html>
