@@ -8,10 +8,16 @@ import { Separator } from "@/components/ui/Separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { AMENITIES } from "@/lib/amenities";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-// ---------- TYPES ----------
 type Step = 1 | 2 | 3 | 4;
+
+interface AgentPayload {
+  id: string;
+  name: string;
+  email: string;
+  // Add other fields as needed
+}
 
 interface FormData {
   title: string;
@@ -29,9 +35,8 @@ interface FormData {
   agentId: string;
 }
 
-// ---------- MAIN COMPONENT ----------
 export default function AddPropertyWizard() {
-  const { agent } = useAuth();
+  const { agent } = useAuth() as { agent: AgentPayload | null };
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,10 +54,17 @@ export default function AddPropertyWizard() {
     amenities: [],
     locationLat: -17.9306,
     locationLng: 31.3306,
-    agentId: "", // ✅ initialized safely
+    agentId: "",
   });
 
-  // ✅ Update agentId once agent is available
+  useEffect(() => {
+    if (agent?.id) {
+      setFormData((prev) => ({
+        ...prev,
+        agentId: agent.id,
+      }));
+    }
+  }, [agent]);
 
   const PROPERTY_TYPES = Object.keys(AMENITIES);
 
