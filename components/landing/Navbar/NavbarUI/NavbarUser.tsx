@@ -12,6 +12,7 @@ export default function NavbarUser({ user }: { user: User }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
 
     const handleClickOutside = (event: MouseEvent) => {
