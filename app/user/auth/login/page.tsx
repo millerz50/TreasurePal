@@ -1,4 +1,4 @@
-import LoginForm from "@/components/auth/user/LoginForm.server"; // SSR shell
+import LoginForm from "@/components/auth/user/LoginForm.server";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-muted px-4">
-      <div className="w-full max-w-md space-y-6">
+      <section className="w-full max-w-md space-y-6">
         <LoginForm />
-      </div>
+      </section>
     </main>
   );
 }

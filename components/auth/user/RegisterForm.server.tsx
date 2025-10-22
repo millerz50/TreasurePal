@@ -1,4 +1,3 @@
-// components/RegisterForm.tsx
 import { BriefcaseIcon, IdentificationIcon } from "@heroicons/react/24/outline";
 import AnimatedInput from "./AnimatedInput.client";
 import RegisterFormSubmit from "./RegisterFormSubmit";
@@ -22,7 +21,9 @@ export default function RegisterForm() {
   const registerNumber = generateRegisterNumber();
 
   return (
-    <div className="space-y-6 max-w-xl mx-auto px-4">
+    <section
+      className="space-y-6 max-w-xl mx-auto px-4"
+      aria-label="Registration form">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
           <IdentificationIcon className="h-6 w-6 text-accent" />
@@ -76,11 +77,16 @@ export default function RegisterForm() {
         />
 
         <div className="relative">
+          <label htmlFor="occupation" className="sr-only">
+            Occupation
+          </label>
           <BriefcaseIcon className="absolute left-3 top-3 h-5 w-5 text-accent" />
           <select
+            id="occupation"
             name="occupation"
             className="select select-bordered w-full pl-10"
-            required>
+            required
+            aria-label="Select Occupation">
             <option value="">Select Occupation</option>
             {occupations.map((option) => (
               <option key={option} value={option}>
@@ -91,18 +97,23 @@ export default function RegisterForm() {
         </div>
 
         <div className="relative">
+          <label htmlFor="registerNumber" className="sr-only">
+            Registration Number
+          </label>
           <IdentificationIcon className="absolute left-3 top-3 h-5 w-5 text-highlight" />
           <input
             type="text"
+            id="registerNumber"
             name="registerNumber"
             readOnly
             className="input input-bordered w-full pl-10 text-sm text-gray-500"
             value={registerNumber}
+            aria-label="Registration Number"
           />
         </div>
 
         <RegisterFormSubmit />
       </form>
-    </div>
+    </section>
   );
 }

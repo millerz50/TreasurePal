@@ -1,5 +1,8 @@
+"use client";
+
 import RegisterForm from "@/components/auth/user/RegisterForm.server";
 import { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Register | TreasurePal",
@@ -13,10 +16,13 @@ export default function RegisterPage() {
       <section className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 bg-base-100 rounded-box shadow-2xl p-8 font-sans">
         {/* Left side: Heading and Description */}
         <div className="flex flex-col justify-center text-base-content">
-          <img
+          <Image
             src="https://cdn-icons-png.flaticon.com/512/854/854894.png"
             alt="Treasure icon"
-            className="w-16 h-16 mb-4 animate-bounce"
+            width={64}
+            height={64}
+            className="mb-4 animate-bounce"
+            priority
           />
           <h1 className="text-4xl font-bold text-primary mb-4">
             Welcome to TreasurePal

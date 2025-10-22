@@ -10,15 +10,12 @@ export default function AgentSignupSubmit() {
   const router = useRouter();
 
   const handleSubmit = async () => {
-    const form = document.getElementById(
-      "agent-signup-form"
-    ) as HTMLFormElement;
-    if (!form) return;
+    const form = document.getElementById("agent-signup-form");
+    if (!(form instanceof HTMLFormElement)) return;
 
     setLoading(true);
     const formData = new FormData(form);
 
-    // ✅ Validate required fields before sending
     const requiredFields = [
       "firstName",
       "surname",
@@ -27,6 +24,7 @@ export default function AgentSignupSubmit() {
       "nationalId",
       "status",
     ];
+
     for (const field of requiredFields) {
       const value = formData.get(field);
       if (!value || (typeof value === "string" && value.trim() === "")) {
@@ -36,7 +34,6 @@ export default function AgentSignupSubmit() {
       }
     }
 
-    // ✅ Validate image file
     const image = formData.get("image");
     if (!(image instanceof File) || image.size === 0) {
       toast.error("Please upload a valid image.");
@@ -54,13 +51,16 @@ export default function AgentSignupSubmit() {
       );
 
       const data = await res.json();
-      if (!res.ok)
+      if (!res.ok) {
         throw new Error(data.error || data.message || "Signup failed");
+      }
 
       toast.success("Agent registered successfully");
       setTimeout(() => router.push("/agent/dashboard"), 1500);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -72,6 +72,8 @@ export default function AgentSignupSubmit() {
         type="button"
         onClick={handleSubmit}
         disabled={loading}
+        aria-label="Submit agent signup form"
+        aria-busy={loading}
         className="btn btn-primary w-full">
         {loading ? "Registering..." : "Register as Agent"}
       </button>

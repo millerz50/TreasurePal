@@ -18,10 +18,9 @@ export default function LoginFormClient() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    const formElement = document.getElementById(
-      "login-form"
-    ) as HTMLFormElement;
-    if (!formElement) return;
+    const formElement = document.getElementById("login-form");
+
+    if (!(formElement instanceof HTMLFormElement)) return;
 
     const handleSubmit = async (e: Event) => {
       e.preventDefault();
@@ -40,7 +39,7 @@ export default function LoginFormClient() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
-            credentials: "include", // ✅ This is the key
+            credentials: "include",
           }
         );
 
@@ -62,14 +61,16 @@ export default function LoginFormClient() {
     };
 
     formElement.addEventListener("submit", handleSubmit);
-    return () => formElement.removeEventListener("submit", handleSubmit);
+    return () => {
+      formElement.removeEventListener("submit", handleSubmit);
+    };
   }, [router]);
 
   const triggerSubmit = () => {
-    const formElement = document.getElementById(
-      "login-form"
-    ) as HTMLFormElement;
-    formElement?.requestSubmit();
+    const formElement = document.getElementById("login-form");
+    if (formElement instanceof HTMLFormElement) {
+      formElement.requestSubmit();
+    }
   };
 
   return (
@@ -77,14 +78,15 @@ export default function LoginFormClient() {
       <Button
         onClick={triggerSubmit}
         className="w-full mt-4"
-        disabled={loading}>
+        disabled={loading}
+        aria-busy={loading}
+        aria-label="Submit login form">
         {loading ? "Signing in..." : "Sign In"}
       </Button>
 
       <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
         <DialogContent className="text-center">
-          <DialogTitle className="sr-only">Login Status</DialogTitle>{" "}
-          {/* ✅ Accessible */}
+          <DialogTitle className="sr-only">Login Status</DialogTitle>
           <CheckCircle className="mx-auto text-green-500 w-8 h-8" />
           <h3 className="mt-2 text-lg font-semibold">Login Successful</h3>
           <DialogDescription className="text-sm text-gray-500">
