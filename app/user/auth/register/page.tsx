@@ -1,5 +1,3 @@
-"use client";
-
 import RegisterForm from "@/components/auth/user/RegisterForm.server";
 import { Metadata } from "next";
 import Image from "next/image";
