@@ -58,7 +58,7 @@ export default function AgentSignupSubmit() {
     try {
       console.log("📡 Sending request to backend...");
       const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/agents/create",
+        "https://treasurepal-backened.onrender.com/api/agents/register",
         {
           method: "POST",
           body: formData,
