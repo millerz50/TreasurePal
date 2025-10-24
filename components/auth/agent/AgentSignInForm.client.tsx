@@ -3,35 +3,49 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, Eye, EyeOff, XCircle } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 
-export interface AgentSignInFormProps {
-  email: string;
-  password: string;
-  lockedOut: boolean;
-  loading: boolean;
-  error: string;
-  success: boolean;
-  onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSubmit: () => void;
-}
-
-const AgentSignInForm: React.FC<AgentSignInFormProps> = ({
-  email,
-  password,
-  lockedOut,
-  loading,
-  error,
-  success,
-  onEmailChange,
-  onPasswordChange,
-  onSubmit,
-}) => {
+export default function AgentSignInClient() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [lockedOut, setLockedOut] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      const res = await fetch(
+        "https://treasurepal-backened.onrender.com/api/agents/signin",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Login failed");
+
+      setSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="space-y-4" aria-label="Agent sign-in form">
+    <form
+      className="space-y-4"
+      aria-label="Agent sign-in form"
+      onSubmit={handleSubmit}>
       <label htmlFor="email" className="sr-only">
         Email address
       </label>
@@ -40,7 +54,7 @@ const AgentSignInForm: React.FC<AgentSignInFormProps> = ({
         type="email"
         placeholder="Email address"
         value={email}
-        onChange={onEmailChange}
+        onChange={(e) => setEmail(e.target.value)}
         disabled={lockedOut}
         aria-label="Email address"
         className="w-full"
@@ -55,7 +69,7 @@ const AgentSignInForm: React.FC<AgentSignInFormProps> = ({
           type={showPassword ? "text" : "password"}
           placeholder="Password"
           value={password}
-          onChange={onPasswordChange}
+          onChange={(e) => setPassword(e.target.value)}
           disabled={lockedOut}
           aria-label="Password"
           className="w-full pr-10"
@@ -88,7 +102,7 @@ const AgentSignInForm: React.FC<AgentSignInFormProps> = ({
       )}
 
       <Button
-        onClick={onSubmit}
+        type="submit"
         className="w-full"
         disabled={loading || lockedOut}
         aria-label="Submit sign-in form"
@@ -103,8 +117,6 @@ const AgentSignInForm: React.FC<AgentSignInFormProps> = ({
           Register here
         </a>
       </p>
-    </div>
+    </form>
   );
-};
-
-export default AgentSignInForm;
+}

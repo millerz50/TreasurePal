@@ -16,16 +16,29 @@ export default function AgentSignupForm() {
       <form
         id="agent-signup-form"
         className="space-y-6"
-        aria-label="Signup form">
+        aria-label="Signup form"
+        encType="multipart/form-data">
         <AnimatedField name="firstName" type="text" placeholder="First Name" />
         <AnimatedField name="surname" type="text" placeholder="Surname" />
-        <AnimatedField name="email" type="email" placeholder="Email" />
-        <AnimatedField name="password" type="password" placeholder="Password" />
+        <AnimatedField
+          name="email"
+          type="email"
+          placeholder="Email"
+          autoComplete="email"
+        />
+        <AnimatedField
+          name="password"
+          type="password"
+          placeholder="Password"
+          autoComplete="new-password"
+        />
         <AnimatedField
           name="nationalId"
           type="text"
           placeholder="National ID"
         />
+
+        {/* Ensure AnimatedField supports file input correctly */}
         <AnimatedField name="image" type="file" placeholder="Upload ID Image" />
 
         <input

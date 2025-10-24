@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import React from "react";
-
-interface AnimatedFieldProps {
+export interface AnimatedFieldProps {
   name: string;
   type: string;
   placeholder: string;
+  autoComplete?: string; // ✅ Add this line
 }
 
 const AnimatedField: React.FC<AnimatedFieldProps> = ({
