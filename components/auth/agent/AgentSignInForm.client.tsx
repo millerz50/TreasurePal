@@ -8,7 +8,6 @@ import { useState } from "react";
 export default function AgentSignInClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [lockedOut, setLockedOut] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -55,7 +54,6 @@ export default function AgentSignInClient() {
         placeholder="Email address"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        disabled={lockedOut}
         aria-label="Email address"
         className="w-full"
       />
@@ -70,7 +68,6 @@ export default function AgentSignInClient() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          disabled={lockedOut}
           aria-label="Password"
           className="w-full pr-10"
         />
@@ -104,7 +101,7 @@ export default function AgentSignInClient() {
       <Button
         type="submit"
         className="w-full"
-        disabled={loading || lockedOut}
+        disabled={loading}
         aria-label="Submit sign-in form"
         aria-busy={loading}>
         {loading ? <span className="animate-spin mr-2">⏳</span> : null}
