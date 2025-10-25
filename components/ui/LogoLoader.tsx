@@ -34,6 +34,7 @@ export default function LogoLoader() {
             {`
               .fadeInOut {
                 animation: fadeInOut 2.5s ease-in-out infinite;
+                transform-origin: center;
               }
               @keyframes fadeInOut {
                 0%, 100% { opacity: 0; transform: scale(0.8); }
@@ -43,7 +44,7 @@ export default function LogoLoader() {
           </style>
         </defs>
 
-        {/* Blue Triangle */}
+        {/* Blue House */}
         <polygon
           points="30,110 70,50 110,110"
           fill="#0074D9"
@@ -51,18 +52,16 @@ export default function LogoLoader() {
           className="animate-[bounce_1.2s_ease-in-out_infinite]"
         />
         {/* Blue Window */}
-        <rect x="55" y="75" width="20" height="20" fill="white" rx="3" />
-        {/* Blue Shadow */}
-        <ellipse
-          cx="65"
-          cy="85"
-          rx="6"
-          ry="8"
+        <rect x="55" y="75" width="24" height="24" fill="white" rx="4" />
+        {/* Blue Human Shadow */}
+        <path
+          d="M65 82 a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0
+             M64 86 q4 6 8 0"
           fill="rgba(0,0,0,0.3)"
           className="fadeInOut"
         />
 
-        {/* Green Triangle */}
+        {/* Green House */}
         <polygon
           points="90,110 130,50 170,110"
           fill="#2ECC40"
@@ -70,13 +69,11 @@ export default function LogoLoader() {
           className="animate-[bounce_1.2s_ease-in-out_infinite] [animation-delay:0.3s]"
         />
         {/* Green Window */}
-        <rect x="115" y="75" width="20" height="20" fill="white" rx="3" />
-        {/* Green Shadow */}
-        <ellipse
-          cx="125"
-          cy="85"
-          rx="6"
-          ry="8"
+        <rect x="115" y="75" width="24" height="24" fill="white" rx="4" />
+        {/* Green Human Shadow */}
+        <path
+          d="M125 82 a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0
+             M124 86 q4 6 8 0"
           fill="rgba(0,0,0,0.3)"
           className="fadeInOut"
         />
