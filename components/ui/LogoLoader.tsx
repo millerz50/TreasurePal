@@ -17,7 +17,7 @@ export default function LogoLoader() {
       <svg
         viewBox="0 0 200 150"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-40 sm:w-48 md:w-56 lg:w-64">
+        className="w-48 sm:w-56 md:w-64 lg:w-72">
         <defs>
           <filter id="shadow-blue" x="-50%" y="-50%" width="200%" height="200%">
             <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0074D9" />
@@ -33,11 +33,11 @@ export default function LogoLoader() {
           <style>
             {`
               .fadeInOut {
-                animation: fadeInOut 2s ease-in-out infinite;
+                animation: fadeInOut 2.5s ease-in-out infinite;
               }
               @keyframes fadeInOut {
-                0%, 100% { opacity: 0; }
-                50% { opacity: 0.4; }
+                0%, 100% { opacity: 0; transform: scale(0.8); }
+                50% { opacity: 0.5; transform: scale(1); }
               }
             `}
           </style>
@@ -51,12 +51,13 @@ export default function LogoLoader() {
           className="animate-[bounce_1.2s_ease-in-out_infinite]"
         />
         {/* Blue Window */}
-        <rect x="60" y="80" width="12" height="12" fill="white" rx="2" />
+        <rect x="55" y="75" width="20" height="20" fill="white" rx="3" />
         {/* Blue Shadow */}
-        <circle
-          cx="66"
-          cy="86"
-          r="4"
+        <ellipse
+          cx="65"
+          cy="85"
+          rx="6"
+          ry="8"
           fill="rgba(0,0,0,0.3)"
           className="fadeInOut"
         />
@@ -69,12 +70,13 @@ export default function LogoLoader() {
           className="animate-[bounce_1.2s_ease-in-out_infinite] [animation-delay:0.3s]"
         />
         {/* Green Window */}
-        <rect x="120" y="80" width="12" height="12" fill="white" rx="2" />
+        <rect x="115" y="75" width="20" height="20" fill="white" rx="3" />
         {/* Green Shadow */}
-        <circle
-          cx="126"
-          cy="86"
-          r="4"
+        <ellipse
+          cx="125"
+          cy="85"
+          rx="6"
+          ry="8"
           fill="rgba(0,0,0,0.3)"
           className="fadeInOut"
         />
