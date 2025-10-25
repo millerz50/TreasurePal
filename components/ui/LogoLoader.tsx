@@ -6,7 +6,7 @@ export default function LogoLoader() {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setIsVisible(false), 2000); // adjust duration
+    const timeout = setTimeout(() => setIsVisible(false), 2500);
     return () => clearTimeout(timeout);
   }, []);
 
@@ -15,39 +15,69 @@ export default function LogoLoader() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-base-100">
       <svg
-        width="120"
-        height="120"
         viewBox="0 0 200 150"
         xmlns="http://www.w3.org/2000/svg"
-        className="animate-pulse">
+        className="w-40 sm:w-48 md:w-56 lg:w-64">
+        <defs>
+          <filter id="shadow-blue" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0074D9" />
+          </filter>
+          <filter
+            id="shadow-green"
+            x="-50%"
+            y="-50%"
+            width="200%"
+            height="200%">
+            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#2ECC40" />
+          </filter>
+          <style>
+            {`
+              .fadeInOut {
+                animation: fadeInOut 2s ease-in-out infinite;
+              }
+              @keyframes fadeInOut {
+                0%, 100% { opacity: 0; }
+                50% { opacity: 0.4; }
+              }
+            `}
+          </style>
+        </defs>
+
+        {/* Blue Triangle */}
         <polygon
-          points="20,100 60,60 100,100"
+          points="30,110 70,50 110,110"
           fill="#0074D9"
-          className="animate-bounce origin-center"
+          filter="url(#shadow-blue)"
+          className="animate-[bounce_1.2s_ease-in-out_infinite]"
         />
+        {/* Blue Window */}
+        <rect x="60" y="80" width="12" height="12" fill="white" rx="2" />
+        {/* Blue Shadow */}
+        <circle
+          cx="66"
+          cy="86"
+          r="4"
+          fill="rgba(0,0,0,0.3)"
+          className="fadeInOut"
+        />
+
+        {/* Green Triangle */}
         <polygon
-          points="100,100 140,60 180,100"
+          points="90,110 130,50 170,110"
           fill="#2ECC40"
-          className="animate-bounce origin-center delay-200"
+          filter="url(#shadow-green)"
+          className="animate-[bounce_1.2s_ease-in-out_infinite] [animation-delay:0.3s]"
         />
-        <text
-          x="100"
-          y="125"
-          fontSize="16"
-          fontFamily="Arial"
-          textAnchor="middle">
-          <tspan fill="#2ECC40">TREASURE </tspan>
-          <tspan fill="#0074D9">PAL</tspan>
-        </text>
-        <text
-          x="100"
-          y="140"
-          fontSize="10"
-          fontFamily="Arial"
-          textAnchor="middle"
-          fill="#0074D9">
-          AFFORDABLE.PROPERTIES
-        </text>
+        {/* Green Window */}
+        <rect x="120" y="80" width="12" height="12" fill="white" rx="2" />
+        {/* Green Shadow */}
+        <circle
+          cx="126"
+          cy="86"
+          r="4"
+          fill="rgba(0,0,0,0.3)"
+          className="fadeInOut"
+        />
       </svg>
     </div>
   );
