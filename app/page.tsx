@@ -1,9 +1,8 @@
 import AgencySection from "@/components/Agent/AgencySection";
 import BecomeAgentHero from "@/components/Agent/BecomeAgentHero";
-import {
-  default as BlogSection,
-  default as Hero,
-} from "@/components/landing/Blog";
+import BlogSection from "@/components/landing/Blog";
+import Hero from "@/components/landing/Hero";
+
 import Navbar from "@/components/landing/Navbar/ssrWrapperNav/Navbar";
 import PropertyList from "@/components/property/PropertyList";
 import { getUser } from "@/lib/auth/getUser";
