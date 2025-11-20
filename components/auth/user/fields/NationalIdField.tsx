@@ -1,4 +1,3 @@
-// components/auth/fields/NationalIdField.tsx
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
 
@@ -7,7 +6,7 @@ export default function NationalIdField({
   onChange,
 }: {
   value: string;
-  onChange: any;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div className="mb-4">
@@ -17,6 +16,7 @@ export default function NationalIdField({
       <Input
         id="nationalId"
         name="nationalId"
+        type="text"
         value={value}
         onChange={onChange}
       />
