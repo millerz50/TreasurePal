@@ -1,4 +1,3 @@
-// components/auth/fields/BioField.tsx
 import { Label } from "../../../ui/label";
 
 export default function BioField({
@@ -6,7 +5,7 @@ export default function BioField({
   onChange,
 }: {
   value: string;
-  onChange: any;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }) {
   return (
     <div className="mb-4">

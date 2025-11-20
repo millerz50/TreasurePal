@@ -1,4 +1,3 @@
-// components/auth/fields/RoleField.tsx
 import { Label } from "../../../ui/label";
 
 export default function RoleField({
@@ -6,7 +5,7 @@ export default function RoleField({
   onChange,
 }: {
   value: string;
-  onChange: any;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }) {
   return (
     <div className="mb-4">
