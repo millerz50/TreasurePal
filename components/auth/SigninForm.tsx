@@ -9,6 +9,8 @@ import { Button } from "../../components/ui/button";
 import EmailField from "./user/fields/EmailField";
 import PasswordField from "./user/fields/PasswordField";
 
+import { account } from "@/lib/appwrite";
+
 export default function SigninForm({
   redirectTo = "/",
 }: {
@@ -31,33 +33,20 @@ export default function SigninForm({
     const tId = toast.loading("Signing you in…");
 
     try {
-      const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/users/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.toLowerCase(), password }),
-        }
-      );
+      // ✅ Correct Appwrite method
+      await account.createSession(email.toLowerCase(), password);
 
-      const body = await res.json().catch(() => ({}));
+      const user = await account.get(); // fetch logged-in user details
 
-      if (!res.ok) {
-        const msg =
-          body?.error || body?.message || `Login failed (${res.status})`;
-        toast.error(msg);
-        toast.dismiss(tId);
-        return;
-      }
-
-      toast.success("Welcome back!", {
+      toast.success(`Welcome back, ${user.name || user.email}!`, {
         description: "Redirecting to your dashboard…",
       });
       toast.dismiss(tId);
 
       router.push(redirectTo);
-    } catch {
-      toast.error("Network error. Try again.");
+    } catch (err: any) {
+      const msg = err?.message || "Login failed";
+      toast.error(msg);
       toast.dismiss(tId);
     } finally {
       setLoading(false);

@@ -1,12 +1,13 @@
 "use client";
 
+import { account } from "@/lib/appwrite"; // import Appwrite client
 import { createContext, useContext, useEffect, useState } from "react";
 
 export interface UserPayload {
   userId: string;
   email?: string;
-  status?: string;
-  role?: string; // "admin" | "agent" | "user"
+  status?: boolean; // Appwrite returns boolean for status
+  role?: string; // "admin" | "agent" | "user" (stored in prefs or DB)
 }
 
 interface AuthContextType {
@@ -26,39 +27,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch(
-          "https://treasurepal-backened.onrender.com/api/users/me", // ✅ corrected
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Cache-Control": "no-cache",
-            },
-          }
-        );
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error("❌ User fetch failed:", res.status, errorText);
-          throw new Error("Failed to fetch user");
-        }
-
-        const data = await res.json();
-        console.log("✅ Raw user response:", data);
-
-        const userData = data.user ?? data;
-
-        if (!userData || !userData.email) {
-          console.warn("⚠️ User missing or malformed:", userData);
-          setUser(null);
-          return;
-        }
+        // ✅ Get current Appwrite user session
+        const appwriteUser = await account.get();
 
         const payload: UserPayload = {
-          userId: userData._id || userData.userId,
-          email: userData.email,
-          role: userData.role,
-          status: userData.status,
+          userId: appwriteUser.$id,
+          email: appwriteUser.email,
+          role: appwriteUser.prefs?.role, // store role in prefs or a collection
+          status: appwriteUser.status, // boolean
         };
 
         setUser(payload);
