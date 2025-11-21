@@ -1,5 +1,4 @@
 // components/auth/fields/AvatarField.tsx
-// components/auth/fields/AvatarField.tsx
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
 
@@ -8,6 +7,10 @@ export default function AvatarField({
 }: {
   onChange: (file: File | null) => void;
 }) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.files?.[0] || null);
+  };
+
   return (
     <div className="mb-4">
       <Label htmlFor="avatar">
@@ -18,7 +21,7 @@ export default function AvatarField({
         name="avatar"
         type="file"
         accept="image/*"
-        onChange={(e) => onChange(e.target.files?.[0] || null)}
+        onChange={handleChange}
       />
     </div>
   );

@@ -66,16 +66,14 @@ export default function SignupForm({
 
   async function uploadAvatar(file: File): Promise<string | null> {
     try {
-      // Upload avatar to Appwrite Storage
+      const fd = new FormData();
+      fd.append("file", file);
+
       const storageRes = await fetch(
         "https://treasurepal-backened.onrender.com/api/storage/upload",
         {
           method: "POST",
-          body: (() => {
-            const fd = new FormData();
-            fd.append("file", file);
-            return fd;
-          })(),
+          body: fd,
         }
       );
 
@@ -84,12 +82,13 @@ export default function SignupForm({
         throw new Error(body?.error || "Avatar upload failed");
       }
       return body?.fileId || null;
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Avatar upload error:", err);
       return null;
     }
   }
-  async function handleSubmit(e: React.FormEvent) {
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
@@ -101,21 +100,19 @@ export default function SignupForm({
 
     setLoading(true);
     try {
-      // Upload avatar separately if needed
       let avatarFileId: string | null = null;
       if (avatarFile) {
-        avatarFileId = await uploadAvatar(avatarFile); // returns fileId
+        avatarFileId = await uploadAvatar(avatarFile);
       }
 
-      // ✅ Build JSON payload exactly matching schema
       const payload = {
-        accountid: parsed.data.accountId, // lowercase key
+        accountId: parsed.data.accountId,
         email: parsed.data.email.toLowerCase(),
         firstName: parsed.data.firstName,
         surname: parsed.data.surname,
         password: parsed.data.password,
         role: parsed.data.role,
-        status: "active",
+        status: "Active",
         phone: parsed.data.phone || null,
         nationalId: parsed.data.nationalId || null,
         bio: parsed.data.bio || null,
@@ -151,7 +148,7 @@ export default function SignupForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-xl mx-auto p-6 bg-base-100 rounded-lg shadow-sm">
+      className="w-full sm:max-w-xl mx-auto p-4 sm:p-6 bg-base-100 rounded-lg shadow-sm">
       <EmailField value={form.email} onChange={onChange} />
       <NameField
         firstName={form.firstName}
@@ -171,11 +168,11 @@ export default function SignupForm({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <Button type="submit" disabled={loading}>
+      <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
+        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
           {loading ? "Creating..." : "Create account"}
         </Button>
-        <a className="btn btn-ghost" href="/login">
+        <a className="btn btn-ghost w-full sm:w-auto" href="/login">
           Already have an account?
         </a>
       </div>

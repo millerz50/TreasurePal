@@ -1,3 +1,4 @@
+// components/auth/fields/BioField.tsx
 import { Label } from "../../../ui/label";
 
 export default function BioField({

@@ -9,7 +9,7 @@ export default function NameField({
 }: {
   firstName: string;
   surname: string;
-  onChange: any;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <>
