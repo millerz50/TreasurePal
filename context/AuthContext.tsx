@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export interface UserPayload {
-  userId?: string;
+  userId: string;
   email?: string;
   status?: string;
   role?: string; // "admin" | "agent" | "user"
