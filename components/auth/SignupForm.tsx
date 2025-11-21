@@ -82,7 +82,7 @@ export default function SignupForm({
       if (!storageRes.ok)
         throw new Error(body?.error || "Avatar upload failed");
       return body?.fileId || null;
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Avatar upload error:", err);
       return null;
     }

@@ -2,8 +2,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import React from "react";
-
 export default function AuthLayout({
   children,
 }: {
@@ -19,11 +19,15 @@ export default function AuthLayout({
           <div className="flex flex-col items-center">
             <div className="mb-6 flex items-center gap-3">
               {/* Optional: replace src with your logo path in public/ */}
-              <img
-                src="/treasurepal-logo.png"
+
+              <Image
+                src="/logo/logo.jpg"
                 alt="TreasurePal logo"
-                className="h-10 w-10 rounded-md shadow-sm"
+                width={40}
+                height={40}
+                className="rounded-md shadow-sm"
               />
+
               <div className="leading-tight">
                 <h1 className="text-2xl font-bold">
                   <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">

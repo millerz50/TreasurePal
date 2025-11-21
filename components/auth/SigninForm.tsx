@@ -97,7 +97,7 @@ export default function SigninForm({
             className="w-full sm:w-auto rounded-md border px-4 py-2 text-center text-sm text-gray-700 hover:bg-gray-50"
             href="/signup"
             aria-label="Go to signup">
-            Don't have an account?
+            Don&apos;t have an account?
           </a>
         </div>
       </div>
