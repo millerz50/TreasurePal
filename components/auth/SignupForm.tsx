@@ -121,7 +121,7 @@ export default function SignupForm({
       };
 
       const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/users/signup",
+        "https://treasurepal-backened.onrender.com/api/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
