@@ -1,6 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
 import React, { useState } from "react";
+import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
@@ -23,7 +25,7 @@ const SignupSchema = z.object({
   role: z.enum(["user", "agent"]).default("user"),
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
-    .default("Pending"),
+    .default("Pending"), // ✅ fixed enum
   nationalId: z.string().optional(),
   bio: z.string().max(300).optional(),
   metadata: z.array(z.string()).optional(),
@@ -53,7 +55,6 @@ export default function SignupForm({
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   function onChange(
     e: React.ChangeEvent<
@@ -78,11 +79,10 @@ export default function SignupForm({
       );
 
       const body = await storageRes.json();
-      if (!storageRes.ok) {
+      if (!storageRes.ok)
         throw new Error(body?.error || "Avatar upload failed");
-      }
       return body?.fileId || null;
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Avatar upload error:", err);
       return null;
     }
@@ -90,15 +90,18 @@ export default function SignupForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
 
     const parsed = SignupSchema.safeParse(form);
     if (!parsed.success) {
-      setError(parsed.error.errors[0].message);
+      toast.error(parsed.error.errors[0].message);
       return;
     }
 
     setLoading(true);
+    const tId = toast.loading("Creating your account…", {
+      description: "Please wait while we finalize your details.",
+    });
+
     try {
       let avatarFileId: string | null = null;
       if (avatarFile) {
@@ -130,52 +133,79 @@ export default function SignupForm({
       );
 
       const body = await res.json().catch(() => ({}));
+
       if (!res.ok) {
         const msg =
           body?.error || body?.message || `Signup failed (${res.status})`;
-        setError(msg);
+        toast.error(msg);
+        toast.dismiss(tId);
         return;
       }
 
-      window.location.href = redirectTo;
-    } catch {
-      setError("Network error. Try again.");
+      toast.success("Account created successfully!", {
+        description: "Redirecting you to login…",
+      });
+      toast.dismiss(tId);
+
+      setTimeout(() => {
+        window.location.href = redirectTo;
+      }, 1200);
+    } catch (err) {
+      toast.error("Network error. Try again.");
+      toast.dismiss(tId);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form
+    <motion.form
       onSubmit={handleSubmit}
-      className="w-full sm:max-w-xl mx-auto p-4 sm:p-6 bg-base-100 rounded-lg shadow-sm">
-      <EmailField value={form.email} onChange={onChange} />
-      <NameField
-        firstName={form.firstName}
-        surname={form.surname}
-        onChange={onChange}
-      />
-      <PhoneField value={form.phone || ""} onChange={onChange} />
-      <RoleField value={form.role} onChange={onChange} />
-      <NationalIdField value={form.nationalId || ""} onChange={onChange} />
-      <AvatarField onChange={(file) => setAvatarFile(file)} />
-      <BioField value={form.bio || ""} onChange={onChange} />
-      <PasswordField value={form.password} onChange={onChange} />
+      className="w-full sm:max-w-xl mx-auto p-4 sm:p-6 rounded-lg shadow-sm"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}>
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div className="mb-6 h-1 w-24 rounded-full bg-gradient-to-r from-green-500 to-blue-500" />
 
-      {error && (
-        <div role="alert" className="mb-4 text-sm text-error">
-          {error}
+        <div className="grid grid-cols-1 gap-4">
+          <EmailField value={form.email} onChange={onChange} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <NameField
+              firstName={form.firstName}
+              surname={form.surname}
+              onChange={onChange}
+            />
+            <PhoneField value={form.phone || ""} onChange={onChange} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <RoleField value={form.role} onChange={onChange} />
+            <NationalIdField
+              value={form.nationalId || ""}
+              onChange={onChange}
+            />
+          </div>
+
+          <AvatarField onChange={(file) => setAvatarFile(file)} />
+          <BioField value={form.bio || ""} onChange={onChange} />
+          <PasswordField value={form.password} onChange={onChange} />
         </div>
-      )}
 
-      <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
-        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-          {loading ? "Creating..." : "Create account"}
-        </Button>
-        <a className="btn btn-ghost w-full sm:w-auto" href="/login">
-          Already have an account?
-        </a>
+        <div className="mt-6 flex flex-col sm:flex-row items-center gap-4">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-500 hover:to-blue-500 transition-transform duration-200 hover:scale-[1.02]">
+            {loading ? "Creating..." : "Create account"}
+          </Button>
+          <a
+            className="w-full sm:w-auto rounded-md border px-4 py-2 text-center text-sm text-gray-700 hover:bg-gray-50"
+            href="/login"
+            aria-label="Go to login">
+            Already have an account?
+          </a>
+        </div>
       </div>
-    </form>
+    </motion.form>
   );
 }
