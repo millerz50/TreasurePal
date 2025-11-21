@@ -6,17 +6,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Topbar() {
-  const { agent } = useAuth();
+  const { user } = useAuth(); // ✅ use `user` instead of `agent`
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("agentToken");
-    router.push("/agent/signin");
+    localStorage.removeItem("userToken"); // ✅ rename if you store tokens
+    router.push("/signin"); // ✅ adjust route naming
   };
 
   const handleEdit = () => {
-    router.push("/agent/profile/edit");
+    router.push("/profile/edit"); // ✅ adjust route naming
   };
 
   return (
@@ -26,7 +26,7 @@ export default function Topbar() {
       <div className="flex items-center gap-4 relative">
         <button className="btn btn-sm btn-outline">Theme</button>
 
-        {agent && (
+        {user && (
           <div className="relative group">
             {/* Avatar with hover tooltip */}
             <button
@@ -34,13 +34,13 @@ export default function Topbar() {
               className="flex items-center gap-2 hover:bg-base-200 px-2 py-1 rounded-md">
               <CircleUserRound className="h-6 w-6 text-primary" />
               <span className="text-sm text-muted-foreground hidden sm:inline">
-                Agent
+                {user.role} {/* ✅ show role dynamically */}
               </span>
             </button>
 
             {/* Tooltip on hover */}
             <div className="absolute top-full left-0 mt-1 bg-base-200 text-xs text-muted-foreground px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
-              {agent.email ?? "No email"}
+              {user.email ?? "No email"}
             </div>
 
             {/* Dropdown menu */}
@@ -49,7 +49,7 @@ export default function Topbar() {
                 <div className="px-4 py-2 text-sm text-muted-foreground">
                   <strong>User ID:</strong>
                   <br />
-                  {agent.userId ?? "Unknown"}
+                  {user.userId ?? "Unknown"}
                 </div>
                 <hr className="border-base-300" />
                 <button

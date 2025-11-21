@@ -1,21 +1,49 @@
 "use client";
 
-import { BarChart, Building2, Home, Plus, Users } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  BarChart,
+  Building2,
+  Heart,
+  Home,
+  Plus,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 
-const navItems = [
-  { label: "Overview", icon: Home, href: "/dashboard" },
-  { label: "Add Property", icon: Plus, href: "/dashboard/properties/add" },
-  {
-    label: "Manage Listings",
-    icon: Building2,
-    href: "/dashboard/properties/manage-listings",
-  },
-  { label: "Agents", icon: Users, href: "/dashboard/agents" },
-  { label: "Analytics", icon: BarChart, href: "/dashboard/analytics" },
-];
-
 export default function Sidebar() {
+  const { user } = useAuth();
+
+  // ✅ Base items everyone sees
+  const baseItems = [{ label: "Overview", icon: Home, href: "/dashboard" }];
+
+  // ✅ Role-specific items
+  const agentItems = [
+    { label: "Add Property", icon: Plus, href: "/dashboard/properties/add" },
+    {
+      label: "Manage Listings",
+      icon: Building2,
+      href: "/dashboard/properties/manage-listings",
+    },
+  ];
+
+  const userItems = [
+    { label: "Liked Properties", icon: Heart, href: "/dashboard/liked" },
+  ];
+
+  const adminItems = [
+    { label: "Agents", icon: Users, href: "/dashboard/agents" },
+    { label: "Analytics", icon: BarChart, href: "/dashboard/analytics" },
+    { label: "Admin Panel", icon: ShieldCheck, href: "/dashboard/admin" },
+  ];
+
+  // ✅ Build nav dynamically
+  let navItems = [...baseItems];
+  if (user?.role === "agent") navItems = [...navItems, ...agentItems];
+  if (user?.role === "user") navItems = [...navItems, ...userItems];
+  if (user?.role === "admin") navItems = [...navItems, ...adminItems];
+
   return (
     <aside className="w-64 bg-base-100 border-r border-base-300 p-4 hidden md:block">
       <h2 className="text-xl font-bold mb-6 text-primary">TreasurePal</h2>

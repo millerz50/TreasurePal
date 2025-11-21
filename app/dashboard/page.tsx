@@ -7,20 +7,25 @@ import { useAuth } from "@/context/AuthContext";
 import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 
+// Example role-specific components
+import AdminPanel from "@/components/dashboard/admin/AdminPanel";
+import AgentTools from "@/components/dashboard/agent/AgentTools";
+import UserFavorites from "@/components/dashboard/user/UserFavorites";
+
 export default function DashboardPage() {
-  const { agent, loading } = useAuth();
+  const { user, loading } = useAuth(); // ✅ use `user` instead of `agent`
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!loading) {
-      if (!agent?.userId) {
+      if (!user?.userId) {
         notFound();
       } else {
         const timeout = setTimeout(() => setReady(true), 0);
         return () => clearTimeout(timeout);
       }
     }
-  }, [agent, loading]);
+  }, [user, loading]);
 
   if (loading || !ready) {
     return <div className="text-center py-10">Loading dashboard...</div>;
@@ -28,9 +33,20 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* ✅ Shared components for all roles */}
       <OverviewCards />
-      <QuickActions />
       <RecentActivity />
+
+      {/* ✅ Role-specific sections */}
+      {/* Role-specific sections */}
+      {user?.role === "agent" && <AgentTools />}
+      {user?.role === "user" && <UserFavorites />}
+      {user?.role === "admin" && (
+        <>
+          <QuickActions />
+          <AdminPanel />
+        </>
+      )}
     </div>
   );
 }
