@@ -25,7 +25,7 @@ const SignupSchema = z.object({
   role: z.enum(["user", "agent"]).default("user"),
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
-    .default("Pending"), // ✅ fixed enum
+    .default("Pending"),
   nationalId: z.string().optional(),
   bio: z.string().max(300).optional(),
   metadata: z.array(z.string()).optional(),
@@ -150,7 +150,8 @@ export default function SignupForm({
       setTimeout(() => {
         window.location.href = redirectTo;
       }, 1200);
-    } catch (err) {
+    } catch {
+      // ✅ removed unused `err` variable
       toast.error("Network error. Try again.");
       toast.dismiss(tId);
     } finally {
