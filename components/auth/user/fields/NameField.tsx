@@ -1,4 +1,4 @@
-// components/auth/fields/NameField.tsx
+// components/auth/user/fields/NameField.tsx
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
 
