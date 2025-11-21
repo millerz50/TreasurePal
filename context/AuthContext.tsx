@@ -2,32 +2,32 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-export interface AgentPayload {
+export interface UserPayload {
   userId?: string;
   email?: string;
   status?: string;
-  role?: string;
+  role?: string; // "admin" | "agent" | "user"
 }
 
 interface AuthContextType {
-  agent: AgentPayload | null;
+  user: UserPayload | null;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  agent: null,
+  user: null,
   loading: true,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [agent, setAgent] = useState<AgentPayload | null>(null);
+  const [user, setUser] = useState<UserPayload | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAgent = async () => {
+    const fetchUser = async () => {
       try {
         const res = await fetch(
-          "https://treasurepal-backened.onrender.com/api/agents/me",
+          "https://treasurepal-backened.onrender.com/api/users/me", // ✅ corrected
           {
             method: "GET",
             credentials: "include",
@@ -39,44 +39,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (!res.ok) {
           const errorText = await res.text();
-          console.error("❌ Agent fetch failed:", res.status, errorText);
-          throw new Error("Failed to fetch agent");
+          console.error("❌ User fetch failed:", res.status, errorText);
+          throw new Error("Failed to fetch user");
         }
 
         const data = await res.json();
-        console.log("✅ Raw agent response:", data);
+        console.log("✅ Raw user response:", data);
 
-        // Normalize whether agent is top-level or nested
-        const agentData = data.agent ?? data;
+        const userData = data.user ?? data;
 
-        if (!agentData || !agentData.email) {
-          console.warn("⚠️ Agent missing or malformed:", agentData);
-          setAgent(null);
+        if (!userData || !userData.email) {
+          console.warn("⚠️ User missing or malformed:", userData);
+          setUser(null);
           return;
         }
 
-        const payload: AgentPayload = {
-          userId: agentData._id || agentData.userId,
-          email: agentData.email,
-          role: agentData.role,
-          status: agentData.status,
+        const payload: UserPayload = {
+          userId: userData._id || userData.userId,
+          email: userData.email,
+          role: userData.role,
+          status: userData.status,
         };
 
-        setAgent(payload);
-        console.log("🔍 Final agent payload:", payload);
+        setUser(payload);
+        console.log("🔍 Final user payload:", payload);
       } catch (err) {
         console.error("❌ Auth fetch failed:", err);
-        setAgent(null);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAgent();
+    fetchUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ agent, loading }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );
