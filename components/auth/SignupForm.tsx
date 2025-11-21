@@ -35,7 +35,7 @@ const SignupSchema = z.object({
 type SignupFormData = z.infer<typeof SignupSchema>;
 
 export default function SignupForm({
-  redirectTo = "/login",
+  redirectTo = "/signin",
 }: {
   redirectTo?: string;
 }) {
@@ -201,7 +201,7 @@ export default function SignupForm({
           </Button>
           <a
             className="w-full sm:w-auto rounded-md border px-4 py-2 text-center text-sm text-gray-700 hover:bg-gray-50"
-            href="/login"
+            href="/signin"
             aria-label="Go to login">
             Already have an account?
           </a>

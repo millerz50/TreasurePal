@@ -1,7 +1,7 @@
-// components/auth/SigninForm.tsx
 "use client";
 
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/button";
@@ -10,10 +10,11 @@ import EmailField from "./user/fields/EmailField";
 import PasswordField from "./user/fields/PasswordField";
 
 export default function SigninForm({
-  redirectTo = "/dashboard",
+  redirectTo = "/",
 }: {
   redirectTo?: string;
 }) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,7 @@ export default function SigninForm({
 
     try {
       const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/users/login",
+        "https://treasurepal-backend.onrender.com/api/users/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -54,9 +55,7 @@ export default function SigninForm({
       });
       toast.dismiss(tId);
 
-      setTimeout(() => {
-        window.location.href = redirectTo;
-      }, 1200);
+      router.push(redirectTo);
     } catch {
       toast.error("Network error. Try again.");
       toast.dismiss(tId);
