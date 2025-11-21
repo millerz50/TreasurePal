@@ -12,13 +12,6 @@ import { useEffect, useState } from "react";
 
 type Step = 1 | 2 | 3 | 4;
 
-interface AgentPayload {
-  id: string;
-  name: string;
-  email: string;
-  // Add other fields as needed
-}
-
 interface FormData {
   title: string;
   price: string;
@@ -32,11 +25,11 @@ interface FormData {
   amenities: string[];
   locationLat: number;
   locationLng: number;
-  agentId: string;
+  userId: string;
 }
 
 export default function AddPropertyWizard() {
-  const { agent } = useAuth() as { agent: AgentPayload | null };
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,17 +47,18 @@ export default function AddPropertyWizard() {
     amenities: [],
     locationLat: -17.9306,
     locationLng: 31.3306,
-    agentId: "",
+    userId: "",
   });
 
-  useEffect(() => {
-    if (agent?.id) {
-      setFormData((prev) => ({
-        ...prev,
-        agentId: agent.id,
-      }));
-    }
-  }, [agent]);
+ useEffect(() => {
+  if (user?.userId) {
+    setFormData((prev) => ({
+      ...prev,
+      userId: user.userId,
+    }));
+  }
+}, [user]);
+
 
   const PROPERTY_TYPES = Object.keys(AMENITIES);
 
@@ -103,8 +97,12 @@ export default function AddPropertyWizard() {
     setError(null);
 
     try {
+      if (user?.role !== "agent") {
+        throw new Error("Only agents can add properties.");
+      }
+
       const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/properties/add",
+        "https://treasurepal-backend.onrender.com/api/properties/add",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
