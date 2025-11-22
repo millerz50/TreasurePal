@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { account } from "@/lib/appwrite";
 import {
   BarChart,
   Building2,
@@ -11,15 +12,24 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
 export default function Topbar() {
   const { user } = useAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem("userToken");
-    router.push("/signin");
+  const handleLogout = async () => {
+    try {
+      // Destroy the current session
+      await account.deleteSession({ sessionId: "current" });
+
+      // Optionally clear any local state
+      localStorage.removeItem("userToken");
+
+      // Redirect
+      router.push("/signin");
+    } catch (err) {
+      console.error("❌ Logout failed:", err);
+    }
   };
 
   const handleEdit = () => {
