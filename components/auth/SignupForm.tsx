@@ -1,9 +1,8 @@
 "use client";
-
+import { ID } from "appwrite";
 import { motion } from "framer-motion";
 import React, { useState } from "react";
 import { toast } from "sonner";
-import { v4 as uuid } from "uuid";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
 
@@ -40,7 +39,7 @@ export default function SignupForm({
   redirectTo?: string;
 }) {
   const [form, setForm] = useState<SignupFormData>({
-    accountId: uuid(),
+    accountId: ID.unique(), // ✅ valid Appwrite ID
     email: "",
     firstName: "",
     surname: "",

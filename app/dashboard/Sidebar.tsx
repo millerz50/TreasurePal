@@ -14,6 +14,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+interface NavItem {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+}
+
+interface Section {
+  title: string;
+  items: NavItem[];
+}
+
 export default function Sidebar() {
   const { user } = useAuth();
 
@@ -21,10 +32,12 @@ export default function Sidebar() {
   const role = user?.role?.toLowerCase();
 
   // Base items
-  const baseItems = [{ label: "Overview", icon: Home, href: "/dashboard" }];
+  const baseItems: NavItem[] = [
+    { label: "Overview", icon: Home, href: "/dashboard" },
+  ];
 
   // User section
-  const userItems = [
+  const userItems: NavItem[] = [
     { label: "Liked Properties", icon: Heart, href: "/dashboard/liked" },
     { label: "Suggestions", icon: Sparkles, href: "/dashboard/suggestions" },
     { label: "Status", icon: Activity, href: "/dashboard/status" },
@@ -32,7 +45,7 @@ export default function Sidebar() {
   ];
 
   // Agent section
-  const agentItems = [
+  const agentItems: NavItem[] = [
     { label: "Add Property", icon: Plus, href: "/dashboard/properties/add" },
     {
       label: "Manage Listings",
@@ -44,16 +57,14 @@ export default function Sidebar() {
   ];
 
   // Admin section
-  const adminItems = [
+  const adminItems: NavItem[] = [
     { label: "Agents", icon: Users, href: "/dashboard/agents" },
     { label: "Analytics", icon: BarChart, href: "/dashboard/analytics" },
     { label: "Admin Panel", icon: ShieldCheck, href: "/dashboard/admin" },
   ];
 
   // Build nav grouped by role
-  const sections: { title: string; items: any[] }[] = [
-    { title: "General", items: baseItems },
-  ];
+  const sections: Section[] = [{ title: "General", items: baseItems }];
 
   if (role === "user") sections.push({ title: "Your Space", items: userItems });
   if (role === "agent")

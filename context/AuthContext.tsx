@@ -1,14 +1,45 @@
+// context/AuthContext.tsx
 "use client";
 
-import { account } from "@/lib/appwrite"; // import Appwrite client
+import { account } from "@/lib/appwrite";
+import type { Models } from "appwrite";
 import { createContext, useContext, useEffect, useState } from "react";
 
-export interface UserPayload {
+async function fetchProfileMe(): Promise<{
+  role?: string;
+  status?: boolean | string;
+  phone?: string;
+  bio?: string;
+} | null> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+      credentials: "include",
+      headers: {
+        // Ensure your middleware can resolve accountId (e.g., via proxy)
+        // If you can't, you can fall back to /users/account/:id
+        // "x-appwrite-account-id": currentUserId, // if needed
+      },
+    });
+    if (!res.ok) throw new Error("Profile fetch failed");
+    return await res.json();
+  } catch (err) {
+    console.error("❌ Profile fetch error:", err);
+    return null;
+  }
+}
+
+export interface UserPrefs {
+  role?: "admin" | "agent" | "user";
+}
+
+export type UserPayload = {
   userId: string;
   email?: string;
-  status?: boolean; // Appwrite returns boolean for status
-  role?: string; // "admin" | "agent" | "user" (stored in prefs or DB)
-}
+  status?: boolean | string;
+  role?: string;
+  phone?: string;
+  bio?: string;
+};
 
 interface AuthContextType {
   user: UserPayload | null;
@@ -27,14 +58,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // ✅ Get current Appwrite user session
-        const appwriteUser = await account.get();
+        // 1. Appwrite session (authoritative for auth)
+        const appwriteUser: Models.User<UserPrefs> =
+          await account.get<UserPrefs>();
+
+        // 2. Profile from API (role, status, phone, bio)
+        const profile = await fetchProfileMe();
 
         const payload: UserPayload = {
           userId: appwriteUser.$id,
           email: appwriteUser.email,
-          role: appwriteUser.prefs?.role, // store role in prefs or a collection
-          status: appwriteUser.status, // boolean
+          role: (profile?.role ?? appwriteUser.prefs?.role)?.toLowerCase(),
+          status: profile?.status ?? appwriteUser.status,
+          phone: profile?.phone,
+          bio: profile?.bio,
         };
 
         setUser(payload);

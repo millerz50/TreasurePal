@@ -31,21 +31,34 @@ export default function SigninForm({
 
     setLoading(true);
     const tId = toast.loading("Signing you in…");
-
     try {
-      // ✅ Correct Appwrite method
-      await account.createSession(email.toLowerCase(), password);
+      // 🔐 Create session using email/password
+      await account.createEmailPasswordSession(email.toLowerCase(), password);
 
-      const user = await account.get(); // fetch logged-in user details
+      // 👤 Fetch authenticated user
+      const user = await account.get();
 
+      // 🎉 Notify and redirect
       toast.success(`Welcome back, ${user.name || user.email}!`, {
         description: "Redirecting to your dashboard…",
       });
       toast.dismiss(tId);
 
       router.push(redirectTo);
-    } catch (err: any) {
-      const msg = err?.message || "Login failed";
+    } catch (err: unknown) {
+      let msg = "Login failed";
+
+      if (err instanceof Error) {
+        msg = err.message;
+      } else if (
+        typeof err === "object" &&
+        err !== null &&
+        "message" in err &&
+        typeof (err as { message?: unknown }).message === "string"
+      ) {
+        msg = (err as { message: string }).message;
+      }
+
       toast.error(msg);
       toast.dismiss(tId);
     } finally {
@@ -66,11 +79,15 @@ export default function SigninForm({
         <div className="grid grid-cols-1 gap-4">
           <EmailField
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setEmail(e.target.value)
+            }
           />
           <PasswordField
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setPassword(e.target.value)
+            }
           />
         </div>
 
