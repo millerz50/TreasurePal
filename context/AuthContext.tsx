@@ -1,11 +1,10 @@
-// context/AuthContext.tsx
 "use client";
 
 import { account } from "@/lib/appwrite";
 import type { Models } from "appwrite";
 import { createContext, useContext, useEffect, useState } from "react";
 
-async function fetchProfileMe(): Promise<{
+async function fetchProfileMe(jwt: string): Promise<{
   role?: string;
   status?: boolean | string;
   phone?: string;
@@ -15,9 +14,7 @@ async function fetchProfileMe(): Promise<{
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
       credentials: "include",
       headers: {
-        // Ensure your middleware can resolve accountId (e.g., via proxy)
-        // If you can't, you can fall back to /users/account/:id
-        // "x-appwrite-account-id": currentUserId, // if needed
+        Authorization: `Bearer ${jwt}`,
       },
     });
     if (!res.ok) throw new Error("Profile fetch failed");
@@ -58,13 +55,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // 1. Appwrite session (authoritative for auth)
+        // 1. Get Appwrite session user
         const appwriteUser: Models.User<UserPrefs> =
           await account.get<UserPrefs>();
 
-        // 2. Profile from API (role, status, phone, bio)
-        const profile = await fetchProfileMe();
+        // 2. Get JWT for API calls
+        const jwt = await account.createJWT();
 
+        // 3. Fetch extended profile from backend
+        const profile = await fetchProfileMe(jwt.jwt);
+
+        // 4. Merge both sources
         const payload: UserPayload = {
           userId: appwriteUser.$id,
           email: appwriteUser.email,
