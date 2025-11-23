@@ -4,14 +4,17 @@ import OverviewCards from "@/components/dashboard/OverviewCards";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-// Example role-specific components
+// Role-specific components
 import AdminPanel from "@/components/dashboard/admin/AdminPanel";
 import AgentTools from "@/components/dashboard/agent/AgentTools";
 import UserFavorites from "@/components/dashboard/user/UserFavorites";
 
-export default function DashboardPageClient() {
+/**
+ * Client-only dashboard component typed as React.FC
+ */
+const DashboardPageClient: React.FC = () => {
   const { user, loading } = useAuth();
   const [ready, setReady] = useState(false);
 
@@ -21,8 +24,8 @@ export default function DashboardPageClient() {
         // client-only fallback; actual redirect/guard is in app/dashboard/page.tsx
         return;
       } else {
-        const timeout = setTimeout(() => setReady(true), 0);
-        return () => clearTimeout(timeout);
+        const t = setTimeout(() => setReady(true), 0);
+        return () => clearTimeout(t);
       }
     }
   }, [user, loading]);
@@ -46,4 +49,6 @@ export default function DashboardPageClient() {
       )}
     </div>
   );
-}
+};
+
+export default DashboardPageClient;

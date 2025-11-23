@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
+// dynamic import resolves the default export from ./pageClient
 const DashClient = dynamic(() => import("./pageClient"), { ssr: false });
 
 export default async function DashboardPage() {
