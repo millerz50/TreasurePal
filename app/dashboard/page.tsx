@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { cookies } from "next/headers";
@@ -7,12 +8,18 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-// Robust dynamic import: prefer default export, fall back to a named export
 const DashClient = dynamic(
   () =>
     import("./pageClient").then((m) => {
-      return (m.default ??
-        (m as any).DashboardPageClient) as React.ComponentType<any>;
+      // Prefer default export, otherwise fallback to named export DashboardPageClient
+      const comp = (m as any).default ?? (m as any).DashboardPageClient;
+      if (!comp) {
+        // Throw a helpful error early so the build log shows a clear reason
+        throw new Error(
+          "Dynamic import resolved but no default or named export 'DashboardPageClient' found in ./pageClient"
+        );
+      }
+      return comp as React.ComponentType<any>;
     }),
   { ssr: false }
 );
