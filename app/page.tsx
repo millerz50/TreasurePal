@@ -11,7 +11,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <Navbar user={user} />
+      <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 py-8">
         <Hero />
         <PropertyList />
