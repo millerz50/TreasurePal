@@ -14,6 +14,14 @@ export default function NavbarUser() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
+  // debug log to observe auth values each render
+  useEffect(() => {
+    console.log("[NavbarUser] render", {
+      loading,
+      user: user ? { id: user.userId, email: user.email } : null,
+    });
+  }, [loading, user]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -29,17 +37,29 @@ export default function NavbarUser() {
   }, []);
 
   if (loading) {
-    return <span className="text-sm text-muted-foreground">Loading…</span>;
+    return (
+      <div className="text-sm text-muted-foreground">
+        Loading…
+        <div className="text-xs text-muted-foreground/70">
+          [debug: auth loading true]
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
     return (
-      <Button
-        variant="ghost"
-        className="text-sm"
-        onClick={() => router.push("/user/auth/login")}>
-        🔑 Sign In
-      </Button>
+      <div>
+        <Button
+          variant="ghost"
+          className="text-sm"
+          onClick={() => router.push("/user/auth/login")}>
+          🔑 Sign In
+        </Button>
+        <div className="mt-1 text-xs text-muted-foreground/70">
+          [debug: no user]
+        </div>
+      </div>
     );
   }
 
