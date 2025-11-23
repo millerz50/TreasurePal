@@ -8,18 +8,8 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-// Robust dynamic import: prefer default export, fallback to named export
 const DashClient = dynamic(
-  () =>
-    import("./pageClient").then((m) => {
-      const comp = (m as any).default ?? (m as any).DashboardPageClient;
-      if (!comp) {
-        throw new Error(
-          "Dynamic import failed: no default or named export 'DashboardPageClient' in ./pageClient"
-        );
-      }
-      return comp as React.ComponentType<any>;
-    }),
+  () => import("./pageClient").then((m) => m.default),
   { ssr: false }
 );
 
