@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
-import { useAuth } from "@/context/AuthContext"; // 🔥 import your hook
+import { useAuth } from "@/context/AuthContext";
 import { motion, useInView } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
@@ -12,19 +12,7 @@ export function NavbarDesktopActions() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
   const router = useRouter();
-
-  // ✅ consume auth context
   const { user, loading } = useAuth();
-
-  // While loading, you can show a skeleton or nothing
-  if (loading) {
-    return (
-      <div className="flex items-center gap-4">
-        <ThemeSwitcher />
-        <span className="text-sm text-muted-foreground">Loading...</span>
-      </div>
-    );
-  }
 
   return (
     <motion.div
@@ -37,20 +25,21 @@ export function NavbarDesktopActions() {
       }}
       className="flex items-center gap-4">
       <ThemeSwitcher />
-
-      {user ? (
+      {loading ? (
+        <span className="text-sm text-muted-foreground">Loading...</span>
+      ) : user ? (
         <NavbarUser />
       ) : (
         <>
           <Button
             variant="outline"
             className="text-sm border border-accent text-accent dark:text-accent hover:bg-accent/10"
-            onClick={() => router.push("/user/auth/login")}>
+            onClick={() => router.push("/signin")}>
             Sign In
           </Button>
           <Button
             className="text-sm bg-gradient-to-r from-green-500 to-blue-600 text-white hover:opacity-90"
-            onClick={() => router.push("/user/auth/register")}>
+            onClick={() => router.push("/signup")}>
             Sign Up
           </Button>
         </>

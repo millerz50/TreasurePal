@@ -1,37 +1,45 @@
 "use client";
 
 import { Heart, Share, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+
+type Favorite = {
+  id: number;
+  title: string;
+  location: string;
+  price: string;
+  likedOn: string;
+  image: string;
+};
 
 export default function UserFavorites() {
-  const favorites = [
-    {
-      id: 1,
-      title: "Luxury Villa in Borrowdale",
-      location: "Borrowdale, Harare",
-      price: "$350,000",
-      likedOn: "Nov 15, 2025",
-      image:
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80", // villa
-    },
-    {
-      id: 2,
-      title: "Modern Apartment in Avondale",
-      location: "Avondale, Harare",
-      price: "$850 / month",
-      likedOn: "Nov 18, 2025",
-      image:
-        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80", // apartment
-    },
-    {
-      id: 3,
-      title: "Townhouse in Highlands",
-      location: "Highlands, Harare",
-      price: "$1,200 / month",
-      likedOn: "Nov 20, 2025",
-      image:
-        "https://images.unsplash.com/photo-1599423300746-b62533397364?auto=format&fit=crop&w=800&q=80", // townhouse
-    },
-  ];
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/favorites`,
+          {
+            credentials: "include",
+          }
+        );
+        if (!res.ok) throw new Error("Failed to load favorites");
+        const data: Favorite[] = await res.json();
+        setFavorites(data);
+      } catch (err) {
+        console.error("❌ Favorites fetch error:", err);
+        setFavorites([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFavorites();
+  }, []);
+
+  if (loading) return <p>Loading favorites...</p>;
+  if (favorites.length === 0) return <p>No favorites found.</p>;
 
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-lg shadow-sm space-y-6">
@@ -58,7 +66,6 @@ export default function UserFavorites() {
                 Liked on {fav.likedOn}
               </p>
 
-              {/* Actions */}
               <div className="flex gap-3 mt-3">
                 <button className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm">
                   <Trash2 className="h-4 w-4" /> Remove

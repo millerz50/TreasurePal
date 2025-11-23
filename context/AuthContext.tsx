@@ -16,9 +16,7 @@ async function fetchProfileMe(jwt: string): Promise<{
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
       credentials: "include",
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
+      headers: { Authorization: `Bearer ${jwt}` },
     });
     if (!res.ok) throw new Error("Profile fetch failed");
     return await res.json();
@@ -42,17 +40,19 @@ export type UserPayload = {
   role?: string;
   phone?: string;
   bio?: string;
-  avatarUrl?: string; // optional
+  avatarUrl?: string;
 };
 
 interface AuthContextType {
   user: UserPayload | null;
   loading: boolean;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -62,26 +62,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // 1. Get Appwrite session user
         const appwriteUser: Models.User<UserPrefs> =
           await account.get<UserPrefs>();
-
-        // 2. Get JWT for API calls
         const jwt = await account.createJWT();
-
-        // 3. Fetch extended profile from backend
         const profile = await fetchProfileMe(jwt.jwt);
 
-        // 4. Build avatar URL (optional)
         let avatarUrl: string | undefined;
         const fileId =
           profile?.avatarFileId ?? appwriteUser.prefs?.avatarFileId;
-
         if (fileId) {
-          // ✅ Use bucket userAvatars
           avatarUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${fileId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
         } else {
-          // ✅ Fallback: initials avatar
           const firstLetter =
             profile?.firstName?.[0] ?? appwriteUser.name?.split(" ")[0]?.[0];
           const surnameLetter =
@@ -91,14 +82,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const initials = `${firstLetter ?? ""}${
             surnameLetter ?? ""
           }`.toUpperCase();
-
-          // Only build fallback if we have at least one letter
           if (initials.trim().length > 0) {
             avatarUrl = `https://ui-avatars.com/api/?name=${initials}&background=random`;
           }
         }
 
-        // 5. Merge both sources
         const payload: UserPayload = {
           userId: appwriteUser.$id,
           email: appwriteUser.email,
@@ -106,11 +94,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           status: profile?.status ?? appwriteUser.status,
           phone: profile?.phone,
           bio: profile?.bio,
-          avatarUrl, // optional
+          avatarUrl,
         };
 
         setUser(payload);
-        console.log("🔍 Final user payload:", payload);
       } catch (err) {
         console.error("❌ Auth fetch failed:", err);
         setUser(null);
@@ -122,8 +109,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     fetchUser();
   }, []);
 
+  const signOut = async () => {
+    try {
+      await account.deleteSession("current");
+      setUser(null);
+    } catch (err) {
+      console.error("❌ Sign out failed:", err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

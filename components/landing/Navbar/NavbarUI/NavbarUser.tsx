@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/AuthContext"; // 🔥 consume auth context
+import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -11,7 +11,7 @@ export default function NavbarUser() {
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -29,8 +29,7 @@ export default function NavbarUser() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!mounted || loading) return null;
-  if (!user) return null; // nothing to show if no user
+  if (!mounted || loading || !user) return null;
 
   return (
     <div ref={dropdownRef} className="relative flex items-center gap-3">
@@ -77,7 +76,7 @@ export default function NavbarUser() {
               <Button
                 variant="ghost"
                 className="justify-start text-sm hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400"
-                onClick={() => console.log("Sign out")}>
+                onClick={signOut}>
                 🚪 Sign Out
               </Button>
             </div>

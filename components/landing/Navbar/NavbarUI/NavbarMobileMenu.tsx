@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
-import { useAuth } from "@/context/AuthContext"; // 🔥 consume auth context
+import { useAuth } from "@/context/AuthContext";
 import { Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,8 +11,6 @@ import NavbarUser from "./NavbarUser";
 export function NavbarMobileMenu() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-
-  // ✅ get auth state
   const { user, loading } = useAuth();
 
   return (
@@ -35,12 +33,12 @@ export function NavbarMobileMenu() {
               <Button
                 variant="outline"
                 className="w-full text-sm border border-accent text-accent dark:text-accent hover:bg-accent/10"
-                onClick={() => router.push("/user/auth/login")}>
+                onClick={() => router.push("/signup")}>
                 Sign In
               </Button>
               <Button
                 className="w-full text-sm bg-gradient-to-r from-green-500 to-blue-600 text-white hover:opacity-90"
-                onClick={() => router.push("/user/auth/register")}>
+                onClick={() => router.push("/signin")}>
                 Sign Up
               </Button>
             </>
