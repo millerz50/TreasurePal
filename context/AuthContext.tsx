@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("❌ Auth fetch failed:", err);
         setUser(null);
       } finally {
-        setLoading(false);
+        setLoading(false); // always flip loading off
       }
     };
 

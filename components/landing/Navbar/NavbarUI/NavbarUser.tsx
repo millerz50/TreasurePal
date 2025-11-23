@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export default function NavbarUser() {
@@ -11,6 +12,7 @@ export default function NavbarUser() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { user, loading, signOut } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -26,7 +28,20 @@ export default function NavbarUser() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (loading || !user) return null;
+  if (loading) {
+    return <span className="text-sm text-muted-foreground">Loading…</span>;
+  }
+
+  if (!user) {
+    return (
+      <Button
+        variant="ghost"
+        className="text-sm"
+        onClick={() => router.push("/user/auth/login")}>
+        🔑 Sign In
+      </Button>
+    );
+  }
 
   return (
     <div ref={dropdownRef} className="relative flex items-center gap-3">
@@ -67,7 +82,7 @@ export default function NavbarUser() {
               <Button
                 variant="ghost"
                 className="justify-start text-sm hover:bg-accent/10"
-                onClick={() => console.log("Edit user please")}>
+                onClick={() => console.log("Edit user")}>
                 ✏️ Edit Profile
               </Button>
               <Button
