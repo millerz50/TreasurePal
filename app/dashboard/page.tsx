@@ -7,8 +7,15 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-// dynamic import resolves the default export from ./pageClient
-const DashClient = dynamic(() => import("./pageClient"), { ssr: false });
+// Robust dynamic import: prefer default export, fall back to a named export
+const DashClient = dynamic(
+  () =>
+    import("./pageClient").then((m) => {
+      return (m.default ??
+        (m as any).DashboardPageClient) as React.ComponentType<any>;
+    }),
+  { ssr: false }
+);
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();

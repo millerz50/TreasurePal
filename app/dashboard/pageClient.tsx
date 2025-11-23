@@ -11,9 +11,6 @@ import AdminPanel from "@/components/dashboard/admin/AdminPanel";
 import AgentTools from "@/components/dashboard/agent/AgentTools";
 import UserFavorites from "@/components/dashboard/user/UserFavorites";
 
-/**
- * Client-only dashboard component typed as React.FC
- */
 const DashboardPageClient: React.FC = () => {
   const { user, loading } = useAuth();
   const [ready, setReady] = useState(false);
