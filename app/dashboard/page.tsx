@@ -1,17 +1,12 @@
 // app/dashboard/page.tsx
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import DashClient from "./pageClient"; // static import of a "use client" module
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
-
-const DashClient = dynamic(
-  () => import("./pageClient").then((m) => m.default),
-  { ssr: false }
-);
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();

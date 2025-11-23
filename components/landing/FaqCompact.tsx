@@ -38,15 +38,25 @@ const DEFAULT: FaqItem[] = [
 ];
 
 const usePrefersReducedMotion = (): boolean => {
-  const [reduced, setReduced] = useState(false);
+  const getInitial = () => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch {
+      return false;
+    }
+  };
+
+  const [reduced, setReduced] = useState<boolean>(getInitial);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
     const handler = () => setReduced(mq.matches);
     mq.addEventListener?.("change", handler);
     return () => mq.removeEventListener?.("change", handler);
   }, []);
+
   return reduced;
 };
 
@@ -111,28 +121,32 @@ const Faq: React.FC<Props> = ({
   const idBase = useId();
   const list = items && items.length ? items : DEFAULT;
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  const getInitialOpenIndex = (): number | null => {
+    if (typeof window === "undefined") return defaultOpenIndex ?? null;
+    if (!storageKey) return defaultOpenIndex ?? null;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw === null) return defaultOpenIndex ?? null;
+      const idx = Number(raw);
+      return !Number.isNaN(idx) && idx >= 0 && idx < list.length ? idx : null;
+    } catch {
+      return defaultOpenIndex ?? null;
+    }
+  };
+
   const [openIndex, setOpenIndex] = useState<number | null>(
-    defaultOpenIndex ?? null
+    getInitialOpenIndex
   );
 
   useEffect(() => {
     if (!storageKey) return;
     try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw !== null) {
-        const idx = Number(raw);
-        if (!Number.isNaN(idx) && idx >= 0 && idx < list.length)
-          setOpenIndex(idx);
-      }
-    } catch {}
-  }, [storageKey, list.length]);
-
-  useEffect(() => {
-    if (!storageKey) return;
-    try {
-      if (openIndex === null) localStorage.removeItem(storageKey);
-      else localStorage.setItem(storageKey, String(openIndex));
-    } catch {}
+      if (openIndex === null) window.localStorage.removeItem(storageKey);
+      else window.localStorage.setItem(storageKey, String(openIndex));
+    } catch {
+      // ignore storage errors
+    }
   }, [openIndex, storageKey]);
 
   const toggle = (i: number) => setOpenIndex((prev) => (prev === i ? null : i));

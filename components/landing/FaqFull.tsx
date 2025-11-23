@@ -65,36 +65,33 @@ const FaqFull: React.FC<FaqProps> = ({
   const list = items && items.length ? items : DEFAULT_ITEMS;
 
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  const getInitialOpenIndex = (): number | null => {
+    if (typeof window === "undefined") return defaultOpenIndex ?? null;
+    if (!storageKey) return defaultOpenIndex ?? null;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw === null) return defaultOpenIndex ?? null;
+      const parsed = Number(raw);
+      return !Number.isNaN(parsed) && parsed >= 0 && parsed < list.length
+        ? parsed
+        : null;
+    } catch {
+      return defaultOpenIndex ?? null;
+    }
+  };
+
   const [openIndex, setOpenIndex] = useState<number | null>(
-    defaultOpenIndex ?? null
+    getInitialOpenIndex
   );
 
   useEffect(() => {
     if (!storageKey) return;
     try {
-      const raw = window.localStorage.getItem(storageKey);
-      if (raw !== null) {
-        const parsed = Number(raw);
-        if (!Number.isNaN(parsed) && parsed >= 0 && parsed < list.length) {
-          setOpenIndex(parsed);
-        }
-      }
+      if (openIndex === null) window.localStorage.removeItem(storageKey);
+      else window.localStorage.setItem(storageKey, String(openIndex));
     } catch {
-      /* ignore storage errors */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageKey, list.length]);
-
-  useEffect(() => {
-    if (!storageKey) return;
-    try {
-      if (openIndex === null) {
-        window.localStorage.removeItem(storageKey);
-      } else {
-        window.localStorage.setItem(storageKey, String(openIndex));
-      }
-    } catch {
-      /* ignore storage errors */
+      // ignore storage errors
     }
   }, [openIndex, storageKey]);
 
@@ -106,9 +103,8 @@ const FaqFull: React.FC<FaqProps> = ({
     [list.length]
   );
 
-  const toggleIndex = (i: number) => {
+  const toggleIndex = (i: number) =>
     setOpenIndex((prev) => (prev === i ? null : i));
-  };
 
   const faqSchema = useMemo(() => {
     if (!includeSchema) return null;
@@ -124,7 +120,7 @@ const FaqFull: React.FC<FaqProps> = ({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity,
-    };
+    } as Record<string, unknown>;
   }, [includeSchema, list]);
 
   return (
@@ -236,7 +232,6 @@ const FaqFull: React.FC<FaqProps> = ({
       )}
 
       {faqSchema ? (
-        // eslint-disable-next-line react/no-danger
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -248,9 +243,7 @@ const FaqFull: React.FC<FaqProps> = ({
 
 export default FaqFull;
 
-/* -------------------------
-   Helpers
-   ------------------------- */
+/* Helpers */
 
 function focusHeader(
   refs: React.RefObject<HTMLButtonElement | null>[],
@@ -272,26 +265,41 @@ function stripTextFromNode(node: React.ReactNode): string {
   }
 
   // Fallback for generic iterables
-  const iter = node as any;
-  if (iter && typeof iter[Symbol.iterator] === "function") {
+  if (isIterable(node)) {
     try {
-      return Array.from(iter as Iterable<unknown>)
+      return Array.from(node as Iterable<unknown>)
         .map((n) => stripTextFromNode(n as React.ReactNode))
         .join(" ");
     } catch {
       return "";
     }
   }
+
   return "";
 }
 
+function isIterable(u: unknown): u is Iterable<unknown> {
+  return (
+    typeof u === "object" && u !== null && Symbol.iterator in (u as object)
+  );
+}
+
 function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
+  const getInitial = (): boolean => {
+    if (typeof window === "undefined") return false;
     try {
-      if (typeof window === "undefined") return;
+      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch {
+      return false;
+    }
+  };
+
+  const [reduced, setReduced] = useState<boolean>(getInitial);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
       const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-      setReduced(mq.matches);
       const onChange = () => setReduced(mq.matches);
       if (mq.addEventListener) mq.addEventListener("change", onChange);
       else mq.addListener(onChange);
@@ -300,8 +308,9 @@ function usePrefersReducedMotion(): boolean {
         else mq.removeListener(onChange);
       };
     } catch {
-      /* ignore */
+      // ignore
     }
   }, []);
+
   return reduced;
 }
