@@ -10,7 +10,7 @@ export default function Navbar() {
       <div className="flex-1">
         <NavbarBrand
           name="TreasurePal"
-          description="Empowering Zimbabwean Real Estate"
+          description="Empowering Zimbabwean Real Estate agency and house seekers"
         />
       </div>
       <div className="flex-none hidden sm:flex">

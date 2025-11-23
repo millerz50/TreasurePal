@@ -74,7 +74,7 @@ export default function UserFavorites() {
                   <Share className="h-4 w-4" /> Share
                 </button>
                 <button className="flex items-center gap-1 text-green-600 hover:text-green-700 text-sm">
-                  <Heart className="h-4 w-4" /> Contact Agent
+                  <Heart className="h-4 w-4" /> Contact Agents
                 </button>
               </div>
             </div>

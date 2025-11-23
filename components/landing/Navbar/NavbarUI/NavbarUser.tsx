@@ -67,7 +67,7 @@ export default function NavbarUser() {
               <Button
                 variant="ghost"
                 className="justify-start text-sm hover:bg-accent/10"
-                onClick={() => console.log("Edit user")}>
+                onClick={() => console.log("Edit user please")}>
                 ✏️ Edit Profile
               </Button>
               <Button
