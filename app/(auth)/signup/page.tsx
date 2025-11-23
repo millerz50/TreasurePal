@@ -11,7 +11,7 @@ export default function SignupPage() {
       <h2 className="mb-6 text-center text-2xl font-semibold">
         Create an account
       </h2>
-      <SignupForm redirectTo="/login" />
+      <SignupForm redirectTo="/signin" />
     </main>
   );
 }

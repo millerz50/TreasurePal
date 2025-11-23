@@ -53,7 +53,7 @@ export default function NavbarUser() {
         <Button
           variant="ghost"
           className="text-sm"
-          onClick={() => router.push("/user/auth/login")}>
+          onClick={() => router.push("/signin")}>
           🔑 Sign In
         </Button>
         <div className="mt-1 text-xs text-muted-foreground/70">
