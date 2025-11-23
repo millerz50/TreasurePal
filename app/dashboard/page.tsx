@@ -1,52 +1,19 @@
-"use client";
+import type { Metadata } from "next";
+import dynamic from "next/dynamic";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-import OverviewCards from "@/components/dashboard/OverviewCards";
-import QuickActions from "@/components/dashboard/QuickActions";
-import RecentActivity from "@/components/dashboard/RecentActivity";
-import { useAuth } from "@/context/AuthContext";
-import { notFound } from "next/navigation";
-import { useEffect, useState } from "react";
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
-// Example role-specific components
-import AdminPanel from "@/components/dashboard/admin/AdminPanel";
-import AgentTools from "@/components/dashboard/agent/AgentTools";
-import UserFavorites from "@/components/dashboard/user/UserFavorites";
+const DashClient = dynamic(() => import("./pageClient"), { ssr: false });
 
-export default function DashboardPage() {
-  const { user, loading } = useAuth(); // ✅ use `user` instead of `agent`
-  const [ready, setReady] = useState(false);
+export default async function DashboardPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user?.userId) {
-        notFound();
-      } else {
-        const timeout = setTimeout(() => setReady(true), 0);
-        return () => clearTimeout(timeout);
-      }
-    }
-  }, [user, loading]);
+  if (!token) redirect("/signin");
 
-  if (loading || !ready) {
-    return <div className="text-center py-10">Loading dashboard...</div>;
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* ✅ Shared components for all roles */}
-      <OverviewCards />
-      <RecentActivity />
-
-      {/* ✅ Role-specific sections */}
-      {/* Role-specific sections */}
-      {user?.role === "agent" && <AgentTools />}
-      {user?.role === "user" && <UserFavorites />}
-      {user?.role === "admin" && (
-        <>
-          <QuickActions />
-          <AdminPanel />
-        </>
-      )}
-    </div>
-  );
+  return <DashClient />;
 }

@@ -17,15 +17,15 @@ export default function BecomeAgentHero() {
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
         }`}>
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
-          Become a Netspace Agent
+          Join Us
         </h1>
         <p className="text-gray-600 text-lg md:text-xl max-w-2xl mx-auto mb-8 leading-relaxed">
-          Empower Zimbabwean businesses through tech. Earn commissions, gain
-          skills, and grow with us.
+          Empower Zimbabwean businesses through TreasurePal. Earn commissions,
+          gain skills, and grow with us.
         </p>
-        <Link href="/agent/signup">
+        <Link href="/signup">
           <button className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-full text-base md:text-lg shadow-md hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
-            Become an Agent
+            Join Us
           </button>
         </Link>
       </div>
