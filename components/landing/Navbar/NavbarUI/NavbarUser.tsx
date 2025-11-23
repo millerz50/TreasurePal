@@ -8,14 +8,11 @@ import { useEffect, useRef, useState } from "react";
 
 export default function NavbarUser() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
-    setMounted(true);
-
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
@@ -29,7 +26,7 @@ export default function NavbarUser() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!mounted || loading || !user) return null;
+  if (loading || !user) return null;
 
   return (
     <div ref={dropdownRef} className="relative flex items-center gap-3">
