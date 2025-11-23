@@ -15,10 +15,10 @@ export default function Navbar({ user }: { user: User | null }) {
         />
       </div>
       <div className="flex-none hidden sm:flex">
-        <NavbarDesktopActions isLoggedIn={isLoggedIn} user={user} />
+        <NavbarDesktopActions />
       </div>
       <div className="flex-none sm:hidden">
-        <NavbarMobileMenu isLoggedIn={isLoggedIn} user={user} />
+        <NavbarMobileMenu />
       </div>
     </div>
   );

@@ -2,21 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
-import { User } from "@/lib/types/navbarTypes";
+import { useAuth } from "@/context/AuthContext"; // 🔥 consume auth context
 import { Menu } from "lucide-react";
-import { useRouter } from "next/navigation"; // ✅ Add this
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import NavbarUser from "./NavbarUser";
 
-export function NavbarMobileMenu({
-  isLoggedIn,
-  user,
-}: {
-  isLoggedIn: boolean;
-  user: User | null;
-}) {
+export function NavbarMobileMenu() {
   const [open, setOpen] = useState(false);
-  const router = useRouter(); // ✅ Initialize router
+  const router = useRouter();
+
+  // ✅ get auth state
+  const { user, loading } = useAuth();
 
   return (
     <div className="sm:hidden flex justify-end w-full relative">
@@ -29,8 +26,10 @@ export function NavbarMobileMenu({
 
       {open && (
         <div className="absolute right-0 top-full mt-2 z-[999] p-4 shadow bg-base-100 rounded-box w-56 flex flex-col gap-2 text-base-content">
-          {isLoggedIn && user ? (
-            <NavbarUser user={user} />
+          {loading ? (
+            <span className="text-sm text-muted-foreground">Loading...</span>
+          ) : user ? (
+            <NavbarUser />
           ) : (
             <>
               <Button

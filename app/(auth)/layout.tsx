@@ -1,4 +1,4 @@
-// app/(auth)/layout.tsx
+// app/(auth)/Auth_layout.tsx
 import React from "react";
 import AuthShell from "./AuthShell"; // client component
 

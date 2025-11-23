@@ -142,7 +142,7 @@ export default function SignupForm({
       }
 
       toast.success("Account created successfully!", {
-        description: "Redirecting you to login…",
+        description: "Redirecting you to signin…",
       });
       toast.dismiss(tId);
 

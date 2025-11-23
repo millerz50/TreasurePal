@@ -1,23 +1,30 @@
 "use client";
 
-import { Button } from "@/components/ui/button"; // Make sure this is imported
+import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
-import { User } from "@/lib/types/navbarTypes";
+import { useAuth } from "@/context/AuthContext"; // 🔥 import your hook
 import { motion, useInView } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import NavbarUser from "./NavbarUser";
 
-export function NavbarDesktopActions({
-  isLoggedIn,
-  user,
-}: {
-  isLoggedIn: boolean;
-  user: User | null;
-}) {
+export function NavbarDesktopActions() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
   const router = useRouter();
+
+  // ✅ consume auth context
+  const { user, loading } = useAuth();
+
+  // While loading, you can show a skeleton or nothing
+  if (loading) {
+    return (
+      <div className="flex items-center gap-4">
+        <ThemeSwitcher />
+        <span className="text-sm text-muted-foreground">Loading...</span>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -31,8 +38,8 @@ export function NavbarDesktopActions({
       className="flex items-center gap-4">
       <ThemeSwitcher />
 
-      {isLoggedIn && user ? (
-        <NavbarUser user={user} />
+      {user ? (
+        <NavbarUser />
       ) : (
         <>
           <Button

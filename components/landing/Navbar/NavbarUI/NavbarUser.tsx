@@ -1,18 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { User } from "@/lib/types/navbarTypes";
+import { useAuth } from "@/context/AuthContext"; // 🔥 consume auth context
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-export default function NavbarUser({ user }: { user: User }) {
+export default function NavbarUser() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const { user, loading } = useAuth();
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -28,7 +29,8 @@ export default function NavbarUser({ user }: { user: User }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted || loading) return null;
+  if (!user) return null; // nothing to show if no user
 
   return (
     <div ref={dropdownRef} className="relative flex items-center gap-3">
@@ -39,20 +41,22 @@ export default function NavbarUser({ user }: { user: User }) {
         whileTap={{ scale: 0.95 }}
         className="flex items-center gap-2 cursor-pointer focus:outline-none">
         <span className="text-sm font-medium text-accent dark:text-accent">
-          {user.name}
+          {user.email ?? user.userId}
         </span>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}>
-          <Image
-            src={user.avatarUrl}
-            alt="User avatar"
-            width={40}
-            height={40}
-            className="rounded-full object-cover shadow-md"
-          />
-        </motion.div>
+        {user.avatarUrl && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}>
+            <Image
+              src={user.avatarUrl}
+              alt="User avatar"
+              width={40}
+              height={40}
+              className="rounded-full object-cover shadow-md"
+            />
+          </motion.div>
+        )}
       </motion.div>
 
       <AnimatePresence>
