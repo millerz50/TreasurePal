@@ -2,13 +2,10 @@ import AgencySection from "@/components/Agent/AgencySection";
 import BecomeAgentHero from "@/components/Agent/BecomeAgentHero";
 import BlogSection from "@/components/landing/Blog";
 import Hero from "@/components/landing/Hero";
-
 import Navbar from "@/components/landing/Navbar/ssrWrapperNav/Navbar";
 import PropertyList from "@/components/property/PropertyList";
-import { getUser } from "@/lib/auth/getUser";
-export default async function Home() {
-  const user = await getUser();
 
+export default function Home() {
   return (
     <div className="min-h-screen bg-base-200">
       <Navbar />

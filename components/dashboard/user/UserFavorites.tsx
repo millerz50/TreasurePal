@@ -1,6 +1,7 @@
 "use client";
 
 import { Heart, Share, Trash2 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type Favorite = {
@@ -53,9 +54,11 @@ export default function UserFavorites() {
           <div
             key={fav.id}
             className="border border-base-300 rounded-lg overflow-hidden shadow hover:shadow-lg transition transform hover:scale-[1.02]">
-            <img
+            <Image
               src={fav.image}
               alt={fav.title}
+              width={600}
+              height={400}
               className="h-48 w-full object-cover"
             />
             <div className="p-4 space-y-2">
