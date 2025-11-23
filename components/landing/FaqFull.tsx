@@ -95,6 +95,7 @@ const FaqFull: React.FC<FaqProps> = ({
     }
   }, [openIndex, storageKey]);
 
+  // keep refs as nullable, cast when passing to JSX to satisfy the button ref type
   const headerRefs: React.RefObject<HTMLButtonElement | null>[] = useMemo(
     () =>
       Array.from({ length: list.length }).map(() =>
@@ -147,7 +148,7 @@ const FaqFull: React.FC<FaqProps> = ({
               <h3>
                 <button
                   id={headerId}
-                  ref={headerRefs[i]}
+                  ref={headerRefs[i] as React.RefObject<HTMLButtonElement>}
                   aria-controls={panelId}
                   aria-expanded={isOpen}
                   onClick={() => toggleIndex(i)}
@@ -251,7 +252,7 @@ function focusHeader(
 ) {
   const clamped = Math.max(0, Math.min(refs.length - 1, index));
   const ref = refs[clamped];
-  if (ref && ref.current) ref.current.focus();
+  if (ref?.current) ref.current.focus();
 }
 
 function stripTextFromNode(node: React.ReactNode): string {
