@@ -20,14 +20,12 @@ const locations = [
 export default function AgencySection() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("All");
-  const [isMobile, setIsMobile] = useState(false);
 
-  // ✅ Fetch agents from API
+  // ✅ Fetch agents from API with proper typing
   useEffect(() => {
-    const fetchAgents = async () => {
+    const fetchAgents = async (): Promise<void> => {
       try {
         const res = await fetch("https://your-api-domain.com/api/agents");
-        // replace with your actual API endpoint
         if (!res.ok) throw new Error("Failed to fetch agents");
         const data: Agent[] = await res.json();
         setAgents(data);
@@ -36,14 +34,6 @@ export default function AgencySection() {
       }
     };
     fetchAgents();
-  }, []);
-
-  // ✅ Handle responsive state
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // ✅ Filter agents by location

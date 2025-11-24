@@ -20,6 +20,7 @@ type Property = {
   summary?: string;
 };
 
+// ✅ Use unknown instead of any, then narrow
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
     const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
@@ -28,21 +29,28 @@ async function fetchByType(typePath: string): Promise<Property[]> {
       console.error("API error", res.status, url);
       return [];
     }
-    const data = await res.json();
+    const data: unknown = await res.json();
     if (!Array.isArray(data)) return [];
-    return data.map((p: any) => ({
-      id: String(
-        p.id ?? p._id ?? p.slug ?? Math.random().toString(36).slice(2)
-      ),
-      title: p.title ?? p.name ?? "Untitled property",
-      location: p.location ?? p.city ?? "Unknown",
-      price: p.price ? String(p.price) : p.displayPrice ?? "Contact for price",
-      beds: p.beds ?? p.bedrooms ?? undefined,
-      baths: p.baths ?? p.bathrooms ?? undefined,
-      image: p.image ?? p.photo ?? null,
-      slug: p.slug ?? p.id ?? undefined,
-      summary: p.summary ?? p.description ?? "",
-    }));
+
+    return data.map((raw) => {
+      const p = raw as Record<string, unknown>;
+      return {
+        id: String(
+          p.id ?? p._id ?? p.slug ?? Math.random().toString(36).slice(2)
+        ),
+        title: (p.title as string) ?? (p.name as string) ?? "Untitled property",
+        location: (p.location as string) ?? (p.city as string) ?? "Unknown",
+        price:
+          p.price !== undefined
+            ? String(p.price)
+            : (p.displayPrice as string) ?? "Contact for price",
+        beds: (p.beds as number) ?? (p.bedrooms as number) ?? undefined,
+        baths: (p.baths as number) ?? (p.bathrooms as number) ?? undefined,
+        image: (p.image as string) ?? (p.photo as string) ?? null,
+        slug: (p.slug as string) ?? (p.id as string) ?? undefined,
+        summary: (p.summary as string) ?? (p.description as string) ?? "",
+      };
+    });
   } catch (err) {
     console.error("Fetch failed:", err);
     return [];
@@ -71,8 +79,9 @@ export default async function SalePage() {
               No properties for sale yet
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 max-w-prose mx-auto">
-              We don't have sale listings in this category right now. Be the
-              first to list and reach local buyers.
+              {/* ✅ Escape apostrophe */}
+              We don&apos;t have sale listings in this category right now. Be
+              the first to list and reach local buyers.
             </p>
 
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
