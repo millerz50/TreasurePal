@@ -24,7 +24,9 @@ const DEFAULT: FaqItem[] = [
     q: "How do I sign up?",
     a: (
       <>
-        <a className="text-blue-600 underline" href="/signup">
+        <a
+          className="text-blue-600 underline dark:text-blue-400"
+          href="/signup">
           Sign up
         </a>{" "}
         and complete the form.
@@ -71,19 +73,21 @@ const AccordionItem: React.FC<{
   const headerId = `${idBase}-h-${index}`;
   const panelId = `${idBase}-p-${index}`;
   return (
-    <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
+    <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800 shadow-sm">
       <h3>
         <button
           id={headerId}
           aria-controls={panelId}
           aria-expanded={isOpen}
           onClick={() => onToggle(index)}
-          className="w-full text-left px-4 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
-          <span className="text-lg font-medium text-gray-900">{item.q}</span>
+          className="w-full text-left px-4 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-300">
+          <span className="text-lg font-medium text-gray-900 dark:text-slate-100">
+            {item.q}
+          </span>
           <svg
             className={`w-5 h-5 transform transition-transform duration-200 ${
               prefersReducedMotion ? "" : isOpen ? "rotate-180" : "rotate-0"
-            } text-gray-500`}
+            } text-gray-500 dark:text-slate-300`}
             viewBox="0 0 20 20"
             fill="none"
             stroke="currentColor"
@@ -105,7 +109,7 @@ const AccordionItem: React.FC<{
         className={`px-4 pb-5 transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden ${
           isOpen ? "max-h-[36rem] opacity-100" : "max-h-0 opacity-0"
         }`}>
-        <div className="pt-3 text-gray-700 text-sm whitespace-pre-wrap">
+        <div className="pt-3 text-gray-700 dark:text-slate-200 text-sm whitespace-pre-wrap">
           {item.a}
         </div>
       </div>
@@ -157,7 +161,7 @@ const Faq: React.FC<Props> = ({
       className="max-w-3xl mx-auto px-4 py-10">
       <h2
         id={`${idBase}-title`}
-        className="text-2xl sm:text-3xl font-extrabold mb-6">
+        className="text-2xl sm:text-3xl font-extrabold mb-6 text-gray-900 dark:text-slate-100">
         Frequently asked questions
       </h2>
       <div className="space-y-3">
@@ -176,10 +180,10 @@ const Faq: React.FC<Props> = ({
 
       {list.length === 0 && (
         <div className="mt-6 text-center">
-          <p className="text-gray-600">No FAQs yet.</p>
+          <p className="text-gray-600 dark:text-slate-300">No FAQs yet.</p>
           <a
             href="/contact"
-            className="mt-3 inline-block text-blue-600 underline">
+            className="mt-3 inline-block text-blue-600 underline dark:text-blue-400">
             Contact us
           </a>
         </div>

@@ -1,6 +1,5 @@
 import BlogSection from "@/components/landing/Blog";
 import FaqFull from "@/components/landing/FaqFull"; // ← import the full FAQ component
-import Footer from "@/components/landing/footer/Footer";
 import Hero from "@/components/landing/Hero";
 import Navbar from "@/components/landing/Navbar/ssrWrapperNav/Navbar";
 import PropertyList from "@/components/property/PropertyList";
@@ -23,7 +22,6 @@ export default function Home() {
         <AgencySection />
         <JoinHero />
       </main>
-      <Footer />
     </div>
   );
 }

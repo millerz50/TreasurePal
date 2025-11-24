@@ -1,4 +1,5 @@
 import "@/app/globals.css";
+import Footer from "@/components/landing/footer/Footer";
 import LogoLoader from "@/components/ui/LogoLoader";
 import "leaflet/dist/leaflet.css";
 import type { Metadata } from "next";
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className="bg-base-100 text-base-content font-sans">
         <LogoLoader />
         <Providers>{children}</Providers>
+        <Footer />
       </body>
     </html>
   );

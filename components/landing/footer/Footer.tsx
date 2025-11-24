@@ -8,13 +8,13 @@ export default function Footer() {
   return (
     <footer
       id="treasurepal-footer"
-      className="bg-tpBg text-tpText border-t border-gray-100"
+      className="bg-gradient-to-b from-white/90 to-gray-50 dark:from-slate-900 dark:to-slate-800 text-slate-900 dark:text-slate-100 border-t border-gray-200 dark:border-slate-700"
       role="contentinfo"
       aria-label="TreasurePal footer">
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="footer-card p-5 md:p-6 grid gap-6 grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr_1.2fr] md:items-start">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid gap-8 md:grid-cols-12 md:items-start">
           {/* Brand + CTA */}
-          <div className="space-y-4">
+          <div className="md:col-span-4 space-y-4">
             <Link
               href="/"
               className="flex items-center gap-3"
@@ -33,121 +33,123 @@ export default function Footer() {
                 </defs>
                 <rect width="48" height="36" rx="6" fill="url(#tp-grad)"></rect>
               </svg>
-
               <div className="min-w-0">
-                <div className="font-extrabold text-lg gradient-text leading-tight truncate">
+                <div
+                  className="text-lg font-extrabold leading-tight bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage: "linear-gradient(90deg,#2ECC71,#1E90FF)",
+                  }}>
                   TREASURE PAL
                 </div>
-                <div className="text-sm font-medium text-tpMuted">
-                  AFFORDABLE PROPERTIES
+                <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Affordable properties across Zimbabwe
                 </div>
               </div>
             </Link>
 
-            <Link
-              href="/list-with-us"
-              data-cta="primary"
-              aria-label="List with TreasurePal"
-              className="inline-flex items-center gap-3 w-full md:w-auto px-5 py-3 rounded-full text-white font-semibold shadow-tp-soft tp-focus justify-center min-h-[44px] transition-transform active:translate-y-0.5"
-              style={{ background: "linear-gradient(90deg,#2ECC71,#1E90FF)" }}>
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-                className="opacity-90">
-                <path
-                  d="M12 2v20"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M5 9h14"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>List with TreasurePal</span>
-            </Link>
-
-            <p className="text-xs text-tpMuted max-w-[20rem]">
-              Find affordable homes and list with confidence. Quick responses
-              and transparent fees.
+            <p className="text-sm text-slate-600 dark:text-slate-300 max-w-[20rem]">
+              List with TreasurePal or discover curated properties — fast,
+              transparent, local.
             </p>
+
+            <div className="flex gap-3">
+              <Link
+                href="/list-with-us"
+                data-cta="primary"
+                className="inline-flex items-center gap-3 px-4 py-2 rounded-full text-white font-semibold shadow-lg transform transition hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(90deg,#2ECC71,#1E90FF)",
+                }}>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true">
+                  <path
+                    d="M5 12h14"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                List with us
+              </Link>
+
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 dark:border-slate-700 text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition">
+                Contact
+              </Link>
+            </div>
           </div>
 
-          {/* Quick links */}
-          <nav aria-label="Footer quick links" className="md:col-span-1">
-            <h4 className="text-sm font-semibold text-tpMuted mb-2">Explore</h4>
-            <ul className="grid grid-cols-3 gap-2 md:grid-cols-1">
-              {[
-                ["Listings", "/listings"],
-                ["Sell", "/sell"],
-                ["About", "/about"],
-                ["FAQ", "/faq"],
-                ["Careers", "/careers"],
-                ["Contact", "/contact"],
-              ].map(([label, href]) => (
-                <li key={label}>
-                  <Link
-                    href={String(href)}
-                    className="block p-2 rounded-md font-medium text-tpText hover:text-tpBlue hover:underline focus-visible:tp-focus">
-                    {label}
+          {/* Links */}
+          <nav
+            aria-label="Footer navigation"
+            className="md:col-span-5 grid grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                Explore
+              </h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/listings" className="hover:underline">
+                    Listings
                   </Link>
                 </li>
-              ))}
-            </ul>
+                <li>
+                  <Link href="/sell" className="hover:underline">
+                    Sell
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/about" className="hover:underline">
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/faq" className="hover:underline">
+                    FAQ
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                Company
+              </h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/careers" className="hover:underline">
+                    Careers
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="hover:underline">
+                    Terms
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="hover:underline">
+                    Privacy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:underline">
+                    Support
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </nav>
 
-          {/* Contact + Social */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-tpMuted">Contact</h4>
-            <div className="flex flex-col gap-1">
-              <a
-                href="tel:+1234567890"
-                className="text-sm font-medium text-tpText">
-                +1 (234) 567‑890
-              </a>
-              <a
-                href="mailto:hello@treasurepal.com"
-                className="text-sm font-medium text-tpText">
-                hello@treasurepal.com
-              </a>
-            </div>
-
-            <div className="flex gap-2 mt-3">
-              {[
-                { label: "Facebook", href: "#", path: "M22 12..." },
-                { label: "Twitter", href: "#", path: "M22 5..." },
-                { label: "Instagram", href: "#", path: "M7 2..." },
-              ].map((s) => (
-                <a
-                  key={s.label}
-                  className="w-10 h-10 rounded-full border flex items-center justify-center tp-social-hoverable tp-focus"
-                  href={s.href}
-                  aria-label={s.label}>
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true">
-                    <path d={s.path} />
-                  </svg>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          {/* Newsletter + Legal */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-tpMuted">
-              Stay in the loop
+          {/* Newsletter + Social */}
+          <div className="md:col-span-3 space-y-4">
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Get property alerts
             </h4>
 
             <form
@@ -164,45 +166,73 @@ export default function Footer() {
                 name="email"
                 type="email"
                 required
-                placeholder="Your email"
-                className="flex-1 input input-bordered rounded-full px-4 py-2"
-                aria-label="Email address"
+                placeholder="you@domain.com"
+                className="flex-1 rounded-full px-4 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-500"
               />
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-gradient-to-r from-tpGreen to-tpBlue text-white font-semibold min-h-[44px]"
-                aria-label="Subscribe">
-                <span>Subscribe</span>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true">
-                  <path
-                    d="M5 12h14M12 5l7 7-7 7"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                className="rounded-full px-4 py-2 bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold text-sm shadow">
+                Subscribe
               </button>
             </form>
 
             <p
-              className="text-sm text-tpMuted tp-newsletter-status"
+              className="text-sm text-slate-500 dark:text-slate-400 tp-newsletter-status"
               aria-live="polite"></p>
 
-            <div className="flex items-center gap-3 text-sm text-tpMuted mt-2">
-              <Link href="/terms" className="hover:underline">
-                Terms
-              </Link>
-              <Link href="/privacy" className="hover:underline">
-                Privacy
-              </Link>
-              <div className="ml-auto">© {year} TreasurePal</div>
+            <div className="flex items-center gap-3 mt-2">
+              <a
+                className="w-10 h-10 rounded-full border flex items-center justify-center tp-social-hoverable"
+                href="#"
+                aria-label="Facebook">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true">
+                  <path d="M22 12..." />
+                </svg>
+              </a>
+              <a
+                className="w-10 h-10 rounded-full border flex items-center justify-center tp-social-hoverable"
+                href="#"
+                aria-label="Twitter">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true">
+                  <path d="M22 5..." />
+                </svg>
+              </a>
+              <a
+                className="w-10 h-10 rounded-full border flex items-center justify-center tp-social-hoverable"
+                href="#"
+                aria-label="Instagram">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true">
+                  <path d="M7 2..." />
+                </svg>
+              </a>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-8 border-t border-gray-100 dark:border-slate-700 pt-6 flex flex-col md:flex-row items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+          <div>© {year} TreasurePal</div>
+          <div className="ml-auto flex gap-4">
+            <Link href="/sitemap.xml" className="hover:underline">
+              Sitemap
+            </Link>
+            <Link href="/contact" className="hover:underline">
+              Contact
+            </Link>
           </div>
         </div>
       </div>

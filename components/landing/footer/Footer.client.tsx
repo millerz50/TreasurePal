@@ -21,7 +21,7 @@ export default function FooterClient() {
     );
     io.observe(footer);
 
-    // CTA pulse (stop after user interaction)
+    // CTA pulse (stops after interaction)
     const cta = footer.querySelector(
       '[data-cta="primary"]'
     ) as HTMLElement | null;
@@ -31,7 +31,7 @@ export default function FooterClient() {
         cta.classList.add("tp-cta-pulse");
         window.setTimeout(() => cta.classList.remove("tp-cta-pulse"), 900);
       };
-      pulseTimer = window.setInterval(startPulse, 6000);
+      pulseTimer = window.setInterval(startPulse, 7000);
       cta.addEventListener(
         "pointerdown",
         () => {
@@ -41,22 +41,29 @@ export default function FooterClient() {
       );
     }
 
-    // Social hover (inline style for quick visual pop)
-    footer.querySelectorAll(".tp-social-hoverable").forEach((el) => {
-      el.addEventListener("pointerenter", () => {
+    // Social hover: subtle gradient + lift, works in dark & light
+    const socials = footer.querySelectorAll(".tp-social-hoverable");
+    socials.forEach((el) => {
+      const enter = () => {
         (el as HTMLElement).style.background =
           "linear-gradient(90deg,#2ECC71,#1E90FF)";
         (el as HTMLElement).style.color = "#fff";
-        (el as HTMLElement).style.transform = "translateY(-2px)";
-      });
-      el.addEventListener("pointerleave", () => {
+        (el as HTMLElement).style.transform = "translateY(-4px) scale(1.02)";
+        (el as HTMLElement).style.transition =
+          "transform 180ms ease, background 180ms ease";
+      };
+      const leave = () => {
         (el as HTMLElement).style.background = "";
         (el as HTMLElement).style.color = "";
         (el as HTMLElement).style.transform = "";
-      });
+      };
+      el.addEventListener("pointerenter", enter);
+      el.addEventListener("pointerleave", leave);
+      el.addEventListener("focus", enter);
+      el.addEventListener("blur", leave);
     });
 
-    // Newsletter AJAX with defensive parsing
+    // Newsletter AJAX with defensive parsing + accessible feedback
     const form = document.getElementById(
       "tp-newsletter-form"
     ) as HTMLFormElement | null;
@@ -67,7 +74,7 @@ export default function FooterClient() {
       const status = document.querySelector<HTMLElement>(
         ".tp-newsletter-status"
       );
-      form.addEventListener("submit", async (e) => {
+      const submitHandler = async (e: Event) => {
         e.preventDefault();
         if (!input || !status) return;
         if (!input.checkValidity()) {
@@ -86,6 +93,7 @@ export default function FooterClient() {
               Accept: "application/json",
             },
             body: JSON.stringify({ email: input.value }),
+            credentials: "include",
           });
           const ct = res.headers.get("content-type") || "";
           const data = ct.includes("application/json")
@@ -112,7 +120,14 @@ export default function FooterClient() {
           status.textContent = "Subscription failed. Try again later.";
           status.classList.add("tp-error");
         }
-      });
+      };
+      form.addEventListener("submit", submitHandler);
+
+      return () => {
+        if (pulseTimer) window.clearInterval(pulseTimer);
+        io.disconnect();
+        form.removeEventListener("submit", submitHandler);
+      };
     }
 
     return () => {

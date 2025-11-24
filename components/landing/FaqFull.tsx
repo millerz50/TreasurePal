@@ -27,7 +27,9 @@ const DEFAULT_ITEMS: FaqItem[] = [
     a: (
       <>
         Click{" "}
-        <a className="text-blue-600 underline" href="/signup">
+        <a
+          className="text-blue-600 underline dark:text-blue-400"
+          href="/signup">
           Sign up
         </a>{" "}
         and complete the short registration form.
@@ -45,7 +47,9 @@ const DEFAULT_ITEMS: FaqItem[] = [
     a: (
       <>
         Visit the Join page and complete the agent application or click{" "}
-        <a className="text-blue-600 underline" href="/signup">
+        <a
+          className="text-blue-600 underline dark:text-blue-400"
+          href="/signup">
           Join Us
         </a>
         .
@@ -95,7 +99,6 @@ const FaqFull: React.FC<FaqProps> = ({
     }
   }, [openIndex, storageKey]);
 
-  // keep refs as nullable, cast when passing to JSX to satisfy the button ref types
   const headerRefs: React.RefObject<HTMLButtonElement | null>[] = useMemo(
     () =>
       Array.from({ length: list.length }).map(() =>
@@ -130,7 +133,7 @@ const FaqFull: React.FC<FaqProps> = ({
       className="max-w-4xl mx-auto px-4 py-12">
       <h2
         id={`${idBase}-faq-heading`}
-        className="text-3xl font-extrabold text-gray-900 mb-6">
+        className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 mb-6">
         Frequently asked questions
       </h2>
 
@@ -144,7 +147,7 @@ const FaqFull: React.FC<FaqProps> = ({
           return (
             <div
               key={it.id ?? i}
-              className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+              className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800 shadow-sm">
               <h3>
                 <button
                   id={headerId}
@@ -167,15 +170,15 @@ const FaqFull: React.FC<FaqProps> = ({
                       focusHeader(headerRefs, list.length - 1);
                     }
                   }}
-                  className="w-full text-left px-4 sm:px-5 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
-                  <span className="text-lg sm:text-xl font-medium text-gray-900">
+                  className="w-full text-left px-4 sm:px-5 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-300">
+                  <span className="text-lg sm:text-xl font-medium text-gray-900 dark:text-slate-100">
                     {it.q}
                   </span>
 
                   <div className="flex items-center gap-3">
                     {it.updatedAt ? (
                       <time
-                        className="text-xs text-gray-400 hidden sm:inline"
+                        className="text-xs text-gray-400 hidden sm:inline dark:text-slate-400"
                         dateTime={it.updatedAt}
                         aria-hidden={!it.updatedAt}>
                         Updated {new Date(it.updatedAt).toLocaleDateString()}
@@ -189,7 +192,7 @@ const FaqFull: React.FC<FaqProps> = ({
                           : isOpen
                           ? "rotate-180"
                           : "rotate-0"
-                      } text-gray-500`}
+                      } text-gray-500 dark:text-slate-300`}
                       viewBox="0 0 20 20"
                       fill="none"
                       stroke="currentColor"
@@ -212,7 +215,7 @@ const FaqFull: React.FC<FaqProps> = ({
                 className={`px-4 sm:px-5 pb-5 transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden ${maxHClass} ${
                   isOpen ? "opacity-100" : "opacity-0"
                 }`}>
-                <div className="pt-3 text-gray-700 text-sm sm:text-base break-words whitespace-pre-wrap">
+                <div className="pt-3 text-gray-700 dark:text-slate-200 text-sm sm:text-base break-words whitespace-pre-wrap">
                   {it.a}
                 </div>
               </div>
@@ -223,10 +226,12 @@ const FaqFull: React.FC<FaqProps> = ({
 
       {list.length === 0 && (
         <div className="mt-6 text-center">
-          <p className="text-gray-600">No FAQs available yet.</p>
+          <p className="text-gray-600 dark:text-slate-300">
+            No FAQs available yet.
+          </p>
           <a
             href="/contact"
-            className="mt-3 inline-block text-blue-600 underline">
+            className="mt-3 inline-block text-blue-600 underline dark:text-blue-400">
             Contact us
           </a>
         </div>
@@ -265,7 +270,6 @@ function stripTextFromNode(node: React.ReactNode): string {
     return stripTextFromNode(element.props.children);
   }
 
-  // Fallback for generic iterables
   if (isIterable(node)) {
     try {
       return Array.from(node as Iterable<unknown>)
