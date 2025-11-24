@@ -61,7 +61,7 @@ const ContactPage = async () => {
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-300 max-w-prose">
             Whether you want to list a property, partner with TreasurePal, or
-            need support, send us a message and we’ll respond within 48 hours.
+            need support, send us a message and we’ll respond within 48 hours at minimum.
           </p>
 
           <div className="rounded-lg border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
