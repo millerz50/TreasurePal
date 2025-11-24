@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   openGraph: { title: `Careers • ${SITE_NAME}`, url: `/careers` },
 };
 
+type RawRecord = Record<string, unknown>;
+
 type Job = {
   id: string;
   title: string;
@@ -18,36 +20,36 @@ type Job = {
   slug?: string;
 };
 
+function toString(v: unknown) {
+  return typeof v === "string" ? v : v == null ? "" : String(v);
+}
+
+function parseJob(raw: RawRecord): Job {
+  return {
+    id: toString(
+      raw.id ?? raw._id ?? raw.slug ?? Math.random().toString(36).slice(2)
+    ),
+    title: toString(raw.title ?? raw.role ?? "Untitled role"),
+    location: toString(raw.location ?? raw.city ?? "Zimbabwe"),
+    type: toString(raw.type ?? raw.employmentType ?? "Not specified"),
+    summary: toString(raw.summary ?? raw.description ?? ""),
+    slug: raw.slug ? toString(raw.slug) : undefined,
+  };
+}
+
 async function fetchCareers(): Promise<Job[]> {
   try {
     const res = await fetch(
       "https://treasurepal-backened.onrender.com/api/careers",
-      {
-        // revalidate every 60 seconds; adjust as needed
-        next: { revalidate: 60 },
-        // include credentials only if your API requires them
-        // credentials: "include",
-      }
+      { next: { revalidate: 60 } }
     );
-
     if (!res.ok) {
       console.error("Careers API returned non-OK:", res.status);
       return [];
     }
-
     const data = await res.json();
     if (!Array.isArray(data)) return [];
-
-    return data.map((j: any) => ({
-      id: String(
-        j.id ?? j._id ?? j.slug ?? Math.random().toString(36).slice(2)
-      ),
-      title: String(j.title ?? "Untitled role"),
-      location: j.location ?? j.city ?? "Zimbabwe",
-      type: j.type ?? j.employmentType ?? "Not specified",
-      summary: j.summary ?? j.description ?? "",
-      slug: j.slug ?? j.id ?? undefined,
-    }));
+    return data.map((j: RawRecord) => parseJob(j));
   } catch (err) {
     console.error("Failed to fetch careers:", err);
     return [];
@@ -87,7 +89,7 @@ export default async function CareersPage() {
               Open roles
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
-              We update openings frequently. If you don’t see a match, send a
+              We update openings frequently. If you do not see a match, send a
               short note to{" "}
               <a
                 href="mailto:careers@treasurepal.example"
@@ -113,8 +115,8 @@ export default async function CareersPage() {
                   <article
                     key={job.id}
                     className="p-3 rounded-md border border-dashed border-gray-200 dark:border-slate-700">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
+                    <div className="flex items-start justify-between">
+                      <div>
                         <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate">
                           {job.title}
                         </h4>
@@ -127,7 +129,6 @@ export default async function CareersPage() {
                           </p>
                         ) : null}
                       </div>
-
                       <div className="flex-shrink-0 self-start">
                         {job.slug ? (
                           <Link

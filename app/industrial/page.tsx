@@ -8,16 +8,60 @@ export const metadata: Metadata = {
   description: `Warehouses, factories, offices and commercial spaces across Zimbabwe.`,
 };
 
+type RawRecord = Record<string, unknown>;
+
 type Property = {
   id: string;
   title: string;
   location?: string;
   price?: string;
-  size?: string | number;
+  size?: string | number | undefined;
   image?: string | null;
   slug?: string;
   summary?: string;
 };
+
+function toString(v: unknown): string {
+  return typeof v === "string" ? v : v == null ? "" : String(v);
+}
+
+function toNumberOrUndefined(v: unknown): number | undefined {
+  if (typeof v === "number") return v;
+  if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) {
+    return Number(v);
+  }
+  return undefined;
+}
+
+function toStringOrNumber(v: unknown): string | number | undefined {
+  if (typeof v === "string" && v.trim() !== "") return v;
+  if (typeof v === "number") return v;
+  // if it's a numeric string, return number
+  if (typeof v === "string" && !Number.isNaN(Number(v))) return Number(v);
+  return undefined;
+}
+
+function parseProperty(raw: RawRecord): Property {
+  return {
+    id: toString(
+      raw.id ?? raw._id ?? raw.slug ?? Math.random().toString(36).slice(2)
+    ),
+    title: toString(raw.title ?? raw.name ?? "Untitled property"),
+    location: toString(raw.location ?? raw.city ?? "Unknown"),
+    price: raw.price
+      ? toString(raw.price)
+      : toString(raw.displayPrice ?? "Contact for price"),
+    // Use the safe converter here
+    size: toStringOrNumber(raw.size ?? raw.area ?? undefined),
+    image: raw.image
+      ? toString(raw.image)
+      : raw.photo
+      ? toString(raw.photo)
+      : null,
+    slug: raw.slug ? toString(raw.slug) : raw.id ? toString(raw.id) : undefined,
+    summary: toString(raw.summary ?? raw.description ?? ""),
+  };
+}
 
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
@@ -29,18 +73,7 @@ async function fetchByType(typePath: string): Promise<Property[]> {
     }
     const data = await res.json();
     if (!Array.isArray(data)) return [];
-    return data.map((p: any) => ({
-      id: String(
-        p.id ?? p._id ?? p.slug ?? Math.random().toString(36).slice(2)
-      ),
-      title: p.title ?? p.name ?? "Untitled property",
-      location: p.location ?? p.city ?? "Unknown",
-      price: p.price ? String(p.price) : p.displayPrice ?? "Contact for price",
-      size: p.size ?? p.area ?? undefined,
-      image: p.image ?? p.photo ?? null,
-      slug: p.slug ?? p.id ?? undefined,
-      summary: p.summary ?? p.description ?? "",
-    }));
+    return data.map((p: RawRecord) => parseProperty(p));
   } catch (err) {
     console.error("Fetch failed:", err);
     return [];
@@ -68,8 +101,8 @@ export default async function IndustrialPage() {
               No industrial listings
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 max-w-prose mx-auto">
-              No industrial or commercial spaces listed yet. List your property
-              to reach businesses and investors.
+              No industrial or commercial spaces listed right now. List your
+              property to reach businesses and investors.
             </p>
 
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">

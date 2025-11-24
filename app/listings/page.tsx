@@ -9,6 +9,8 @@ export const metadata: Metadata = {
     "Browse property listings across Zimbabwe. Filter by location, price, and type.",
 };
 
+type RawRecord = Record<string, unknown>;
+
 type Property = {
   id: string;
   title: string;
@@ -21,14 +23,43 @@ type Property = {
   summary?: string;
 };
 
+function toString(v: unknown) {
+  return typeof v === "string" ? v : v == null ? "" : String(v);
+}
+function toNumberOrUndefined(v: unknown) {
+  return typeof v === "number"
+    ? v
+    : typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))
+    ? Number(v)
+    : undefined;
+}
+function parseProperty(raw: RawRecord): Property {
+  return {
+    id: toString(
+      raw.id ?? raw._id ?? raw.slug ?? Math.random().toString(36).slice(2)
+    ),
+    title: toString(raw.title ?? raw.name ?? "Untitled property"),
+    location: toString(raw.location ?? raw.city ?? "Unknown"),
+    price: raw.price
+      ? toString(raw.price)
+      : toString(raw.displayPrice ?? "Contact for price"),
+    beds: toNumberOrUndefined(raw.beds ?? raw.bedrooms),
+    baths: toNumberOrUndefined(raw.baths ?? raw.bathrooms),
+    image: raw.image
+      ? toString(raw.image)
+      : raw.photo
+      ? toString(raw.photo)
+      : null,
+    slug: raw.slug ? toString(raw.slug) : raw.id ? toString(raw.id) : undefined,
+    summary: toString(raw.summary ?? raw.description ?? ""),
+  };
+}
+
 async function fetchListings(): Promise<Property[]> {
   try {
     const res = await fetch(
       "https://treasurepal-backened.onrender.com/api/properties/all",
-      {
-        // server-side fetch with ISR; adjust revalidate as needed
-        next: { revalidate: 60 },
-      }
+      { next: { revalidate: 60 } }
     );
     if (!res.ok) {
       console.error("Listings API error", res.status);
@@ -36,19 +67,7 @@ async function fetchListings(): Promise<Property[]> {
     }
     const data = await res.json();
     if (!Array.isArray(data)) return [];
-    return data.map((p: any) => ({
-      id: String(
-        p.id ?? p._id ?? p.slug ?? Math.random().toString(36).slice(2)
-      ),
-      title: p.title ?? p.name ?? "Untitled property",
-      location: p.location ?? p.city ?? "Unknown",
-      price: p.price ? String(p.price) : p.displayPrice ?? "Contact for price",
-      beds: p.beds ?? p.bedrooms ?? undefined,
-      baths: p.baths ?? p.bathrooms ?? undefined,
-      image: p.image ?? p.photo ?? null,
-      slug: p.slug ?? p.id ?? undefined,
-      summary: p.summary ?? p.description ?? "",
-    }));
+    return data.map((item: RawRecord) => parseProperty(item));
   } catch (err) {
     console.error("Failed to fetch listings:", err);
     return [];
@@ -66,7 +85,7 @@ export default async function ListingsPage() {
             Listings
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-            Find rooms, houses, commercial spaces and more across Zimbabwe.
+            Find rooms, houses, commercial spaces and more.
           </p>
         </header>
 
@@ -77,7 +96,7 @@ export default async function ListingsPage() {
                 No listings yet
               </h2>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 max-w-prose mx-auto">
-                We don't have any active listings right now. Be the first to
+                We do not have any active listings right now. Be the first to
                 list a property and reach thousands of local buyers and renters.
               </p>
 
@@ -87,7 +106,6 @@ export default async function ListingsPage() {
                   className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm">
                   List your property
                 </Link>
-
                 <Link
                   href="/sell/agent"
                   className="inline-flex items-center justify-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm">
@@ -102,7 +120,6 @@ export default async function ListingsPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Example starter cards to inspire uploads */}
               {[
                 {
                   title: "Room for rent",
@@ -175,13 +192,11 @@ export default async function ListingsPage() {
                   <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
                     {p.location} • {p.price}
                   </p>
-
                   {p.summary ? (
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
                       {p.summary}
                     </p>
                   ) : null}
-
                   <div className="mt-3 flex items-center justify-between">
                     <Link
                       href={
