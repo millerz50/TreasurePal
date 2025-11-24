@@ -3,6 +3,7 @@
 import LocationSearch from "@/components/property/LocationSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { Dispatch, SetStateAction } from "react";
 import type { FormData, Step } from "../AddPropertyWizard";
 
@@ -94,6 +95,16 @@ export default function BasicInfoStep({
           </option>
         ))}
       </select>
+
+      {/* ✅ Description moved here */}
+      <Textarea
+        name="description"
+        placeholder="Property description..."
+        value={formData.description}
+        onChange={(e) =>
+          setFormData((prev) => ({ ...prev, description: e.target.value }))
+        }
+      />
 
       <div className="flex justify-end">
         <Button

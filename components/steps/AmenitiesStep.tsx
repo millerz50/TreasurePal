@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { AMENITIES } from "@/lib/amenities";
 import type { Dispatch, SetStateAction } from "react";
 import type { FormData, Step } from "../AddPropertyWizard";
@@ -61,15 +60,6 @@ export default function AmenitiesStep({
             </div>
           </div>
         ))}
-
-      <Textarea
-        name="description"
-        placeholder="Add a description..."
-        value={formData.description}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, description: e.target.value }))
-        }
-      />
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => setStep(1)}>
