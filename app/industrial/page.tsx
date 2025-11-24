@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: `Industrial & Commercial • ${SITE_NAME}`,
+  title: `Industrial & Commercial listings • ${SITE_NAME}`,
   description: `Warehouses, factories, offices and commercial spaces across Zimbabwe.`,
 };
 
