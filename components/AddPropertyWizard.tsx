@@ -1,18 +1,17 @@
 "use client";
 
-import MapPicker from "@/components/dashboard/MapPicker";
-import LocationSearch from "@/components/property/LocationSearch";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
-import { AMENITIES } from "@/lib/amenities";
 import { useEffect, useState } from "react";
+import AmenitiesStep from "./steps/AmenitiesStep";
+import BasicInfoStep from "./steps/BasicInfoStep";
+import LocationStep from "./steps/LocationStep";
+import PropertyImagesStep from "./steps/PropertyImagesStep";
+import ReviewStep from "./steps/ReviewStep";
 
-type Step = 1 | 2 | 3 | 4;
+export type Step = 1 | 2 | 3 | 4 | 5;
 
-interface FormData {
+export interface FormData {
   title: string;
   price: string;
   location: string;
@@ -26,6 +25,11 @@ interface FormData {
   locationLat: number;
   locationLng: number;
   userId: string;
+  frontElevation?: File | null;
+  southView?: File | null;
+  westView?: File | null;
+  eastView?: File | null;
+  floorPlan?: File | null;
 }
 
 export default function AddPropertyWizard() {
@@ -50,66 +54,32 @@ export default function AddPropertyWizard() {
     userId: "",
   });
 
- useEffect(() => {
-  if (user?.userId) {
-    setFormData((prev) => ({
-      ...prev,
-      userId: user.userId,
-    }));
-  }
-}, [user]);
-
-
-  const PROPERTY_TYPES = Object.keys(AMENITIES);
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "rooms" ? Number(value) : value,
-    }));
-  };
-
-  const toggleAmenity = (amenity: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter((a) => a !== amenity)
-        : [...prev.amenities, amenity],
-    }));
-  };
-
-  const validateStep1 = (): string | null => {
-    if (!formData.title.trim()) return "Title is required.";
-    if (!formData.price.trim()) return "Price is required.";
-    if (isNaN(Number(formData.price))) return "Price must be a number.";
-    if (!formData.location.trim()) return "Location is required.";
-    if (!formData.address.trim()) return "Address is required.";
-    return null;
-  };
+  useEffect(() => {
+    if (user?.userId) {
+      setFormData((prev) => ({ ...prev, userId: user.userId }));
+    }
+  }, [user]);
 
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
-
     try {
       if (user?.role !== "agent") {
         throw new Error("Only agents can add properties.");
       }
-
+      const payload = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value instanceof File) payload.append(key, value);
+        else if (value !== undefined && value !== null)
+          payload.append(key, String(value));
+      });
       const res = await fetch(
         "https://treasurepal-backend.onrender.com/api/properties/add",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: payload,
         }
       );
-
       if (!res.ok) throw new Error("Failed to submit property");
       console.log("✅ Property submitted!");
     } catch (err) {
@@ -124,7 +94,8 @@ export default function AddPropertyWizard() {
       <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Basic Info</li>
       <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Amenities</li>
       <li className={`step ${step >= 3 ? "step-primary" : ""}`}>Location</li>
-      <li className={`step ${step >= 4 ? "step-primary" : ""}`}>Review</li>
+      <li className={`step ${step >= 4 ? "step-primary" : ""}`}>Images</li>
+      <li className={`step ${step >= 5 ? "step-primary" : ""}`}>Review</li>
     </ul>
   );
 
@@ -134,160 +105,43 @@ export default function AddPropertyWizard() {
       <Separator />
 
       {step === 1 && (
-        <div className="space-y-4">
-          <Input
-            name="title"
-            placeholder="Title"
-            value={formData.title}
-            onChange={handleChange}
-          />
-          <Input
-            name="price"
-            placeholder="Price"
-            value={formData.price}
-            onChange={handleChange}
-          />
-
-          <LocationSearch
-            onSelect={({ name, lat, lng }) =>
-              setFormData((prev) => ({
-                ...prev,
-                location: name,
-                address: name,
-                locationLat: lat,
-                locationLng: lng,
-              }))
-            }
-          />
-
-          <Input
-            name="address"
-            placeholder="Address"
-            value={formData.address}
-            onChange={handleChange}
-          />
-          <Input
-            type="number"
-            name="rooms"
-            placeholder="Rooms"
-            value={formData.rooms}
-            onChange={handleChange}
-          />
-
-          <select
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            className="select select-bordered w-full">
-            {PROPERTY_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-
-          <div className="flex justify-end">
-            <Button
-              onClick={() => {
-                const err = validateStep1();
-                if (err) return setError(err);
-                setError(null);
-                setStep(2);
-              }}>
-              Next
-            </Button>
-          </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-        </div>
+        <BasicInfoStep
+          formData={formData}
+          setFormData={setFormData}
+          setStep={setStep}
+          error={error}
+          setError={setError}
+        />
       )}
-
       {step === 2 && (
-        <div className="space-y-4">
-          {AMENITIES[formData.type] &&
-            Object.entries(AMENITIES[formData.type]).map(
-              ([category, items]) => (
-                <div key={category}>
-                  <h3 className="font-semibold text-primary">{category}</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {items.map(({ name, icon: Icon }) => (
-                      <label
-                        key={name}
-                        className="flex items-center gap-2 border p-2 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.amenities.includes(name)}
-                          onChange={() => toggleAmenity(name)}
-                        />
-                        {Icon && <Icon className="w-4 h-4 text-primary" />}
-                        {name}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )
-            )}
-
-          <Textarea
-            name="description"
-            placeholder="Description"
-            value={formData.description}
-            onChange={handleChange}
-          />
-
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(1)}>
-              Back
-            </Button>
-            <Button onClick={() => setStep(3)}>Next</Button>
-          </div>
-        </div>
+        <AmenitiesStep
+          formData={formData}
+          setFormData={setFormData}
+          setStep={setStep}
+        />
       )}
-
       {step === 3 && (
-        <div className="space-y-4">
-          <div className="w-full h-64 rounded-lg border overflow-hidden">
-            <MapPicker
-              coordinates={[formData.locationLat, formData.locationLng]}
-              setCoordinates={(coords) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  locationLat: coords[0],
-                  locationLng: coords[1],
-                }))
-              }
-              setAddress={(address) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  address,
-                }))
-              }
-            />
-          </div>
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(2)}>
-              Back
-            </Button>
-            <Button onClick={() => setStep(4)}>Next</Button>
-          </div>
-        </div>
+        <LocationStep
+          formData={formData}
+          setFormData={setFormData}
+          setStep={setStep}
+        />
       )}
-
       {step === 4 && (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-primary">Review Your Listing</h3>
-          <pre className="bg-muted p-4 rounded text-xs overflow-x-auto">
-            {JSON.stringify(formData, null, 2)}
-          </pre>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(3)}>
-              Back
-            </Button>
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? "Submitting..." : "Submit Property"}
-            </Button>
-          </div>
-        </div>
+        <PropertyImagesStep
+          formData={formData}
+          setFormData={setFormData}
+          setStep={setStep}
+        />
+      )}
+      {step === 5 && (
+        <ReviewStep
+          formData={formData}
+          setStep={setStep}
+          handleSubmit={handleSubmit}
+          loading={loading}
+          error={error}
+        />
       )}
     </div>
   );

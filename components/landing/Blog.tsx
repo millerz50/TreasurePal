@@ -5,53 +5,39 @@ import { HeartIcon as OutlineHeart } from "@heroicons/react/24/outline";
 import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const blogPosts = [
-  {
-    id: 1,
-    title: "Exploring Bindura’s Hidden Gems",
-    excerpt:
-      "Discover the most underrated spots in Bindura—from scenic trails to local cafés.",
-    image: "https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg",
-    date: "September 20, 2025",
-  },
-  {
-    id: 2,
-    title: "How Tech Is Transforming Zimbabwean Real Estate",
-    excerpt:
-      "A look into how platforms like TreasurePal are reshaping property discovery.",
-    image: "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg",
-    date: "September 24, 2025",
-  },
-  {
-    id: 3,
-    title: "Designing for Mobile in Zimbabwe",
-    excerpt:
-      "Why responsive design is more than a trend — it’s a necessity for local engagement.",
-    image: "https://images.pexels.com/photos/1643384/pexels-photo-1643384.jpeg",
-    date: "September 25, 2025",
-  },
-  {
-    id: 4,
-    title: "Building SEO-Optimized Platforms for Local Businesses",
-    excerpt:
-      "How Netspace is helping Zimbabwean brands rank higher and reach wider audiences.",
-    image: "https://images.pexels.com/photos/1643385/pexels-photo-1643385.jpeg",
-    date: "September 26, 2025",
-  },
-  {
-    id: 5,
-    title: "Modular UI Systems for Scalable Dashboards",
-    excerpt:
-      "A guide to designing reusable components that power Netspace’s admin tools.",
-    image: "https://images.pexels.com/photos/1643386/pexels-photo-1643386.jpeg",
-    date: "September 27, 2025",
-  },
-];
+type BlogPost = {
+  id: number;
+  title: string;
+  excerpt: string;
+  date: string;
+  image: string;
+};
 
 export default function BlogSection() {
-  const [activePostId, setActivePostId] = useState(blogPosts[0]?.id ?? 1);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [activePostId, setActivePostId] = useState<number | null>(null);
+
+  // ✅ Fetch blog posts from API
+  useEffect(() => {
+    const fetchPosts = async (): Promise<void> => {
+      try {
+        const res = await fetch("https://your-api-domain.com/api/blogs");
+        // replace with your actual API endpoint
+        if (!res.ok) throw new Error("Failed to fetch blog posts");
+        const data: BlogPost[] = await res.json();
+        setBlogPosts(data);
+        if (data.length > 0) {
+          setActivePostId(data[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching blog posts:", error);
+      }
+    };
+    fetchPosts();
+  }, []);
+
   const activePost = blogPosts.find((post) => post.id === activePostId);
 
   if (!activePost) return null;
@@ -115,7 +101,7 @@ export default function BlogSection() {
   );
 }
 
-function BlogArticle({ post }: { post: (typeof blogPosts)[0] }) {
+function BlogArticle({ post }: { post: BlogPost }) {
   const [liked, setLiked] = useState(false);
 
   return (
