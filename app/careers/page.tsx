@@ -1,14 +1,62 @@
 // app/careers/page.tsx
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_NAME } from "@/lib/site";
 import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: `Careers at ${SITE_NAME}`,
   description: `Join ${SITE_NAME}. See open roles, benefits, and how we hire locally in Zimbabwe.`,
-  openGraph: { title: `Careers • ${SITE_NAME}`, url: `${SITE_URL}/careers` },
+  openGraph: { title: `Careers • ${SITE_NAME}`, url: `/careers` },
 };
 
-export default function CareersPage() {
+type Job = {
+  id: string;
+  title: string;
+  location?: string;
+  type?: string;
+  summary?: string;
+  slug?: string;
+};
+
+async function fetchCareers(): Promise<Job[]> {
+  try {
+    const res = await fetch(
+      "https://treasurepal-backened.onrender.com/api/careers",
+      {
+        // revalidate every 60 seconds; adjust as needed
+        next: { revalidate: 60 },
+        // include credentials only if your API requires them
+        // credentials: "include",
+      }
+    );
+
+    if (!res.ok) {
+      console.error("Careers API returned non-OK:", res.status);
+      return [];
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+
+    return data.map((j: any) => ({
+      id: String(
+        j.id ?? j._id ?? j.slug ?? Math.random().toString(36).slice(2)
+      ),
+      title: String(j.title ?? "Untitled role"),
+      location: j.location ?? j.city ?? "Zimbabwe",
+      type: j.type ?? j.employmentType ?? "Not specified",
+      summary: j.summary ?? j.description ?? "",
+      slug: j.slug ?? j.id ?? undefined,
+    }));
+  } catch (err) {
+    console.error("Failed to fetch careers:", err);
+    return [];
+  }
+}
+
+export default async function CareersPage() {
+  const jobs = await fetchCareers();
+
   return (
     <main className="min-h-screen bg-base-200 text-base-content py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -50,37 +98,57 @@ export default function CareersPage() {
             </p>
 
             <div className="mt-4 grid gap-3">
-              <article className="p-3 rounded-md border border-dashed border-gray-200 dark:border-slate-700">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-medium">Field Agent — Harare</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Full time · Onsite
-                    </p>
-                  </div>
+              {jobs.length === 0 ? (
+                <div className="p-4 rounded-md border border-dashed border-gray-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300">
+                  No openings at this time. Check back soon or send your CV to{" "}
                   <a
-                    href="/careers/field-agent"
-                    className="text-sm text-blue-600 dark:text-blue-400 underline">
-                    View
+                    href="mailto:careers@treasurepal.example"
+                    className="underline text-blue-600 dark:text-blue-400">
+                    careers@treasurepal.example
                   </a>
+                  .
                 </div>
-              </article>
+              ) : (
+                jobs.map((job) => (
+                  <article
+                    key={job.id}
+                    className="p-3 rounded-md border border-dashed border-gray-200 dark:border-slate-700">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                          {job.title}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          {job.location} · {job.type}
+                        </p>
+                        {job.summary ? (
+                          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-3">
+                            {job.summary}
+                          </p>
+                        ) : null}
+                      </div>
 
-              <article className="p-3 rounded-md border border-dashed border-gray-200 dark:border-slate-700">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-medium">Frontend Engineer</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Remote · Hybrid
-                    </p>
-                  </div>
-                  <a
-                    href="/careers/frontend-engineer"
-                    className="text-sm text-blue-600 dark:text-blue-400 underline">
-                    View
-                  </a>
-                </div>
-              </article>
+                      <div className="flex-shrink-0 self-start">
+                        {job.slug ? (
+                          <Link
+                            href={`/careers/${job.slug}`}
+                            className="text-sm text-blue-600 dark:text-blue-400 underline">
+                            View
+                          </Link>
+                        ) : (
+                          <a
+                            href={`mailto:careers@treasurepal.example?subject=Application%20for%20${encodeURIComponent(
+                              job.title
+                            )}`}
+                            className="text-sm text-blue-600 dark:text-blue-400 underline">
+                            Apply
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))
+              )}
             </div>
           </div>
         </section>
