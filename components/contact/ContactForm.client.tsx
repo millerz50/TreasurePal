@@ -1,7 +1,6 @@
 // components/contact/ContactForm.client.tsx
 "use client";
 
-import { handleContactSubmission } from "@/app/actions/contact";
 import React, { useEffect, useRef, useState } from "react";
 
 type FormState = "idle" | "submitting" | "success" | "error";
@@ -11,22 +10,20 @@ export default function ContactForm() {
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [honeypot, setHoneypot] = useState(""); // hidden field for bots
+  const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<FormState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
 
-  // Respect reduced motion for subtle animations
-  const [reducedMotion, setReducedMotion] = useState(false);
-  useEffect(() => {
+  // Derive reduced motion preference synchronously to avoid setState inside an effect
+  const [reducedMotion] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
     try {
-      setReducedMotion(
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      );
+      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     } catch {
-      setReducedMotion(false);
+      return false;
     }
-  }, []);
+  });
 
   useEffect(() => {
     if (statusRef.current) statusRef.current.focus();
@@ -45,7 +42,6 @@ export default function ContactForm() {
     setErrorMsg(null);
     setStatus("submitting");
 
-    // client-side validation
     if (!name.trim() || !email.trim() || !message.trim()) {
       setErrorMsg("Please fill in your name, email and message.");
       setStatus("error");
@@ -53,14 +49,12 @@ export default function ContactForm() {
     }
 
     try {
-      // call server action
-      const res = await handleContactSubmission({
-        name,
-        email,
-        subject,
-        message,
-        honeypot,
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, subject, message, honeypot }),
       });
+
       const data = await res.json();
       if (res.ok && data.success) {
         setStatus("success");
@@ -162,7 +156,7 @@ export default function ContactForm() {
             className="inline-flex items-center gap-2 bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white px-4 py-2 rounded-full text-sm font-semibold shadow hover:scale-[1.01] transition-transform disabled:opacity-60">
             {status === "submitting" ? (
               <svg
-                className="w-4 h-4 animate-spin"
+                className={`w-4 h-4 ${reducedMotion ? "" : "animate-spin"}`}
                 viewBox="0 0 24 24"
                 fill="none">
                 <circle
@@ -200,7 +194,7 @@ export default function ContactForm() {
               : status === "error"
               ? "text-red-600"
               : "text-slate-600"
-          } `}>
+          }`}>
           {status === "success" && "Thanks — we received your message."}
           {status === "error" && (errorMsg || "Submission failed.")}
         </div>
