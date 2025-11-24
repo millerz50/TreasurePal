@@ -95,7 +95,7 @@ const FaqFull: React.FC<FaqProps> = ({
     }
   }, [openIndex, storageKey]);
 
-  // keep refs as nullable, cast when passing to JSX to satisfy the button ref type
+  // keep refs as nullable, cast when passing to JSX to satisfy the button ref types
   const headerRefs: React.RefObject<HTMLButtonElement | null>[] = useMemo(
     () =>
       Array.from({ length: list.length }).map(() =>
