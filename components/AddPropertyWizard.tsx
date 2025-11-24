@@ -7,6 +7,7 @@ import AmenitiesStep from "./steps/AmenitiesStep";
 import BasicInfoStep from "./steps/BasicInfoStep";
 import LocationStep from "./steps/LocationStep";
 import PropertyImagesStep from "./steps/PropertyImagesStep";
+
 import ReviewStep from "./steps/ReviewStep";
 
 export type Step = 1 | 2 | 3 | 4 | 5;

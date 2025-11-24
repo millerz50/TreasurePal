@@ -20,11 +20,7 @@ const imageFields = [
   { key: "floorPlan", label: "Floor Plan", mock: "/mock/floor.png" },
 ];
 
-export default function PropertyImagesStep({
-  formData,
-  setFormData,
-  setStep,
-}: Props) {
+export default function PropertyImagesStep({ setFormData, setStep }: Props) {
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
   const handleFileChange = (key: string, file: File | null) => {
