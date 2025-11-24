@@ -25,19 +25,15 @@ function toString(v: unknown): string {
   return typeof v === "string" ? v : v == null ? "" : String(v);
 }
 
-function toNumberOrUndefined(v: unknown): number | undefined {
-  if (typeof v === "number") return v;
-  if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) {
-    return Number(v);
-  }
-  return undefined;
-}
-
 function toStringOrNumber(v: unknown): string | number | undefined {
-  if (typeof v === "string" && v.trim() !== "") return v;
   if (typeof v === "number") return v;
-  // if it's a numeric string, return number
-  if (typeof v === "string" && !Number.isNaN(Number(v))) return Number(v);
+  if (typeof v === "string") {
+    const trimmed = v.trim();
+    if (trimmed === "") return undefined;
+    // numeric string -> number
+    if (!Number.isNaN(Number(trimmed))) return Number(trimmed);
+    return trimmed;
+  }
   return undefined;
 }
 
@@ -51,7 +47,6 @@ function parseProperty(raw: RawRecord): Property {
     price: raw.price
       ? toString(raw.price)
       : toString(raw.displayPrice ?? "Contact for price"),
-    // Use the safe converter here
     size: toStringOrNumber(raw.size ?? raw.area ?? undefined),
     image: raw.image
       ? toString(raw.image)
@@ -147,6 +142,7 @@ export default async function IndustrialPage() {
                   <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
                     {p.location} • {p.price}
                   </p>
+
                   {p.size ? (
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                       Size: {p.size}
@@ -157,6 +153,7 @@ export default async function IndustrialPage() {
                       {p.summary}
                     </p>
                   ) : null}
+
                   <div className="mt-3 flex items-center justify-between">
                     <Link
                       href={
