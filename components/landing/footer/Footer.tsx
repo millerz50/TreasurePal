@@ -98,7 +98,54 @@ export default function Footer() {
                   <Link href="/listings" className="hover:underline">
                     Listings
                   </Link>
+
+                  {/* Sub-links under Listings */}
+                  <ul className="mt-2 ml-4 space-y-1 text-sm">
+                    <li>
+                      <Link
+                        href="/sale"
+                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        For Sale
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/rent"
+                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        Rent
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/students"
+                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        Student Housing
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/lodges"
+                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        Lodges & Hotels
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/industrial"
+                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        Industrial & Commercial
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/careers"
+                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        Careers
+                      </Link>
+                    </li>
+                  </ul>
                 </li>
+
                 <li>
                   <Link href="/sell" className="hover:underline">
                     Sell
