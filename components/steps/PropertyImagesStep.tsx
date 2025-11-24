@@ -7,17 +7,37 @@ import { useState } from "react";
 import type { FormData, Step } from "../AddPropertyWizard";
 
 interface Props {
-  formData: FormData;
   setFormData: Dispatch<SetStateAction<FormData>>;
   setStep: Dispatch<SetStateAction<Step>>;
+  formData: FormData;
 }
 
 const imageFields = [
-  { key: "frontElevation", label: "Front Elevation", mock: "/mock/front.png" },
-  { key: "southView", label: "South View", mock: "/mock/south.png" },
-  { key: "westView", label: "West View", mock: "/mock/west.png" },
-  { key: "eastView", label: "East View", mock: "/mock/east.png" },
-  { key: "floorPlan", label: "Floor Plan", mock: "/mock/floor.png" },
+  {
+    key: "frontElevation",
+    label: "Front Elevation",
+    mock: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800",
+  },
+  {
+    key: "southView",
+    label: "South View",
+    mock: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+  },
+  {
+    key: "westView",
+    label: "West View",
+    mock: "https://images.unsplash.com/photo-1599423300746-b62533397364?w=800",
+  },
+  {
+    key: "eastView",
+    label: "East View",
+    mock: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800",
+  },
+  {
+    key: "floorPlan",
+    label: "Floor Plan",
+    mock: "https://images.unsplash.com/photo-1581090700227-4c4f7e0e1f2d?w=800",
+  },
 ];
 
 export default function PropertyImagesStep({ setFormData, setStep }: Props) {
