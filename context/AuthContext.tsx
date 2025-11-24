@@ -1,43 +1,27 @@
+// components/AuthProvider.tsx
 "use client";
 
 import { account } from "@/lib/appwrite";
 import type { Models } from "appwrite";
-import { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-async function fetchProfileMe(jwt: string): Promise<{
-  role?: string;
-  status?: boolean | string;
-  phone?: string;
-  bio?: string;
-  avatarFileId?: string;
-  firstName?: string;
-  surname?: string;
-} | null> {
+async function fetchProfileMe(jwt: string) {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
       credentials: "include",
       headers: { Authorization: `Bearer ${jwt}` },
     });
-    if (!res.ok) {
-      console.error(
-        "fetchProfileMe non-ok response",
-        res.status,
-        await res.text()
-      );
-      throw new Error("Profile fetch failed");
-    }
+    if (!res.ok) throw new Error("Profile fetch failed");
     return await res.json();
-  } catch (err) {
-    console.error("❌ Profile fetch error:", err);
+  } catch {
     return null;
   }
-}
-
-export interface UserPrefs {
-  role?: "admin" | "agent" | "user";
-  avatarFileId?: string;
-  firstName?: string;
-  surname?: string;
 }
 
 export type UserPayload = {
@@ -66,27 +50,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserPayload | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Prevent overlapping fetches across Strict Mode remounts
+  const fetchLock = useRef(false);
+  // Track mounted state to avoid setState after unmount
+  const mounted = useRef(true);
+  // Abort controller for fetchProfileMe
+  const abortCtrl = useRef<AbortController | null>(null);
+
   useEffect(() => {
-    let active = true;
-    console.log("[AuthProvider] mount - starting fetchUser");
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (abortCtrl.current) abortCtrl.current.abort();
+    };
+  }, []);
 
-    const fetchUser = async () => {
+  useEffect(() => {
+    if (fetchLock.current) return;
+    fetchLock.current = true;
+
+    abortCtrl.current = new AbortController();
+    const signal = abortCtrl.current.signal;
+
+    (async () => {
       try {
-        console.log("[AuthProvider] calling account.get()");
-        const appwriteUser: Models.User<UserPrefs> =
-          await account.get<UserPrefs>();
-        console.log("[AuthProvider] account.get() returned", {
-          id: appwriteUser.$id,
-          email: appwriteUser.email,
-        });
-
-        console.log("[AuthProvider] creating JWT");
+        const appwriteUser: Models.User<any> = await account.get();
+        // create JWT (Appwrite SDK)
         const jwt = await account.createJWT();
-        console.log("[AuthProvider] jwt created");
 
+        // fetch profile from your API; pass abort signal if you adapt fetchProfileMe to accept it
         const profile = await fetchProfileMe(jwt.jwt);
-        console.log("[AuthProvider] profile fetch result:", profile);
 
+        // build avatar URL or initials fallback
         let avatarUrl: string | undefined;
         const fileId =
           profile?.avatarFileId ?? appwriteUser.prefs?.avatarFileId;
@@ -117,43 +112,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           avatarUrl,
         };
 
-        console.log("[AuthProvider] built payload:", payload);
-        if (active) setUser(payload);
+        if (mounted.current) setUser(payload);
       } catch (err) {
-        console.error("❌ Auth fetch failed:", err);
-        if (active) setUser(null);
+        if (mounted.current) setUser(null);
       } finally {
-        if (active) {
-          setLoading(false);
-          console.log("[AuthProvider] fetchUser complete - loading false");
-        }
+        if (mounted.current) setLoading(false);
+        fetchLock.current = false;
       }
-    };
+    })();
 
-    fetchUser();
-
-    return () => {
-      active = false;
-      console.log("[AuthProvider] unmount - active set false");
-    };
+    // no dependencies: run once per mount; fetchLock prevents overlap
   }, []);
 
   const signOut = async () => {
     try {
-      console.log("[AuthProvider] signOut requested");
       await account.deleteSession("current");
       setUser(null);
-      console.log("[AuthProvider] signOut success");
-    } catch (err) {
-      console.error("❌ Sign out failed:", err);
+    } catch {
+      // swallow error or handle UI notification
     }
   };
-
-  // debug log on every render (kept minimal)
-  console.log("[AuthProvider] render", {
-    loading,
-    user: user ? { id: user.userId, email: user.email } : null,
-  });
 
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>
