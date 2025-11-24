@@ -16,7 +16,7 @@ const imageFields = [
   { key: "frontElevation", label: "Front Elevation", mock: "/mock/front.png" },
   { key: "southView", label: "South View", mock: "/mock/south.png" },
   { key: "westView", label: "West View", mock: "/mock/west.png" },
-  { key: "eastView", label: "East View", mock: "/mock/east.png" },
+  { key: "eastViews", label: "East View", mock: "/mock/east.png" },
   { key: "floorPlan", label: "Floor Plan", mock: "/mock/floor.png" },
 ];
 
