@@ -49,7 +49,7 @@ export default function Footer() {
 
             <p className="text-sm text-slate-600 dark:text-slate-300 max-w-[20rem]">
               List with TreasurePal or discover curated properties — fast,
-              transparent, local.
+              transparent, local.easly
             </p>
 
             <div className="flex gap-3">
