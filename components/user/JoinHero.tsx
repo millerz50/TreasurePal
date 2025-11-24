@@ -1,38 +1,31 @@
-// components/BecomeAgentHero.tsx
+// components/user/JoinHero.tsx
 "use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-/** small hook to respect reduced motion preference */
-function usePrefersReducedMotion() {
-  const getInitial = () =>
-    typeof window === "undefined"
-      ? false
-      : window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const [reduced, setReduced] = useState<boolean>(getInitial);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handler = () => setReduced(mq.matches);
-    mq.addEventListener?.("change", handler);
-    return () => mq.removeEventListener?.("change", handler);
-  }, []);
-  return reduced;
+/** Synchronous check for reduced motion preference (safe on server) */
+function prefersReducedMotionSync(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
 }
 
-export default function BecomeAgentHero() {
-  const [visible, setVisible] = useState(false);
-  const reduced = usePrefersReducedMotion();
+export default function JoinHero() {
+  // Derive initial visible state from reduced-motion preference to avoid setState in effect
+  const initialVisible = prefersReducedMotionSync();
+  const [visible, setVisible] = useState<boolean>(initialVisible);
 
   useEffect(() => {
-    if (reduced) {
-      setVisible(true);
-      return;
-    }
+    // If user prefers reduced motion, we already set visible above — no setState here
+    if (initialVisible) return;
+
     const timeout = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(timeout);
-  }, [reduced]);
+  }, [initialVisible]);
 
   return (
     <section
@@ -41,7 +34,7 @@ export default function BecomeAgentHero() {
       <div
         className={`mx-auto max-w-4xl text-center transition-all duration-700 ease-out transform ${
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-        } ${reduced ? "transition-none" : ""}`}>
+        }`}>
         <h1
           id="become-agent-title"
           className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-slate-100 mb-4 tracking-tight">
