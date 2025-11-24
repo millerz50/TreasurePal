@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: `Student rooms and shared housing across Zimbabwe. Find affordable student accommodation.`,
 };
 
+type RawRecord = Record<string, unknown>;
+
 type Property = {
   id: string;
   title: string;
@@ -20,6 +22,38 @@ type Property = {
   summary?: string;
 };
 
+function toString(v: unknown) {
+  return typeof v === "string" ? v : v == null ? "" : String(v);
+}
+function toNumberOrUndefined(v: unknown) {
+  return typeof v === "number"
+    ? v
+    : typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))
+    ? Number(v)
+    : undefined;
+}
+function parseProperty(raw: RawRecord): Property {
+  return {
+    id: toString(
+      raw.id ?? raw._id ?? raw.slug ?? Math.random().toString(36).slice(2)
+    ),
+    title: toString(raw.title ?? raw.name ?? "Untitled property"),
+    location: toString(raw.location ?? raw.city ?? "Unknown"),
+    price: raw.price
+      ? toString(raw.price)
+      : toString(raw.displayPrice ?? "Contact for price"),
+    beds: toNumberOrUndefined(raw.beds ?? raw.bedrooms),
+    baths: toNumberOrUndefined(raw.baths ?? raw.bathrooms),
+    image: raw.image
+      ? toString(raw.image)
+      : raw.photo
+      ? toString(raw.photo)
+      : null,
+    slug: raw.slug ? toString(raw.slug) : raw.id ? toString(raw.id) : undefined,
+    summary: toString(raw.summary ?? raw.description ?? ""),
+  };
+}
+
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
     const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
@@ -30,19 +64,7 @@ async function fetchByType(typePath: string): Promise<Property[]> {
     }
     const data = await res.json();
     if (!Array.isArray(data)) return [];
-    return data.map((p: any) => ({
-      id: String(
-        p.id ?? p._id ?? p.slug ?? Math.random().toString(36).slice(2)
-      ),
-      title: p.title ?? p.name ?? "Untitled property",
-      location: p.location ?? p.city ?? "Unknown",
-      price: p.price ? String(p.price) : p.displayPrice ?? "Contact for price",
-      beds: p.beds ?? p.bedrooms ?? undefined,
-      baths: p.baths ?? p.bathrooms ?? undefined,
-      image: p.image ?? p.photo ?? null,
-      slug: p.slug ?? p.id ?? undefined,
-      summary: p.summary ?? p.description ?? "",
-    }));
+    return data.map((p) => parseProperty(p as RawRecord));
   } catch (err) {
     console.error("Fetch failed:", err);
     return [];
