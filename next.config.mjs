@@ -20,6 +20,19 @@ const nextConfig = {
         pathname: "/**",
       },
     ],
+    domains: ["ui-avatars.com", "images.pexels.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ui-avatars.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+        pathname: "/**",
+      },
+    ],
   },
   experimental: {
     swcPlugins: [],

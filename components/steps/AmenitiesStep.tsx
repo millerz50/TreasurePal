@@ -27,32 +27,44 @@ export default function AmenitiesStep({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {AMENITIES[formData.type] &&
         Object.entries(AMENITIES[formData.type]).map(([category, items]) => (
           <div key={category}>
-            <h3 className="font-semibold text-primary">{category}</h3>
+            <h3 className="font-semibold text-primary mb-2">{category}</h3>
             <div className="flex flex-wrap gap-3">
-              {items.map(({ name, icon: Icon }) => (
-                <label
-                  key={name}
-                  className="flex items-center gap-2 border p-2 rounded cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.amenities.includes(name)}
-                    onChange={() => toggleAmenity(name)}
-                  />
-                  {Icon && <Icon className="w-4 h-4 text-primary" />}
-                  {name}
-                </label>
-              ))}
+              {items.map(({ name, icon: Icon }) => {
+                const selected = formData.amenities.includes(name);
+                return (
+                  <button
+                    type="button"
+                    key={name}
+                    onClick={() => toggleAmenity(name)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition 
+                      ${
+                        selected
+                          ? "bg-primary text-white border-primary"
+                          : "bg-white hover:bg-muted border-gray-300"
+                      }
+                    `}>
+                    {Icon && (
+                      <Icon
+                        className={`w-5 h-5 ${
+                          selected ? "text-white" : "text-primary"
+                        }`}
+                      />
+                    )}
+                    <span className="text-sm font-medium">{name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
 
       <Textarea
         name="description"
-        placeholder="Description"
+        placeholder="Add a description..."
         value={formData.description}
         onChange={(e) =>
           setFormData((prev) => ({ ...prev, description: e.target.value }))
