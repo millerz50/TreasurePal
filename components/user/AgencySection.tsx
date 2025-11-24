@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { Agent } from "@/lib/types";
+import type { Agent } from "@/lib/types/types";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
