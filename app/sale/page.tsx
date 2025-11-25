@@ -105,7 +105,7 @@ export default async function SalePage() {
                 className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                    // eslint-disable-next-line @next/next/no-img-elements
                     <img
                       src={p.image}
                       alt={p.title}
