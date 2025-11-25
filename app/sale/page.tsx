@@ -1,6 +1,6 @@
-// app/sale/page.tsx
 import { SITE_NAME } from "@/lib/site";
 import { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -79,7 +79,6 @@ export default async function SalePage() {
               No properties for sale yet
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 max-w-prose mx-auto">
-              {/* ✅ Escape apostrophe */}
               We don&apos;t have sale listings in this category right now. Be
               the first to list and reach local buyers.
             </p>
@@ -105,12 +104,15 @@ export default async function SalePage() {
                 className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-elements
-                    <img
+                    <Image
                       src={p.image}
                       alt={p.title}
-                      className="object-cover w-full h-full"
-                      loading="lazy"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw,
+                             (max-width: 1200px) 50vw,
+                             33vw"
+                      priority={false}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-sm text-slate-500">
