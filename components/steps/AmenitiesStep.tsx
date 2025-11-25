@@ -25,9 +25,16 @@ export default function AmenitiesStep({
     }));
   };
 
+  const selectedCount = formData.amenities.length;
+
   return (
     <div className="space-y-6">
-      {AMENITIES[formData.type] &&
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-primary">Select Amenities</h2>
+        <span className="text-sm text-gray-500">{selectedCount} selected</span>
+      </div>
+
+      {AMENITIES[formData.type] ? (
         Object.entries(AMENITIES[formData.type]).map(([category, items]) => (
           <div key={category}>
             <h3 className="font-semibold text-primary mb-2">{category}</h3>
@@ -59,7 +66,10 @@ export default function AmenitiesStep({
               })}
             </div>
           </div>
-        ))}
+        ))
+      ) : (
+        <p className="text-muted">No amenities defined for {formData.type}</p>
+      )}
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => setStep(1)}>
