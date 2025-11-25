@@ -112,3 +112,8 @@ export const AMENITIES: AmenityMap = {
     ],
   },
 };
+
+// ✅ Derive property types dynamically
+export const PROPERTY_TYPES = Object.keys(
+  AMENITIES
+) as (keyof typeof AMENITIES)[];

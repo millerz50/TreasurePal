@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Dispatch, SetStateAction } from "react";
 import type { FormData, Step } from "../AddPropertyWizard";
 
+// ✅ Import PROPERTY_TYPES from amenities
+import { PROPERTY_TYPES } from "@/components/amenities/AmenityMap";
+
 interface Props {
   formData: FormData;
   setFormData: Dispatch<SetStateAction<FormData>>;
@@ -22,8 +25,6 @@ export default function BasicInfoStep({
   error,
   setError,
 }: Props) {
-  const PROPERTY_TYPES = ["House", "Apartment", "Commercial"];
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -84,6 +85,7 @@ export default function BasicInfoStep({
         onChange={handleChange}
       />
 
+      {/* ✅ Dropdown uses PROPERTY_TYPES from amenities */}
       <select
         name="type"
         value={formData.type}
@@ -96,7 +98,6 @@ export default function BasicInfoStep({
         ))}
       </select>
 
-      {/* ✅ Description moved here */}
       <Textarea
         name="description"
         placeholder="Property description..."
