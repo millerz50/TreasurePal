@@ -19,12 +19,10 @@ export default function BlogSection() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [activePostId, setActivePostId] = useState<number | null>(null);
 
-  // ✅ Fetch blog posts from API
   useEffect(() => {
     const fetchPosts = async (): Promise<void> => {
       try {
         const res = await fetch("https://your-api-domain.com/api/blogs");
-        // replace with your actual API endpoint
         if (!res.ok) throw new Error("Failed to fetch blog posts");
         const data: BlogPost[] = await res.json();
         setBlogPosts(data);
@@ -43,12 +41,12 @@ export default function BlogSection() {
   if (!activePost) return null;
 
   return (
-    <section className="py-12 px-4 sm:px-8 max-w-screen-xl mx-auto">
-      <h2 className="text-4xl font-bold text-center text-blue-700 mb-12">
+    <section className="py-16 px-6 sm:px-10 max-w-screen-xl mx-auto">
+      <h2 className="text-5xl font-extrabold text-center bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text mb-14">
         Netspace Insights
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-12">
         {/* Main Blog Viewer */}
         <div>
           <AnimatePresence mode="wait">
@@ -63,13 +61,13 @@ export default function BlogSection() {
           </AnimatePresence>
         </div>
 
-        {/* Sidebar Blog Links with Images */}
-        <aside className="sticky top-20 space-y-4 max-h-[600px] overflow-y-auto">
-          <h4 className="text-lg font-semibold text-blue-600">🗂 Other Posts</h4>
-          <ul className="space-y-4">
+        {/* Sidebar Blog Links */}
+        <aside className="sticky top-20 space-y-5 max-h-[600px] overflow-y-auto">
+          <h4 className="text-xl font-semibold text-accent">🗂 Other Posts</h4>
+          <ul className="space-y-5">
             {blogPosts.map((post) => (
-              <li key={post.id} className="flex gap-3 items-start">
-                <div className="w-16 h-16 relative rounded-md border border-blue-100 overflow-hidden">
+              <li key={post.id} className="flex gap-3 items-start group">
+                <div className="w-16 h-16 relative rounded-md border-2 border-primary/30 overflow-hidden shadow-sm">
                   <Image
                     src={post.image}
                     alt={post.title}
@@ -83,10 +81,10 @@ export default function BlogSection() {
                     type="button"
                     onClick={() => setActivePostId(post.id)}
                     className={cn(
-                      "text-sm text-left w-full transition font-medium",
+                      "text-sm text-left w-full transition font-semibold",
                       post.id === activePostId
-                        ? "text-blue-900"
-                        : "text-blue-700 hover:underline hover:text-blue-900"
+                        ? "text-primary"
+                        : "text-base-content group-hover:text-white"
                     )}>
                     {post.title}
                   </button>
@@ -108,7 +106,7 @@ function BlogArticle({ post }: { post: BlogPost }) {
     <article className="space-y-6">
       <motion.div
         layout
-        className="relative aspect-video overflow-hidden rounded-xl shadow-lg border border-blue-100">
+        className="relative aspect-video overflow-hidden rounded-xl shadow-xl border-4 border-accent/40 group">
         <Image
           src={post.image}
           alt={post.title}
@@ -117,7 +115,7 @@ function BlogArticle({ post }: { post: BlogPost }) {
           sizes="100vw"
         />
         <div
-          className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"
+          className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
           aria-hidden="true"
         />
         <button
@@ -126,10 +124,10 @@ function BlogArticle({ post }: { post: BlogPost }) {
           aria-label="Like post"
           aria-pressed={liked}
           className={cn(
-            "btn btn-sm btn-circle absolute top-4 right-4 transition",
+            "btn btn-sm btn-circle absolute top-4 right-4 transition shadow-md",
             liked
-              ? "bg-red-500 text-white"
-              : "bg-white text-red-500 hover:bg-red-100"
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "bg-white text-red-600 hover:bg-red-100"
           )}>
           {liked ? (
             <SolidHeart className="h-5 w-5" />
@@ -137,11 +135,17 @@ function BlogArticle({ post }: { post: BlogPost }) {
             <OutlineHeart className="h-5 w-5" />
           )}
         </button>
+        {/* Hover reveal text */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-transparent group-hover:text-white text-xl font-bold transition duration-300">
+            {post.title}
+          </span>
+        </div>
       </motion.div>
 
       <motion.div layout className="prose prose-blue max-w-none">
-        <h3 className="text-3xl font-bold">{post.title}</h3>
-        <p className="text-base text-muted-foreground">{post.excerpt}</p>
+        <h3 className="text-3xl font-bold text-primary">{post.title}</h3>
+        <p className="text-base text-gray-700">{post.excerpt}</p>
         <p className="text-xs text-gray-500">📅 {post.date}</p>
       </motion.div>
     </article>

@@ -1,4 +1,3 @@
-// components/amenities/AmenityIcons.ts
 import type { LucideIcon } from "lucide-react";
 import {
   BatteryCharging,

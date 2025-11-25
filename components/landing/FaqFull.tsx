@@ -133,7 +133,7 @@ const FaqFull: React.FC<FaqProps> = ({
       className="max-w-4xl mx-auto px-4 py-12">
       <h2
         id={`${idBase}-faq-heading`}
-        className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 mb-6">
+        className="text-3xl font-extrabold text-primary dark:text-accent mb-6">
         Frequently asked questions
       </h2>
 
@@ -147,7 +147,7 @@ const FaqFull: React.FC<FaqProps> = ({
           return (
             <div
               key={it.id ?? i}
-              className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800 shadow-sm">
+              className="border border-primary/30 dark:border-accent/40 rounded-lg overflow-hidden bg-base-100 dark:bg-slate-800 shadow-md">
               <h3>
                 <button
                   id={headerId}
@@ -170,8 +170,8 @@ const FaqFull: React.FC<FaqProps> = ({
                       focusHeader(headerRefs, list.length - 1);
                     }
                   }}
-                  className="w-full text-left px-4 sm:px-5 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-300">
-                  <span className="text-lg sm:text-xl font-medium text-gray-900 dark:text-slate-100">
+                  className="w-full text-left px-4 sm:px-5 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-accent transition-colors">
+                  <span className="text-lg sm:text-xl font-semibold text-base-content dark:text-slate-100">
                     {it.q}
                   </span>
 
@@ -192,7 +192,7 @@ const FaqFull: React.FC<FaqProps> = ({
                           : isOpen
                           ? "rotate-180"
                           : "rotate-0"
-                      } text-gray-500 dark:text-slate-300`}
+                      } text-primary dark:text-accent`}
                       viewBox="0 0 20 20"
                       fill="none"
                       stroke="currentColor"
@@ -215,7 +215,7 @@ const FaqFull: React.FC<FaqProps> = ({
                 className={`px-4 sm:px-5 pb-5 transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden ${maxHClass} ${
                   isOpen ? "opacity-100" : "opacity-0"
                 }`}>
-                <div className="pt-3 text-gray-700 dark:text-slate-200 text-sm sm:text-base break-words whitespace-pre-wrap">
+                <div className="pt-3 text-base-content dark:text-slate-200 text-sm sm:text-base break-words whitespace-pre-wrap">
                   {it.a}
                 </div>
               </div>
@@ -226,12 +226,12 @@ const FaqFull: React.FC<FaqProps> = ({
 
       {list.length === 0 && (
         <div className="mt-6 text-center">
-          <p className="text-gray-600 dark:text-slate-300">
+          <p className="text-base-content dark:text-slate-300">
             No FAQs available yet.
           </p>
           <a
             href="/contact"
-            className="mt-3 inline-block text-blue-600 underline dark:text-blue-400">
+            className="mt-3 inline-block text-primary underline dark:text-accent">
             Contact us
           </a>
         </div>

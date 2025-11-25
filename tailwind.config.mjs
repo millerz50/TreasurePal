@@ -1,10 +1,11 @@
 import daisyui from "daisyui";
 
-export default {
+/** @type {import('tailwindcss').Config} */
+const config = {
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}", // ✅ Add this if needed
+    "./src/**/*.{ts,tsx}", // ✅ include src if you use it
     "./node_modules/daisyui/dist/**/*.js",
   ],
 
@@ -32,7 +33,6 @@ export default {
           "0%": { opacity: 0, transform: "translateY(20px)" },
           "100%": { opacity: 1, transform: "translateY(0)" },
         },
-
         slideInLeft: {
           "0%": { transform: "translateX(-100%)", opacity: 0 },
           "100%": { transform: "translateX(0)", opacity: 1 },
@@ -47,27 +47,31 @@ export default {
         },
       },
       animation: {
-        fadeIn: "fadeIn 10s ease-out forwards",
-        scaleUp: "scaleUp 10s ease-out forwards",
-        shimmer: "shimmer 20s linear infinite",
-        flicker: "flicker 11s ease-in-out infinite",
-        slideInLeft: "slideInLeft 1s ease-out forwards",
+        fadeIn: "fadeIn 1s ease-out forwards",
+        scaleUp: "scaleUp 0.6s ease-out forwards",
+        shimmer: "shimmer 2s linear infinite",
+        flicker: "flicker 1.5s ease-in-out infinite",
+        slideInLeft: "slideInLeft 0.8s ease-out forwards",
       },
     },
   },
+
   plugins: [daisyui],
+
   daisyui: {
     themes: [
       {
         treasurepal: {
-          primary: "#2563eb",
-          accent: "#10b981",
-          highlight: "#f59e0b",
-          "base-100": "#ffffff",
-          "base-content": "#1f2937",
+          primary: "#2563eb", // vivid blue
+          accent: "#10b981", // bright green
+          highlight: "#f59e0b", // amber highlight
+          "base-100": "#ffffff", // white background
+          "base-content": "#1f2937", // slate gray text
         },
       },
       "dark",
     ],
   },
 };
+
+export default config;

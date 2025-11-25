@@ -33,12 +33,12 @@ export function NavbarMobileMenu() {
               <Button
                 variant="outline"
                 className="w-full text-sm border border-accent text-accent dark:text-accent hover:bg-accent/10"
-                onClick={() => router.push("/signup")}>
+                onClick={() => router.push("/signin")}>
                 Sign In
               </Button>
               <Button
                 className="w-full text-sm bg-gradient-to-r from-green-500 to-blue-600 text-white hover:opacity-90"
-                onClick={() => router.push("/signin")}>
+                onClick={() => router.push("/signup")}>
                 Sign Up
               </Button>
             </>
