@@ -6,7 +6,7 @@ export default function FloatingContactWidget() {
   const links = [
     {
       id: "whatsapp",
-      href: "https://wa.me/263771234567",
+      href: "https://wa.me/26377768431",
       icon: MessageCircle,
       label: "WhatsApp",
       bg: "bg-green-500 hover:bg-green-600 dark:hover:bg-green-400",
@@ -20,7 +20,7 @@ export default function FloatingContactWidget() {
     },
     {
       id: "github",
-      href: "https://github.com/treasurepal",
+      href: "https://github.com/millerz50/TreasurePal",
       icon: Github,
       label: "GitHub",
       bg: "bg-gray-800 hover:bg-gray-900 dark:hover:bg-gray-700",

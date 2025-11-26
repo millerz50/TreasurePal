@@ -1,11 +1,50 @@
-import { SITE_NAME } from "@/lib/site";
-import { Metadata } from "next";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: `For Sale • ${SITE_NAME}`,
   description: `Properties for sale across Zimbabwe on ${SITE_NAME}. Find houses, stands and commercial plots.`,
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: `${SITE_URL}/sale`,
+    languages: {
+      // Global English
+      en: `${SITE_URL}/en/sale`,
+      // Zimbabwe-specific English
+      "en-zw": "https://treasurepal.co.zw/en/sale",
+      // Shona
+      sn: `${SITE_URL}/sn/sale`,
+      "sn-zw": "https://treasurepal.co.zw/sn/sale",
+      // Ndebele
+      nd: `${SITE_URL}/nd/sale`,
+      "nd-zw": "https://treasurepal.co.zw/nd/sale`,
+    },
+  },
+  openGraph: {
+    title: `For Sale • ${SITE_NAME}`,
+    description:
+      "Browse houses, stands, and commercial plots for sale across Zimbabwe on TreasurePal.",
+    url: `${SITE_URL}/sale`,
+    siteName: SITE_NAME,
+    images: [
+      {
+        url: "/og/sale.jpg", // place a branded OG image in /public/og/
+        width: 1200,
+        height: 630,
+        alt: "Properties for sale in Zimbabwe",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `For Sale • ${SITE_NAME}`,
+    description:
+      "Find houses, stands, and commercial plots for sale across Zimbabwe.",
+    images: ["/og/sale.jpg"],
+  },
 };
 
 type Property = {
@@ -86,12 +125,14 @@ export default async function SalePage() {
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/sell/new"
-                className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm">
+                className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm"
+              >
                 List your property for sale
               </Link>
               <Link
                 href="/support"
-                className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm">
+                className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm"
+              >
                 Need help listing?
               </Link>
             </div>
@@ -101,7 +142,8 @@ export default async function SalePage() {
             {listings.map((p) => (
               <article
                 key={p.id}
-                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
+                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm"
+              >
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
                     <Image
@@ -135,10 +177,9 @@ export default async function SalePage() {
                   ) : null}
                   <div className="mt-3 flex items-center justify-between">
                     <Link
-                      href={
-                        p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`
-                      }
-                      className="text-sm text-blue-600 dark:text-blue-400 underline">
+                      href={p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`}
+                      className="text-sm text-blue-600 dark:text-blue-400 underline"
+                    >
                       View
                     </Link>
                     <span className="text-xs text-slate-500 dark:text-slate-400">

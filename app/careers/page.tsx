@@ -1,12 +1,48 @@
-// app/careers/page.tsx
-import { SITE_NAME } from "@/lib/site";
-import { Metadata } from "next";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: `Careers at ${SITE_NAME}`,
   description: `Join ${SITE_NAME}. See open roles, benefits, and how we hire locally in Zimbabwe.`,
-  openGraph: { title: `Careers • ${SITE_NAME}`, url: `/careers` },
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: `${SITE_URL}/careers`,
+    languages: {
+      // Global English
+      en: `${SITE_URL}/en/careers`,
+      // Zimbabwe-specific English
+      "en-zw": "https://treasurepal.co.zw/en/careers",
+      // Shona
+      sn: `${SITE_URL}/sn/careers`,
+      "sn-zw": "https://treasurepal.co.zw/sn/careers",
+      // Ndebele
+      nd: `${SITE_URL}/nd/careers`,
+      "nd-zw": "https://treasurepal.co.zw/nd/careers`,
+    },
+  },
+  openGraph: {
+    title: `Careers • ${SITE_NAME}`,
+    description: `Explore open roles at ${SITE_NAME}. We hire for product, engineering, operations, and local field positions across Zimbabwe.`,
+    url: `${SITE_URL}/careers`,
+    siteName: SITE_NAME,
+    images: [
+      {
+        url: "/og/careers.jpg", // place a branded OG image in /public/og/
+        width: 1200,
+        height: 630,
+        alt: "Careers at TreasurePal",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Careers • ${SITE_NAME}`,
+    description:
+      "Join TreasurePal to build modern property tools. Competitive compensation, remote-friendly roles, and local hubs in Harare.",
+    images: ["/og/careers.jpg"],
+  },
 };
 
 type RawRecord = Record<string, unknown>;
@@ -93,7 +129,8 @@ export default async function CareersPage() {
               short note to{" "}
               <a
                 href="mailto:careers@treasurepal.example"
-                className="underline text-blue-600 dark:text-blue-400">
+                className="underline text-blue-600 dark:text-blue-400"
+              >
                 careers@treasurepal.example
               </a>
               .
@@ -105,7 +142,8 @@ export default async function CareersPage() {
                   No openings at this time. Check back soon or send your CV to{" "}
                   <a
                     href="mailto:careers@treasurepal.example"
-                    className="underline text-blue-600 dark:text-blue-400">
+                    className="underline text-blue-600 dark:text-blue-400"
+                  >
                     careers@treasurepal.example
                   </a>
                   .
@@ -114,7 +152,8 @@ export default async function CareersPage() {
                 jobs.map((job) => (
                   <article
                     key={job.id}
-                    className="p-3 rounded-md border border-dashed border-gray-200 dark:border-slate-700">
+                    className="p-3 rounded-md border border-dashed border-gray-200 dark:border-slate-700"
+                  >
                     <div className="flex items-start justify-between">
                       <div>
                         <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate">
@@ -133,7 +172,8 @@ export default async function CareersPage() {
                         {job.slug ? (
                           <Link
                             href={`/careers/${job.slug}`}
-                            className="text-sm text-blue-600 dark:text-blue-400 underline">
+                            className="text-sm text-blue-600 dark:text-blue-400 underline"
+                          >
                             View
                           </Link>
                         ) : (
@@ -141,7 +181,8 @@ export default async function CareersPage() {
                             href={`mailto:careers@treasurepal.example?subject=Application%20for%20${encodeURIComponent(
                               job.title
                             )}`}
-                            className="text-sm text-blue-600 dark:text-blue-400 underline">
+                            className="text-sm text-blue-600 dark:text-blue-400 underline"
+                          >
                             Apply
                           </a>
                         )}

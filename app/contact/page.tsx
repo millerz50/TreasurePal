@@ -1,12 +1,27 @@
-// app/contact/page.tsx
 import ContactForm from "@/components/contact/ContactForm.client";
-import { SITE_NAME, SITE_URL } from "@/lib/site"; // optional constants file
-import { Metadata } from "next";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Contact TreasurePal — Get in touch",
   description:
     "Contact TreasurePal for listings, partnerships, support, or press. Fast replies from our local team in Zimbabwe.",
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: `${SITE_URL}/contact`,
+    languages: {
+      // Global English
+      en: `${SITE_URL}/en/contact`,
+      // Zimbabwe-specific English
+      "en-zw": "https://treasurepal.co.zw/en/contact",
+      // Shona
+      sn: `${SITE_URL}/sn/contact`,
+      "sn-zw": "https://treasurepal.co.zw/sn/contact",
+      // Ndebele
+      nd: `${SITE_URL}/nd/contact`,
+      "nd-zw": "https://treasurepal.co.zw/nd/contact`,
+    },
+  },
   openGraph: {
     title: "Contact TreasurePal",
     description:
@@ -15,9 +30,10 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     images: [
       {
-        url: `${SITE_URL}/og/contact.png`,
+        url: `${SITE_URL}/og/contact.png`, // place branded contact OG image in /public/og/
         width: 1200,
         height: 630,
+        alt: "Contact TreasurePal",
       },
     ],
     type: "website",
@@ -46,7 +62,7 @@ const ContactPage = async () => {
           telephone: "+263-77-000-0000",
           contactType: "customer service",
           areaServed: "ZW",
-          availableLanguage: ["English"],
+          availableLanguage: ["English", "Shona", "Ndebele"],
         },
       ],
     },
@@ -73,13 +89,15 @@ const ContactPage = async () => {
               <br />
               <a
                 href="tel:+263770000000"
-                className="text-blue-600 dark:text-blue-400 underline">
+                className="text-blue-600 dark:text-blue-400 underline"
+              >
                 +263 77 000 0000
               </a>
               <br />
               <a
                 href="mailto:hello@treasurepal.example"
-                className="text-blue-600 dark:text-blue-400 underline">
+                className="text-blue-600 dark:text-blue-400 underline"
+              >
                 hello@treasurepal.example
               </a>
             </address>
@@ -90,7 +108,8 @@ const ContactPage = async () => {
             to your inquiry. See our{" "}
             <a
               href="/privacy"
-              className="underline text-blue-600 dark:text-blue-400">
+              className="underline text-blue-600 dark:text-blue-400"
+            >
               privacy policy
             </a>
             .

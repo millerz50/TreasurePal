@@ -1,11 +1,49 @@
-// app/students/page.tsx
-import { SITE_NAME } from "@/lib/site";
-import { Metadata } from "next";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: `Student Housing • ${SITE_NAME}`,
   description: `Student rooms and shared housing across Zimbabwe. Find affordable student accommodation.`,
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: `${SITE_URL}/students`,
+    languages: {
+      // Global English
+      en: `${SITE_URL}/en/students`,
+      // Zimbabwe-specific English
+      "en-zw": "https://treasurepal.co.zw/en/students",
+      // Shona
+      sn: `${SITE_URL}/sn/students`,
+      "sn-zw": "https://treasurepal.co.zw/sn/students",
+      // Ndebele
+      nd: `${SITE_URL}/nd/students`,
+      "nd-zw": "https://treasurepal.co.zw/nd/students`,
+    },
+  },
+  openGraph: {
+    title: `Student Housing • ${SITE_NAME}`,
+    description:
+      "Affordable student rooms and shared housing across Zimbabwe. Find accommodation near universities and colleges.",
+    url: `${SITE_URL}/students`,
+    siteName: SITE_NAME,
+    images: [
+      {
+        url: "/og/students.jpg", // place a branded OG image in /public/og/
+        width: 1200,
+        height: 630,
+        alt: "Student housing in Zimbabwe",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Student Housing • ${SITE_NAME}`,
+    description:
+      "Find affordable student accommodation across Zimbabwe. Rooms, shared housing, and near-campus stays.",
+    images: ["/og/students.jpg"],
+  },
 };
 
 type RawRecord = Record<string, unknown>;
@@ -99,12 +137,14 @@ export default async function StudentsPage() {
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/sell/new"
-                className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm">
+                className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm"
+              >
                 List a student room
               </Link>
               <Link
                 href="/support"
-                className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm">
+                className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm"
+              >
                 Need help listing?
               </Link>
             </div>
@@ -114,7 +154,8 @@ export default async function StudentsPage() {
             {listings.map((p) => (
               <article
                 key={p.id}
-                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
+                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm"
+              >
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -145,10 +186,9 @@ export default async function StudentsPage() {
                   ) : null}
                   <div className="mt-3 flex items-center justify-between">
                     <Link
-                      href={
-                        p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`
-                      }
-                      className="text-sm text-blue-600 dark:text-blue-400 underline">
+                      href={p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`}
+                      className="text-sm text-blue-600 dark:text-blue-400 underline"
+                    >
                       View
                     </Link>
                     <span className="text-xs text-slate-500 dark:text-slate-400">

@@ -1,10 +1,42 @@
-// app/privacy/page.tsx
-import { SITE_NAME } from "@/lib/site";
-import { Metadata } from "next";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: `Privacy Policy • ${SITE_NAME}`,
-  description: `How ${SITE_NAME} collects, uses, and protects your data.`,
+  description: `Learn how ${SITE_NAME} collects, uses, and protects your data. Transparent practices for users in Zimbabwe and worldwide.`,
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: `${SITE_URL}/privacy`,
+    languages: {
+      en: `${SITE_URL}/en/privacy`,
+      "en-zw": "https://treasurepal.co.zw/en/privacy",
+      sn: `${SITE_URL}/sn/privacy`,
+      "sn-zw": "https://treasurepal.co.zw/sn/privacy`,
+      nd: `${SITE_URL}/nd/privacy`,
+      "nd-zw": "https://treasurepal.co.zw/nd/privacy`,
+    },
+  },
+  openGraph: {
+    title: `Privacy Policy • ${SITE_NAME}`,
+    description: `How ${SITE_NAME} collects, uses, and protects your data. Transparent practices for all users.`,
+    url: `${SITE_URL}/privacy`,
+    siteName: SITE_NAME,
+    images: [
+      {
+        url: "/og/privacy.jpg", // place a branded OG image in /public/og/
+        width: 1200,
+        height: 630,
+        alt: "Privacy Policy",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Privacy Policy • ${SITE_NAME}`,
+    description: `Learn how ${SITE_NAME} collects, uses, and protects your data.`,
+    images: ["/og/privacy.jpg"],
+  },
 };
 
 export default function PrivacyPage() {
@@ -15,31 +47,75 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
-          We respect your privacy. This page explains what data we collect and
-          how we use it.
+          We respect your privacy. This page explains what data we collect, how
+          we use it, and the choices you have.
         </p>
 
-        <section className="mt-6 space-y-4 text-sm text-slate-700 dark:text-slate-200">
+        <section className="mt-6 space-y-6 text-sm text-slate-700 dark:text-slate-200">
           <div>
             <h2 className="font-semibold">Data we collect</h2>
             <p className="mt-1">
-              Contact info, listing details, analytics and cookies for site
-              functionality.
+              We collect contact information, property listing details,
+              analytics data, and cookies to ensure site functionality and
+              improve user experience.
             </p>
           </div>
 
           <div>
             <h2 className="font-semibold">How we use data</h2>
             <p className="mt-1">
-              To provide services, communicate, and improve the product.
+              Your data helps us provide services, communicate with you,
+              personalize experiences, and improve TreasurePal. We never sell
+              personal data to third parties.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-semibold">Security</h2>
+            <p className="mt-1">
+              We use encryption, secure servers, and regular audits to protect
+              your information. Access is restricted to authorized personnel
+              only.
             </p>
           </div>
 
           <div>
             <h2 className="font-semibold">Your choices</h2>
             <p className="mt-1">
-              You can request deletion, opt out of marketing, and manage
-              cookies.
+              You can request deletion of your data, opt out of marketing
+              communications, and manage cookies through your browser settings.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-semibold">Children’s privacy</h2>
+            <p className="mt-1">
+              TreasurePal does not knowingly collect data from children under
+              13. If you believe a child has provided us information, please
+              contact us to remove it.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-semibold">International compliance</h2>
+            <p className="mt-1">
+              We follow global privacy standards including GDPR and CCPA. Users
+              in Zimbabwe and worldwide have rights to access, correct, and
+              delete their data.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-semibold">Contact us</h2>
+            <p className="mt-1">
+              For privacy inquiries, email{" "}
+              <a
+                href="mailto:privacy@treasurepal.example"
+                className="underline text-blue-600 dark:text-blue-400"
+              >
+                privacy@treasurepal.example
+              </a>
+              .
             </p>
           </div>
         </section>
