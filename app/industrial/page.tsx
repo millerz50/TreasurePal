@@ -1,3 +1,8 @@
+import {
+  baseAlternates,
+  defaultOpenGraph,
+  defaultTwitter,
+} from "@/app/seo/seoConfig";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -7,38 +12,35 @@ export const metadata: Metadata = {
   description: `Warehouses, factories, offices and commercial spaces across Zimbabwe.`,
   metadataBase: new URL(SITE_URL),
   alternates: {
+    ...baseAlternates,
     canonical: `${SITE_URL}/industrial`,
     languages: {
-      // Global English
       en: `${SITE_URL}/en/industrial`,
-      // Zimbabwe-specific English
       "en-zw": "https://treasurepal.co.zw/en/industrial",
-      // Shona
       sn: `${SITE_URL}/sn/industrial`,
       "sn-zw": "https://treasurepal.co.zw/sn/industrial",
-      // Ndebele
       nd: `${SITE_URL}/nd/industrial`,
-      "nd-zw": "https://treasurepal.co.zw/nd/industrial`,
+      "nd-zw": "https://treasurepal.co.zw/nd/industrial", // 👈 fixed closing quote
     },
   },
+
   openGraph: {
+    ...defaultOpenGraph,
     title: `Industrial & Commercial listings • ${SITE_NAME}`,
     description:
       "Explore warehouses, factories, offices, and commercial spaces available for businesses across Zimbabwe.",
     url: `${SITE_URL}/industrial`,
-    siteName: SITE_NAME,
     images: [
       {
-        url: "/og/industrial.jpg", // place a branded OG image in /public/og/
+        url: "/og/industrial.jpg",
         width: 1200,
         height: 630,
         alt: "Industrial and commercial properties in Zimbabwe",
       },
     ],
-    type: "website",
   },
   twitter: {
-    card: "summary_large_image",
+    ...defaultTwitter,
     title: `Industrial & Commercial listings • ${SITE_NAME}`,
     description:
       "Warehouses, factories, offices, and commercial spaces for businesses across Zimbabwe.",
@@ -140,14 +142,12 @@ export default async function IndustrialPage() {
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/sell/new"
-                className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm"
-              >
+                className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm">
                 List commercial space
               </Link>
               <Link
                 href="/support"
-                className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm"
-              >
+                className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm">
                 Need help listing?
               </Link>
             </div>
@@ -157,8 +157,7 @@ export default async function IndustrialPage() {
             {listings.map((p) => (
               <article
                 key={p.id}
-                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm"
-              >
+                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -196,9 +195,10 @@ export default async function IndustrialPage() {
 
                   <div className="mt-3 flex items-center justify-between">
                     <Link
-                      href={p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`}
-                      className="text-sm text-blue-600 dark:text-blue-400 underline"
-                    >
+                      href={
+                        p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`
+                      }
+                      className="text-sm text-blue-600 dark:text-blue-400 underline">
                       View
                     </Link>
                     <span className="text-xs text-slate-500 dark:text-slate-400">

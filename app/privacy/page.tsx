@@ -1,38 +1,36 @@
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import type { Metadata } from "next";
 
+import {
+  baseAlternates,
+  defaultOpenGraph,
+  defaultTwitter,
+} from "@/app/seo/seoConfig";
+
 export const metadata: Metadata = {
   title: `Privacy Policy • ${SITE_NAME}`,
   description: `Learn how ${SITE_NAME} collects, uses, and protects your data. Transparent practices for users in Zimbabwe and worldwide.`,
   metadataBase: new URL(SITE_URL),
   alternates: {
-    canonical: `${SITE_URL}/privacy`,
-    languages: {
-      en: `${SITE_URL}/en/privacy`,
-      "en-zw": "https://treasurepal.co.zw/en/privacy",
-      sn: `${SITE_URL}/sn/privacy`,
-      "sn-zw": "https://treasurepal.co.zw/sn/privacy`,
-      nd: `${SITE_URL}/nd/privacy`,
-      "nd-zw": "https://treasurepal.co.zw/nd/privacy`,
-    },
+    ...baseAlternates,
+    canonical: `${SITE_URL}/privacy`, // 👈 should point to /privacy
   },
   openGraph: {
+    ...defaultOpenGraph,
     title: `Privacy Policy • ${SITE_NAME}`,
     description: `How ${SITE_NAME} collects, uses, and protects your data. Transparent practices for all users.`,
     url: `${SITE_URL}/privacy`,
-    siteName: SITE_NAME,
     images: [
       {
-        url: "/og/privacy.jpg", // place a branded OG image in /public/og/
+        url: "/og/privacy.jpg",
         width: 1200,
         height: 630,
         alt: "Privacy Policy",
       },
     ],
-    type: "website",
   },
   twitter: {
-    card: "summary_large_image",
+    ...defaultTwitter,
     title: `Privacy Policy • ${SITE_NAME}`,
     description: `Learn how ${SITE_NAME} collects, uses, and protects your data.`,
     images: ["/og/privacy.jpg"],
@@ -111,8 +109,7 @@ export default function PrivacyPage() {
               For privacy inquiries, email{" "}
               <a
                 href="mailto:privacy@treasurepal.example"
-                className="underline text-blue-600 dark:text-blue-400"
-              >
+                className="underline text-blue-600 dark:text-blue-400">
                 privacy@treasurepal.example
               </a>
               .

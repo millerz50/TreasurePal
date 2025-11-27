@@ -1,10 +1,40 @@
 // app/terms/page.tsx
-import { SITE_NAME } from "@/lib/site";
+import {
+  baseAlternates,
+  defaultOpenGraph,
+  defaultTwitter,
+} from "@/app/seo/seoConfig";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: `Terms of Service • ${SITE_NAME}`,
-  description: `Terms of service for ${SITE_NAME}. Please read before using our platform.`,
+  title: `About • ${SITE_NAME}`,
+  description: `Learn more about ${SITE_NAME}, our mission, and how we empower property access across Zimbabwe.`,
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    ...baseAlternates,
+    canonical: `${SITE_URL}/about`,
+  },
+  openGraph: {
+    ...defaultOpenGraph,
+    title: `About • ${SITE_NAME}`,
+    description: `Discover ${SITE_NAME}'s mission and vision for inclusive property opportunities in Zimbabwe.`,
+    url: `${SITE_URL}/about`,
+    images: [
+      {
+        url: "/og/about.jpg",
+        width: 1200,
+        height: 630,
+        alt: "About TreasurePal",
+      },
+    ],
+  },
+  twitter: {
+    ...defaultTwitter,
+    title: `About • ${SITE_NAME}`,
+    description: `Learn more about ${SITE_NAME}, our mission, and how we empower property access across Zimbabwe.`,
+    images: ["/og/about.jpg"],
+  },
 };
 
 export default function TermsPage() {

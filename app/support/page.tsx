@@ -3,9 +3,41 @@ import ContactForm from "@/components/contact/ContactForm.client";
 import { SITE_NAME } from "@/lib/site";
 import { Metadata } from "next";
 
+import {
+  baseAlternates,
+  defaultOpenGraph,
+  defaultTwitter,
+} from "@/app/seo/seoConfig";
+import { SITE_URL } from "@/lib/site";
+
 export const metadata: Metadata = {
   title: `Support • ${SITE_NAME}`,
   description: `Support and help center for ${SITE_NAME}. Get help with listings, accounts, and payments.`,
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    ...baseAlternates,
+    canonical: `${SITE_URL}/support`, // 👈 correct canonical path
+  },
+  openGraph: {
+    ...defaultOpenGraph,
+    title: `Support • ${SITE_NAME}`,
+    description: `Support and help center for ${SITE_NAME}. Get help with listings, accounts, and payments.`,
+    url: `${SITE_URL}/support`,
+    images: [
+      {
+        url: "/og/support.jpg", // place a branded OG image in /public/og/
+        width: 1200,
+        height: 630,
+        alt: "Support and help center",
+      },
+    ],
+  },
+  twitter: {
+    ...defaultTwitter,
+    title: `Support • ${SITE_NAME}`,
+    description: `Support and help center for ${SITE_NAME}. Get help with listings, accounts, and payments.`,
+    images: ["/og/support.jpg"],
+  },
 };
 
 export default function SupportPage() {

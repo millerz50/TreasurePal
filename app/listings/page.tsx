@@ -2,44 +2,38 @@ import { SITE_NAME, SITE_URL } from "@/lib/site";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import {
+  baseAlternates,
+  defaultOpenGraph,
+  defaultTwitter,
+} from "@/app/seo/seoConfig";
+
 export const metadata: Metadata = {
   title: `Listings • ${SITE_NAME}`,
   description:
     "Browse property listings across Zimbabwe. Filter by location, price, and type.",
   metadataBase: new URL(SITE_URL),
   alternates: {
+    ...baseAlternates,
     canonical: `${SITE_URL}/listings`,
-    languages: {
-      // Global English
-      en: `${SITE_URL}/en/listings`,
-      // Zimbabwe-specific English
-      "en-zw": "https://treasurepal.co.zw/en/listings",
-      // Shona
-      sn: `${SITE_URL}/sn/listings`,
-      "sn-zw": "https://treasurepal.co.zw/sn/listings",
-      // Ndebele
-      nd: `${SITE_URL}/nd/listings`,
-      "nd-zw": "https://treasurepal.co.zw/nd/listings`,
-    },
   },
   openGraph: {
+    ...defaultOpenGraph,
     title: `Listings • ${SITE_NAME}`,
     description:
       "Find rooms, houses, commercial spaces, and more across Zimbabwe. Filter by location, price, and type.",
     url: `${SITE_URL}/listings`,
-    siteName: SITE_NAME,
     images: [
       {
-        url: "/og/listings.jpg", // place a branded OG image in /public/og/
+        url: "/og/listings.jpg",
         width: 1200,
         height: 630,
         alt: "Property listings in Zimbabwe",
       },
     ],
-    type: "website",
   },
   twitter: {
-    card: "summary_large_image",
+    ...defaultTwitter,
     title: `Listings • ${SITE_NAME}`,
     description:
       "Browse property listings across Zimbabwe. Rooms, houses, and commercial spaces available.",
@@ -136,8 +130,7 @@ export default async function ListingsPage() {
             {listings.map((p) => (
               <article
                 key={p.id}
-                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm"
-              >
+                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -168,9 +161,10 @@ export default async function ListingsPage() {
                   ) : null}
                   <div className="mt-3 flex items-center justify-between">
                     <Link
-                      href={p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`}
-                      className="text-sm text-blue-600 dark:text-blue-400 underline"
-                    >
+                      href={
+                        p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`
+                      }
+                      className="text-sm text-blue-600 dark:text-blue-400 underline">
                       View
                     </Link>
                     <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -186,4 +180,3 @@ export default async function ListingsPage() {
     </main>
   );
 }
-

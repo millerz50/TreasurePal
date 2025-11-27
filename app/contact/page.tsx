@@ -19,7 +19,7 @@ export const metadata: Metadata = {
       "sn-zw": "https://treasurepal.co.zw/sn/contact",
       // Ndebele
       nd: `${SITE_URL}/nd/contact`,
-      "nd-zw": "https://treasurepal.co.zw/nd/contact`,
+      "nd-zw": "https://treasurepal.co.zw/nd/contact",
     },
   },
   openGraph: {
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     images: [
       {
-        url: `${SITE_URL}/og/contact.png`, // place branded contact OG image in /public/og/
+        url: `${SITE_URL}/og/contact.png`,
         width: 1200,
         height: 630,
         alt: "Contact TreasurePal",
@@ -77,7 +77,8 @@ const ContactPage = async () => {
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-300 max-w-prose">
             Whether you want to list a property, partner with TreasurePal, or
-            need support, send us a message and we’ll respond within 48 hours at minimum.
+            need support, send us a message and we’ll respond within 48 hours at
+            minimum.
           </p>
 
           <div className="rounded-lg border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
@@ -89,15 +90,13 @@ const ContactPage = async () => {
               <br />
               <a
                 href="tel:+263770000000"
-                className="text-blue-600 dark:text-blue-400 underline"
-              >
+                className="text-blue-600 dark:text-blue-400 underline">
                 +263 77 000 0000
               </a>
               <br />
               <a
                 href="mailto:hello@treasurepal.example"
-                className="text-blue-600 dark:text-blue-400 underline"
-              >
+                className="text-blue-600 dark:text-blue-400 underline">
                 hello@treasurepal.example
               </a>
             </address>
@@ -108,8 +107,7 @@ const ContactPage = async () => {
             to your inquiry. See our{" "}
             <a
               href="/privacy"
-              className="underline text-blue-600 dark:text-blue-400"
-            >
+              className="underline text-blue-600 dark:text-blue-400">
               privacy policy
             </a>
             .

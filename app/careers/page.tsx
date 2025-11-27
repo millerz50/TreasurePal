@@ -18,7 +18,7 @@ export const metadata: Metadata = {
       "sn-zw": "https://treasurepal.co.zw/sn/careers",
       // Ndebele
       nd: `${SITE_URL}/nd/careers`,
-      "nd-zw": "https://treasurepal.co.zw/nd/careers`,
+      "nd-zw": "https://treasurepal.co.zw/nd/careers", // 👈 fixed closing quote
     },
   },
   openGraph: {
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     images: [
       {
-        url: "/og/careers.jpg", // place a branded OG image in /public/og/
+        url: "/og/careers.jpg",
         width: 1200,
         height: 630,
         alt: "Careers at TreasurePal",
@@ -129,8 +129,7 @@ export default async function CareersPage() {
               short note to{" "}
               <a
                 href="mailto:careers@treasurepal.example"
-                className="underline text-blue-600 dark:text-blue-400"
-              >
+                className="underline text-blue-600 dark:text-blue-400">
                 careers@treasurepal.example
               </a>
               .
@@ -142,8 +141,7 @@ export default async function CareersPage() {
                   No openings at this time. Check back soon or send your CV to{" "}
                   <a
                     href="mailto:careers@treasurepal.example"
-                    className="underline text-blue-600 dark:text-blue-400"
-                  >
+                    className="underline text-blue-600 dark:text-blue-400">
                     careers@treasurepal.example
                   </a>
                   .
@@ -152,8 +150,7 @@ export default async function CareersPage() {
                 jobs.map((job) => (
                   <article
                     key={job.id}
-                    className="p-3 rounded-md border border-dashed border-gray-200 dark:border-slate-700"
-                  >
+                    className="p-3 rounded-md border border-dashed border-gray-200 dark:border-slate-700">
                     <div className="flex items-start justify-between">
                       <div>
                         <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate">
@@ -172,8 +169,7 @@ export default async function CareersPage() {
                         {job.slug ? (
                           <Link
                             href={`/careers/${job.slug}`}
-                            className="text-sm text-blue-600 dark:text-blue-400 underline"
-                          >
+                            className="text-sm text-blue-600 dark:text-blue-400 underline">
                             View
                           </Link>
                         ) : (
@@ -181,8 +177,7 @@ export default async function CareersPage() {
                             href={`mailto:careers@treasurepal.example?subject=Application%20for%20${encodeURIComponent(
                               job.title
                             )}`}
-                            className="text-sm text-blue-600 dark:text-blue-400 underline"
-                          >
+                            className="text-sm text-blue-600 dark:text-blue-400 underline">
                             Apply
                           </a>
                         )}
