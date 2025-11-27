@@ -11,9 +11,16 @@ import React, {
   useState,
 } from "react";
 
+// ✅ Hard‑coded API base URL (production)
+const API_BASE_URL = "https://www.treasureprops.com/api";
+
+// ✅ Hard‑coded Appwrite endpoint + project
+const APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1";
+const APPWRITE_PROJECT_ID = "treasureprops"; // replace with your actual project ID
+
 async function fetchProfileMe(jwt: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+    const res = await fetch(`${API_BASE_URL}/users/me`, {
       credentials: "include",
       headers: { Authorization: `Bearer ${jwt}` },
     });
@@ -50,11 +57,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserPayload | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Prevent overlapping fetches across Strict Mode remounts
   const fetchLock = useRef(false);
-  // Track mounted state to avoid setState after unmount
   const mounted = useRef(true);
-  // Abort controller for fetchProfileMe
   const abortCtrl = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -75,22 +79,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     (async () => {
       try {
         const appwriteUser: Models.User<any> = await account.get();
-        // create JWT (Appwrite SDK)
         const jwt = await account.createJWT();
 
-        // fetch profile from your API
         const profile = await fetchProfileMe(jwt.jwt);
 
-        // build avatar URL or fallback
+        // ✅ Avatar URL logic
         let avatarUrl: string | undefined;
-
-        // Prefer explicit avatar file ID from profile or prefs
         const fileId =
           profile?.avatarFileId ?? appwriteUser.prefs?.avatarFileId;
         if (fileId) {
-          avatarUrl = `${process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${fileId}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`;
+          avatarUrl = `${APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${fileId}/view?project=${APPWRITE_PROJECT_ID}`;
         } else {
-          // fallback: use ui-avatars with name or email
           const displayName = profile?.firstName
             ? `${profile.firstName} ${profile.surname ?? ""}`
             : appwriteUser.name || appwriteUser.email;
@@ -120,8 +119,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         fetchLock.current = false;
       }
     })();
-
-    // no dependencies: run once per mount; fetchLock prevents overlap
   }, []);
 
   const signOut = async () => {
