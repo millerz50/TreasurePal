@@ -1,11 +1,44 @@
 // app/rent/page.tsx
-import { SITE_NAME } from "@/lib/site";
-import { Metadata } from "next";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+import {
+  baseAlternates,
+  defaultOpenGraph,
+  defaultTwitter,
+} from "@/app/seo/seoConfig";
 
 export const metadata: Metadata = {
   title: `Rentals • ${SITE_NAME}`,
   description: `Browse rental properties across Zimbabwe on ${SITE_NAME}. Rooms, houses and short-term stays.`,
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    ...baseAlternates,
+    canonical: `${SITE_URL}/rent`,
+  },
+  openGraph: {
+    ...defaultOpenGraph,
+    title: `Rentals • ${SITE_NAME}`,
+    description:
+      "Browse rental listings across Zimbabwe — rooms, houses, and short-term stays.",
+    url: `${SITE_URL}/rent`,
+    images: [
+      {
+        url: "/og/rent.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Rental properties in Zimbabwe",
+      },
+    ],
+  },
+  twitter: {
+    ...defaultTwitter,
+    title: `Rentals • ${SITE_NAME}`,
+    description:
+      "Browse rental properties across Zimbabwe. Rooms, houses and short-term stays.",
+    images: ["/og/rent.jpg"],
+  },
 };
 
 type RawRecord = Record<string, unknown>;
@@ -56,7 +89,8 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
-    const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
+    // ✅ Use production API endpoint
+    const url = `https://www.treasureprops.com/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
       console.error("API error", res.status, url);
@@ -67,7 +101,19 @@ async function fetchByType(typePath: string): Promise<Property[]> {
     return data.map((p) => parseProperty(p as RawRecord));
   } catch (err) {
     console.error("Fetch failed:", err);
-    return [];
+
+    // ✅ Fallback to Zimbabwe domain if global fails
+    try {
+      const url = `https://www.treasureprops.co.zw/api/properties/${typePath}`;
+      const res = await fetch(url, { next: { revalidate: 60 } });
+      if (!res.ok) return [];
+      const data = await res.json();
+      if (!Array.isArray(data)) return [];
+      return data.map((p) => parseProperty(p as RawRecord));
+    } catch (err2) {
+      console.error("Fallback fetch also failed:", err2);
+      return [];
+    }
   }
 }
 

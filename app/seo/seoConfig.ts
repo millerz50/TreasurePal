@@ -1,14 +1,20 @@
 // components/seo/seoConfig.ts
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_NAME } from "@/lib/site";
 
 export const baseAlternates = {
   languages: {
-    en: `${SITE_URL}/en`,
+    // Universal domain (global fallback)
+    en: "https://www.treasureprops.com/en",
+    sn: "https://www.treasureprops.com/sn",
+    nd: "https://www.treasureprops.com/nd",
+
+    // Zimbabwe-specific domain
     "en-zw": "https://treasurepal.co.zw/en",
-    sn: `${SITE_URL}/sn`,
     "sn-zw": "https://treasurepal.co.zw/sn",
-    nd: `${SITE_URL}/nd`,
     "nd-zw": "https://treasurepal.co.zw/nd",
+
+    // Global fallback (x-default)
+    "x-default": "https://www.treasureprops.com/",
   },
 };
 

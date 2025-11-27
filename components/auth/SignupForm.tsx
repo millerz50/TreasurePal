@@ -6,15 +6,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
 
-import AvatarField from "./user/fields/AvatarField";
-import BioField from "./user/fields/BioField";
-import EmailField from "./user/fields/EmailField";
-import NameField from "./user/fields/NameField";
-import NationalIdField from "./user/fields/NationalIdField";
-import PasswordField from "./user/fields/PasswordField";
-import PhoneField from "./user/fields/PhoneField";
-import RoleField from "./user/fields/RoleField";
-
 const SignupSchema = z.object({
   accountId: z.string().min(1, "Account ID required"),
   email: z.string().email("Invalid email"),
@@ -39,7 +30,7 @@ export default function SignupForm({
   redirectTo?: string;
 }) {
   const [form, setForm] = useState<SignupFormData>({
-    accountId: ID.unique(), // ✅ valid Appwrite ID
+    accountId: ID.unique(),
     email: "",
     firstName: "",
     surname: "",
@@ -52,7 +43,6 @@ export default function SignupForm({
     password: "",
   });
 
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   function onChange(
@@ -64,49 +54,25 @@ export default function SignupForm({
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  async function uploadAvatar(file: File): Promise<string | null> {
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-
-      const storageRes = await fetch(
-        "https://treasurepal-backened.onrender.com/api/storage/upload",
-        {
-          method: "POST",
-          body: fd,
-        }
-      );
-
-      const body = await storageRes.json();
-      if (!storageRes.ok)
-        throw new Error(body?.error || "Avatar upload failed");
-      return body?.fileId || null;
-    } catch (err: unknown) {
-      console.error("Avatar upload error:", err);
-      return null;
-    }
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     const parsed = SignupSchema.safeParse(form);
     if (!parsed.success) {
-      toast.error(parsed.error.errors[0].message);
+      toast.error(parsed.error.errors[0].message, {
+        icon: "❌",
+        duration: 4000,
+      });
       return;
     }
 
     setLoading(true);
     const tId = toast.loading("Creating your account…", {
       description: "Please wait while we finalize your details.",
+      icon: "⏳",
     });
 
     try {
-      let avatarFileId: string | null = null;
-      if (avatarFile) {
-        avatarFileId = await uploadAvatar(avatarFile);
-      }
-
       const payload = {
         accountId: parsed.data.accountId,
         email: parsed.data.email.toLowerCase(),
@@ -119,7 +85,6 @@ export default function SignupForm({
         nationalId: parsed.data.nationalId || null,
         bio: parsed.data.bio || null,
         metadata: parsed.data.metadata || [],
-        avatarFileId,
       };
 
       const res = await fetch(
@@ -136,13 +101,15 @@ export default function SignupForm({
       if (!res.ok) {
         const msg =
           body?.error || body?.message || `Signup failed (${res.status})`;
-        toast.error(msg);
+        toast.error(msg, { icon: "⚠️", duration: 5000 });
         toast.dismiss(tId);
         return;
       }
 
       toast.success("Account created successfully!", {
         description: "Redirecting you to signin…",
+        icon: "✅",
+        duration: 3000,
       });
       toast.dismiss(tId);
 
@@ -150,8 +117,7 @@ export default function SignupForm({
         window.location.href = redirectTo;
       }, 1200);
     } catch {
-      // ✅ removed unused `err` variable
-      toast.error("Network error. Try again.");
+      toast.error("Network error. Try again.", { icon: "🌐", duration: 5000 });
       toast.dismiss(tId);
     } finally {
       setLoading(false);
@@ -161,51 +127,152 @@ export default function SignupForm({
   return (
     <motion.form
       onSubmit={handleSubmit}
-      className="w-full sm:max-w-xl mx-auto p-4 sm:p-6 rounded-lg shadow-sm"
-      initial={{ opacity: 0, y: 12 }}
+      className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}>
-      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
-        <div className="mb-6 h-1 w-24 rounded-full bg-gradient-to-r from-green-500 to-blue-500" />
+      transition={{ duration: 0.5, ease: "easeOut" }}>
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 sm:p-8 shadow-lg">
+        <motion.div className="mb-6 h-1 w-32 rounded-full bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 animate-pulse" />
 
-        <div className="grid grid-cols-1 gap-4">
-          <EmailField value={form.email} onChange={onChange} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <NameField
-              firstName={form.firstName}
-              surname={form.surname}
+        <motion.div
+          className="grid grid-cols-1 gap-6"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: {
+              opacity: 1,
+              y: 0,
+              transition: { staggerChildren: 0.1 },
+            },
+          }}>
+          {/* Email */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-slate-700 mb-1">
+              Email
+            </label>
+            <input
+              name="email"
+              type="email"
+              value={form.email}
               onChange={onChange}
+              placeholder="you@example.com"
+              className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-sm"
             />
-            <PhoneField value={form.phone || ""} onChange={onChange} />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <RoleField value={form.role} onChange={onChange} />
-            <NationalIdField
-              value={form.nationalId || ""}
+
+          {/* Name + Phone */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-slate-700 mb-1">
+                First Name
+              </label>
+              <input
+                name="firstName"
+                value={form.firstName}
+                onChange={onChange}
+                placeholder="John"
+                className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-sm"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-slate-700 mb-1">
+                Phone
+              </label>
+              <input
+                name="phone"
+                value={form.phone || ""}
+                onChange={onChange}
+                placeholder="+263 77 000 0000"
+                className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-500 transition-all duration-200 shadow-sm"
+              />
+            </div>
+          </div>
+
+          {/* Role + National ID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-slate-700 mb-1">
+                Role
+              </label>
+              <select
+                name="role"
+                value={form.role}
+                onChange={onChange}
+                className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 focus:ring-2 focus:ring-green-500 transition-all duration-200 shadow-sm">
+                <option value="user">User</option>
+                <option value="agent">Agent</option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-slate-700 mb-1">
+                National ID
+              </label>
+              <input
+                name="nationalId"
+                value={form.nationalId || ""}
+                onChange={onChange}
+                placeholder="63-123456A12"
+                className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-sm"
+              />
+            </div>
+          </div>
+
+          {/* Bio */}
+          {/* Bio */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-slate-700 mb-1">
+              Bio
+            </label>
+            <textarea
+              name="bio"
+              value={form.bio || ""}
               onChange={onChange}
+              placeholder="Tell us about yourself..."
+              className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-500 transition-all duration-200 shadow-sm"
+              rows={3}
             />
           </div>
 
-          <AvatarField onChange={(file) => setAvatarFile(file)} />
-          <BioField value={form.bio || ""} onChange={onChange} />
-          <PasswordField value={form.password} onChange={onChange} />
-        </div>
+          {/* Password */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-slate-700 mb-1">
+              Password
+            </label>
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={onChange}
+              placeholder="••••••••"
+              className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-sm"
+            />
+          </div>
+        </motion.div>
 
-        <div className="mt-6 flex flex-col sm:flex-row items-center gap-4">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-500 hover:to-blue-500 transition-transform duration-200 hover:scale-[1.02]">
-            {loading ? "Creating..." : "Create account"}
-          </Button>
-          <a
-            className="w-full sm:w-auto rounded-md border px-4 py-2 text-center text-sm text-gray-700 hover:bg-gray-50"
+        {/* Actions */}
+        <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto bg-gradient-to-r from-green-600 via-teal-500 to-blue-600 text-white font-bold shadow-md hover:from-green-500 hover:via-teal-400 hover:to-blue-500 transition-transform duration-200">
+              {loading ? "Creating..." : "Create account"}
+            </Button>
+          </motion.div>
+          <motion.a
+            whileHover={{ scale: 1.05 }}
             href="/signin"
+            className="w-full sm:w-auto rounded-md border-2 border-blue-500 px-4 py-2 text-center text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
             aria-label="Go to login">
             Already have an account?
-          </a>
+          </motion.a>
         </div>
-      </div>
+      </motion.div>
     </motion.form>
   );
 }

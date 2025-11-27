@@ -1,5 +1,5 @@
 export function Hreflang({ path }: { path: string }) {
-  const baseCom = "https://treasurepal.com";
+  const baseCom = "https://www.treasureprops.com";
   const baseZw = "https://treasurepal.co.zw";
 
   // Languages without ISO 639-1 codes (manual injection)

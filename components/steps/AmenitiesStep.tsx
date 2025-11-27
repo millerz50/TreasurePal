@@ -1,7 +1,7 @@
 "use client";
 
+import { AMENITIES } from "@/components/amenities/AmenityMap";
 import { Button } from "@/components/ui/button";
-import { AMENITIES } from "@/lib/amenities";
 import type { Dispatch, SetStateAction } from "react";
 import type { FormData, Step } from "../AddPropertyWizard";
 

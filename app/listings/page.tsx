@@ -89,9 +89,12 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchListings(): Promise<Property[]> {
   try {
+    // ✅ Use production API endpoint
     const res = await fetch(
-      "https://treasurepal-backened.onrender.com/api/properties/all",
-      { next: { revalidate: 60 } }
+      "https://www.treasureprops.com/api/properties/all",
+      {
+        next: { revalidate: 60 },
+      }
     );
     if (!res.ok) {
       console.error("Listings API error", res.status);
@@ -102,7 +105,23 @@ async function fetchListings(): Promise<Property[]> {
     return data.map((item: RawRecord) => parseProperty(item));
   } catch (err) {
     console.error("Failed to fetch listings:", err);
-    return [];
+
+    // ✅ Fallback to Zimbabwe domain if global fails
+    try {
+      const res = await fetch(
+        "https://www.treasureprops.co.zw/api/properties/all",
+        {
+          next: { revalidate: 60 },
+        }
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      if (!Array.isArray(data)) return [];
+      return data.map((item: RawRecord) => parseProperty(item));
+    } catch (err2) {
+      console.error("Fallback fetch also failed:", err2);
+      return [];
+    }
   }
 }
 
@@ -123,7 +142,27 @@ export default async function ListingsPage() {
 
         {listings.length === 0 ? (
           <section className="grid gap-6">
-            {/* ... your "No listings yet" section unchanged ... */}
+            <div className="p-6 rounded-lg border border-dashed border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-center">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                No listings available
+              </h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                There are no properties listed right now. Be the first to list
+                your property and reach buyers and renters.
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/sell/new"
+                  className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm">
+                  List a property
+                </Link>
+                <Link
+                  href="/support"
+                  className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm">
+                  Need help listing?
+                </Link>
+              </div>
+            </div>
           </section>
         ) : (
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

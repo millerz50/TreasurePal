@@ -68,19 +68,37 @@ export default function AddPropertyWizard() {
       if (user?.role !== "agent") {
         throw new Error("Only agents can add properties.");
       }
+
       const payload = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        if (value instanceof File) payload.append(key, value);
-        else if (value !== undefined && value !== null)
+        if (value instanceof File) {
+          payload.append(key, value);
+        } else if (value !== undefined && value !== null) {
           payload.append(key, String(value));
+        }
       });
-      const res = await fetch(
-        "https://treasurepal-backend.onrender.com/api/properties/add",
+
+      // ✅ Primary production API
+      let res = await fetch(
+        "https://www.treasureprops.com/api/properties/add",
         {
           method: "POST",
           body: payload,
         }
       );
+
+      // ✅ Fallback to Zimbabwe domain if global fails
+      if (!res.ok) {
+        console.error("Primary API failed, trying fallback…");
+        res = await fetch(
+          "https://www.treasureprops.co.zw/api/properties/add",
+          {
+            method: "POST",
+            body: payload,
+          }
+        );
+      }
+
       if (!res.ok) throw new Error("Failed to submit property");
       console.log("✅ Property submitted!");
     } catch (err) {

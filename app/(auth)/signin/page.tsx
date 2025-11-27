@@ -5,27 +5,30 @@ export const metadata: Metadata = {
   title: "TreasurePal | Sign in to Your Account",
   description:
     "Access your TreasurePal dashboard to manage properties, agencies, and opportunities. Secure sign‑in for students, families, and investors.",
-  metadataBase: new URL("https://treasurepal.com"),
+  // ✅ Global canonical base set to TreasureProps
+  metadataBase: new URL("https://www.treasureprops.com"),
   alternates: {
-    canonical: "https://treasurepal.com/signin",
+    canonical: "https://www.treasureprops.com/signin",
     languages: {
       // Global English
-      en: "https://treasurepal.com/en/signin",
+      en: "https://www.treasureprops.com/en/signin",
       // Zimbabwe-specific English
       "en-zw": "https://treasurepal.co.zw/en/signin",
       // Shona
-      sn: "https://treasurepal.com/sn/signin",
+      sn: "https://www.treasureprops.com/sn/signin",
       "sn-zw": "https://treasurepal.co.zw/sn/signin",
       // Ndebele
-      nd: "https://treasurepal.com/nd/signin",
+      nd: "https://www.treasureprops.com/nd/signin",
       "nd-zw": "https://treasurepal.co.zw/nd/signin",
+      // Global fallback
+      "x-default": "https://www.treasureprops.com/signin",
     },
   },
   openGraph: {
     title: "TreasurePal | Sign in",
     description:
       "Welcome back to TreasurePal. Sign in to explore treasures across Zimbabwe and worldwide.",
-    url: "https://treasurepal.com/signin",
+    url: "https://www.treasureprops.com/signin",
     siteName: "TreasurePal",
     images: [
       {
@@ -45,7 +48,7 @@ export const metadata: Metadata = {
     images: ["/og/treasurepal-signin.jpg"],
   },
   robots: {
-    index: false,
+    index: false, // ✅ prevent indexing of login page
     follow: true,
   },
 };

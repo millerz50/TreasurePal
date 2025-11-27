@@ -5,35 +5,35 @@ import {
   defaultTwitter,
 } from "@/app/seo/seoConfig";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: `About • ${SITE_NAME}`,
-  description: `Learn more about ${SITE_NAME}, our mission, and how we empower property access across Zimbabwe.`,
+  title: `Terms of Service • ${SITE_NAME}`,
+  description: `Read the Terms of Service for ${SITE_NAME}. Understand your rights and responsibilities when using our platform.`,
   metadataBase: new URL(SITE_URL),
   alternates: {
     ...baseAlternates,
-    canonical: `${SITE_URL}/about`,
+    canonical: `${SITE_URL}/terms`, // ✅ correct canonical path
   },
   openGraph: {
     ...defaultOpenGraph,
-    title: `About • ${SITE_NAME}`,
-    description: `Discover ${SITE_NAME}'s mission and vision for inclusive property opportunities in Zimbabwe.`,
-    url: `${SITE_URL}/about`,
+    title: `Terms of Service • ${SITE_NAME}`,
+    description: `Review the Terms of Service for ${SITE_NAME}. Learn how we operate and what you agree to.`,
+    url: `${SITE_URL}/terms`,
     images: [
       {
-        url: "/og/about.jpg",
+        url: "/og/terms.jpg", // ✅ place a branded OG image in /public/og/
         width: 1200,
         height: 630,
-        alt: "About TreasurePal",
+        alt: "Terms of Service",
       },
     ],
   },
   twitter: {
     ...defaultTwitter,
-    title: `About • ${SITE_NAME}`,
-    description: `Learn more about ${SITE_NAME}, our mission, and how we empower property access across Zimbabwe.`,
-    images: ["/og/about.jpg"],
+    title: `Terms of Service • ${SITE_NAME}`,
+    description: `Read the Terms of Service for ${SITE_NAME}. Understand your rights and responsibilities when using our platform.`,
+    images: ["/og/terms.jpg"],
   },
 };
 
