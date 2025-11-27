@@ -78,27 +78,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // create JWT (Appwrite SDK)
         const jwt = await account.createJWT();
 
-        // fetch profile from your API; pass abort signal if you adapt fetchProfileMe to accept it
+        // fetch profile from your API
         const profile = await fetchProfileMe(jwt.jwt);
 
-        // build avatar URL or initials fallback
+        // build avatar URL or fallback
         let avatarUrl: string | undefined;
+
+        // Prefer explicit avatar file ID from profile or prefs
         const fileId =
           profile?.avatarFileId ?? appwriteUser.prefs?.avatarFileId;
         if (fileId) {
-          avatarUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${fileId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+          avatarUrl = `${process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${fileId}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`;
         } else {
-          const firstLetter =
-            profile?.firstName?.[0] ?? appwriteUser.name?.split(" ")[0]?.[0];
-          const surnameLetter =
-            profile?.surname?.[0] ??
-            appwriteUser.name?.split(" ")[1]?.[0] ??
-            "";
-          const initials = `${firstLetter ?? ""}${
-            surnameLetter ?? ""
-          }`.toUpperCase();
-          if (initials.trim().length > 0) {
-            avatarUrl = `https://ui-avatars.com/api/?name=${initials}&background=random`;
+          // fallback: use ui-avatars with name or email
+          const displayName = profile?.firstName
+            ? `${profile.firstName} ${profile.surname ?? ""}`
+            : appwriteUser.name || appwriteUser.email;
+
+          if (displayName) {
+            avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              displayName
+            )}&background=random&color=fff`;
           }
         }
 
