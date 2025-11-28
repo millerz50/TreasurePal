@@ -12,6 +12,7 @@ import ReviewStep from "./steps/ReviewStep";
 
 export type Step = 1 | 2 | 3 | 4 | 5;
 
+// ✅ Central form type for all steps
 export interface PropertyFormValues {
   title: string;
   price: string;
@@ -61,7 +62,6 @@ export default function AddPropertyWizard() {
     }
   }, [user]);
 
-  // Use the Render service domain requested by you
   const API_BASE = "https://treasurepal-backened.onrender.com";
 
   const handleSubmit = async () => {
@@ -84,6 +84,7 @@ export default function AddPropertyWizard() {
         }
 
         if (Array.isArray(value)) {
+          if (value.length === 0) return; // ✅ skip empty arrays
           value.forEach((v) => fd.append(key, String(v)));
           return;
         }
@@ -94,7 +95,6 @@ export default function AddPropertyWizard() {
       const res = await fetch(`${API_BASE}/api/properties/add`, {
         method: "POST",
         body: fd,
-        // credentials: "include" // enable if your API requires cookies/sessions
       });
 
       if (!res.ok) {
@@ -103,17 +103,19 @@ export default function AddPropertyWizard() {
           const json = await res.json();
           msg = json?.error || json?.message || msg;
         } catch {
-          try {
-            const text = await res.text();
-            if (text) msg = text;
-          } catch {
-            /* ignore */
-          }
+          const text = await res.text();
+          if (text) msg = text;
         }
         throw new Error(msg);
       }
 
-      console.log("✅ Property submitted!");
+      const result = await res.json();
+      if (!result || Object.keys(result).length === 0) {
+        console.log("⚠️ API returned empty data");
+        return;
+      }
+
+      console.log("✅ Property submitted!", result);
     } catch (err) {
       if (err instanceof Error) setError(err.message);
       else setError("An unknown error occurred");
