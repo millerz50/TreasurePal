@@ -1,4 +1,3 @@
-// components/AddPropertyWizard.tsx
 "use client";
 
 import { Separator } from "@/components/ui/Separator";

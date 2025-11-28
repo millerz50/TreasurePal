@@ -3,11 +3,11 @@
 import { AMENITIES } from "@/components/amenities/AmenityMap";
 import { Button } from "@/components/ui/button";
 import type { Dispatch, SetStateAction } from "react";
-import type { FormData, Step } from "../AddPropertyWizard";
+import type { PropertyFormValues, Step } from "../AddPropertyWizard";
 
 interface Props {
-  formData: FormData;
-  setFormData: Dispatch<SetStateAction<FormData>>;
+  formData: PropertyFormValues;
+  setFormData: Dispatch<SetStateAction<PropertyFormValues>>;
   setStep: Dispatch<SetStateAction<Step>>;
 }
 
