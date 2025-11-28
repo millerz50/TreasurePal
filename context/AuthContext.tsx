@@ -15,8 +15,8 @@ import React, {
 const API_BASE_URL = "https://www.treasureprops.com/api";
 
 // ✅ Hard‑coded Appwrite endpoint + project
-const APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1";
-const APPWRITE_PROJECT_ID = "treasureprops"; // replace with your actual project ID
+const APPWRITE_ENDPOINT = "https://nyc.cloud.appwrite.io/v1";
+const APPWRITE_PROJECT_ID = "treasureproject";
 
 async function fetchProfileMe(jwt: string) {
   try {
