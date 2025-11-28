@@ -1,3 +1,4 @@
+// components/AddPropertyWizard.tsx
 "use client";
 
 import { Separator } from "@/components/ui/Separator";
@@ -7,12 +8,11 @@ import AmenitiesStep from "./steps/AmenitiesStep";
 import BasicInfoStep from "./steps/BasicInfoStep";
 import LocationStep from "./steps/LocationStep";
 import PropertyImagesStep from "./steps/PropertyImagesStep";
-
 import ReviewStep from "./steps/ReviewStep";
 
 export type Step = 1 | 2 | 3 | 4 | 5;
 
-export interface FormData {
+export interface PropertyFormValues {
   title: string;
   price: string;
   location: string;
@@ -39,7 +39,7 @@ export default function AddPropertyWizard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<PropertyFormValues>({
     title: "",
     price: "",
     location: "",
@@ -61,48 +61,62 @@ export default function AddPropertyWizard() {
     }
   }, [user]);
 
+  // Use the Render service domain requested by you
+  const API_BASE = "https://treasurepal-backened.onrender.com";
+
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
+
     try {
       if (user?.role !== "agent") {
         throw new Error("Only agents can add properties.");
       }
 
-      const payload = new FormData();
+      const fd = new FormData();
+
       Object.entries(formData).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+
         if (value instanceof File) {
-          payload.append(key, value);
-        } else if (value !== undefined && value !== null) {
-          payload.append(key, String(value));
+          fd.append(key, value);
+          return;
         }
+
+        if (Array.isArray(value)) {
+          value.forEach((v) => fd.append(key, String(v)));
+          return;
+        }
+
+        fd.append(key, String(value));
       });
 
-      // ✅ Primary production API
-      let res = await fetch(
-        "https://treasurepal-backened.onrender.com/properties/add",
-        {
-          method: "POST",
-          body: payload,
-        }
-      );
+      const res = await fetch(`${API_BASE}/api/properties/add`, {
+        method: "POST",
+        body: fd,
+        // credentials: "include" // enable if your API requires cookies/sessions
+      });
 
-      // ✅ Fallback to Zimbabwe domain if global fails
       if (!res.ok) {
-        console.error("Primary API failed, trying fallback…");
-        res = await fetch(
-          "https://treasurepal-backened.onrender.com/api/properties/add",
-          {
-            method: "POST",
-            body: payload,
+        let msg = `Failed to submit property (${res.status})`;
+        try {
+          const json = await res.json();
+          msg = json?.error || json?.message || msg;
+        } catch {
+          try {
+            const text = await res.text();
+            if (text) msg = text;
+          } catch {
+            /* ignore */
           }
-        );
+        }
+        throw new Error(msg);
       }
 
-      if (!res.ok) throw new Error("Failed to submit property");
       console.log("✅ Property submitted!");
     } catch (err) {
       if (err instanceof Error) setError(err.message);
+      else setError("An unknown error occurred");
     } finally {
       setLoading(false);
     }

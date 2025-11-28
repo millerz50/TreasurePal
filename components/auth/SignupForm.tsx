@@ -97,19 +97,6 @@ export default function SignupForm({
         }
       );
 
-      // ✅ Optional fallback to regional domain if global fails
-      if (!res.ok) {
-        console.warn("Primary signup failed, trying fallback…");
-        res = await fetch(
-          "https://treasurepal-backened.onrender.com/api/users/signup",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          }
-        );
-      }
-
       const body = await res.json().catch(() => ({}));
 
       if (!res.ok) {
