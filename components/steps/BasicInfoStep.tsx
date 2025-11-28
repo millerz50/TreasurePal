@@ -1,30 +1,30 @@
 "use client";
 
+import { PROPERTY_TYPES } from "@/components/amenities/AmenityMap";
 import LocationSearch from "@/components/property/LocationSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Dispatch, SetStateAction } from "react";
-import type { FormData, Step } from "../AddPropertyWizard";
-
-// ✅ Import PROPERTY_TYPES from amenities
-import { PROPERTY_TYPES } from "@/components/amenities/AmenityMap";
+import React from "react";
+import type { PropertyFormValues, Step } from "../AddPropertyWizard";
 
 interface Props {
-  formData: FormData;
-  setFormData: Dispatch<SetStateAction<FormData>>;
+  formData: PropertyFormValues;
+  setFormData: Dispatch<SetStateAction<PropertyFormValues>>;
   setStep: Dispatch<SetStateAction<Step>>;
   error: string | null;
   setError: Dispatch<SetStateAction<string | null>>;
 }
 
-export default function BasicInfoStep({
+// ✅ Define as a typed React functional component
+const BasicInfoStep: React.FC<Props> = ({
   formData,
   setFormData,
   setStep,
   error,
   setError,
-}: Props) {
+}) => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -85,7 +85,6 @@ export default function BasicInfoStep({
         onChange={handleChange}
       />
 
-      {/* ✅ Dropdown uses PROPERTY_TYPES from amenities */}
       <select
         name="type"
         value={formData.type}
@@ -121,4 +120,6 @@ export default function BasicInfoStep({
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>
   );
-}
+};
+
+export default BasicInfoStep;

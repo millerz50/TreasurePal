@@ -2,23 +2,24 @@
 
 import { Button } from "@/components/ui/button";
 import type { Dispatch, SetStateAction } from "react";
-import type { FormData, Step } from "../AddPropertyWizard";
+import React from "react";
+import type { PropertyFormValues, Step } from "../AddPropertyWizard";
 
 interface Props {
-  formData: FormData;
+  formData: PropertyFormValues;
   setStep: Dispatch<SetStateAction<Step>>;
   handleSubmit: () => void;
   loading: boolean;
   error: string | null;
 }
 
-export default function ReviewStep({
+const ReviewStep: React.FC<Props> = ({
   formData,
   setStep,
   handleSubmit,
   loading,
   error,
-}: Props) {
+}) => {
   return (
     <div className="space-y-4">
       <h3 className="font-semibold text-primary">Review Your Listing</h3>
@@ -36,4 +37,6 @@ export default function ReviewStep({
       </div>
     </div>
   );
-}
+};
+
+export default ReviewStep;

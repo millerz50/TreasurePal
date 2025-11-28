@@ -3,19 +3,16 @@
 import MapPicker from "@/components/dashboard/MapPicker";
 import { Button } from "@/components/ui/button";
 import type { Dispatch, SetStateAction } from "react";
-import type { FormData, Step } from "../AddPropertyWizard";
+import React from "react";
+import type { PropertyFormValues, Step } from "../AddPropertyWizard";
 
 interface Props {
-  formData: FormData;
-  setFormData: Dispatch<SetStateAction<FormData>>;
+  formData: PropertyFormValues;
+  setFormData: Dispatch<SetStateAction<PropertyFormValues>>;
   setStep: Dispatch<SetStateAction<Step>>;
 }
 
-export default function LocationStep({
-  formData,
-  setFormData,
-  setStep,
-}: Props) {
+const LocationStep: React.FC<Props> = ({ formData, setFormData, setStep }) => {
   return (
     <div className="space-y-4">
       <div className="w-full h-64 rounded-lg border overflow-hidden">
@@ -44,4 +41,6 @@ export default function LocationStep({
       </div>
     </div>
   );
-}
+};
+
+export default LocationStep;

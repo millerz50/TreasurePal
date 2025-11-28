@@ -3,13 +3,13 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import type { Dispatch, SetStateAction } from "react";
-import { useState } from "react";
-import type { FormData, Step } from "../AddPropertyWizard";
+import React, { useState } from "react";
+import type { PropertyFormValues, Step } from "../AddPropertyWizard";
 
 interface Props {
-  setFormData: Dispatch<SetStateAction<FormData>>;
+  setFormData: Dispatch<SetStateAction<PropertyFormValues>>;
   setStep: Dispatch<SetStateAction<Step>>;
-  formData: FormData;
+  formData: PropertyFormValues;
 }
 
 const imageFields = [
@@ -40,7 +40,7 @@ const imageFields = [
   },
 ];
 
-export default function PropertyImagesStep({ setFormData, setStep }: Props) {
+const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
   const handleFileChange = (key: string, file: File | null) => {
@@ -94,4 +94,6 @@ export default function PropertyImagesStep({ setFormData, setStep }: Props) {
       </div>
     </div>
   );
-}
+};
+
+export default PropertyImagesStep;
