@@ -172,7 +172,7 @@ export default function SignupForm({
             />
           </div>
 
-          {/* Name + Phone */}
+          {/* First Name + Surname */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex flex-col">
               <label className="text-sm font-semibold text-slate-700 mb-1">
@@ -186,18 +186,32 @@ export default function SignupForm({
                 className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-sm"
               />
             </div>
+
             <div className="flex flex-col">
               <label className="text-sm font-semibold text-slate-700 mb-1">
-                Phone
+                Surname
               </label>
               <input
-                name="phone"
-                value={form.phone || ""}
+                name="surname"
+                value={form.surname}
                 onChange={onChange}
-                placeholder="+263 77 000 0000"
+                placeholder="Doe"
                 className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-500 transition-all duration-200 shadow-sm"
               />
             </div>
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-slate-700 mb-1">
+              Phone
+            </label>
+            <input
+              name="phone"
+              value={form.phone || ""}
+              onChange={onChange}
+              placeholder="+263 77 000 0000"
+              className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-500 transition-all duration-200 shadow-sm"
+            />
           </div>
 
           {/* Role + National ID */}
