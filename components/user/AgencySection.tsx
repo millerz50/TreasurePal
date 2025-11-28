@@ -25,7 +25,9 @@ export default function AgencySection() {
   useEffect(() => {
     const fetchAgents = async (): Promise<void> => {
       try {
-        const res = await fetch("https://your-api-domain.com/api/agents");
+        const res = await fetch(
+          "https://treasurepal-backened.onrender.com/agents"
+        );
         if (!res.ok) throw new Error("Failed to fetch agents");
         const data: Agent[] = await res.json();
         setAgents(data);

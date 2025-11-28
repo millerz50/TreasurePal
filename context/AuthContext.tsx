@@ -12,7 +12,7 @@ import React, {
 } from "react";
 
 // ✅ Hard‑coded API base URL (production)
-const API_BASE_URL = "https://www.treasureprops.com/api";
+const API_BASE_URL = "https://treasurepal-backened.onrender.com/api";
 
 // ✅ Hard‑coded Appwrite endpoint + project
 const APPWRITE_ENDPOINT = "https://nyc.cloud.appwrite.io/v1";

@@ -80,7 +80,7 @@ export default function AddPropertyWizard() {
 
       // ✅ Primary production API
       let res = await fetch(
-        "https://www.treasureprops.com/api/properties/add",
+        "https://treasurepal-backened.onrender.com/properties/add",
         {
           method: "POST",
           body: payload,
@@ -91,7 +91,7 @@ export default function AddPropertyWizard() {
       if (!res.ok) {
         console.error("Primary API failed, trying fallback…");
         res = await fetch(
-          "https://www.treasureprops.co.zw/api/properties/add",
+          "https://treasurepal-backened.onrender.com/api/properties/add",
           {
             method: "POST",
             body: payload,

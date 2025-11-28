@@ -31,9 +31,12 @@ function parseJob(raw: RawRecord): Job {
 async function fetchCareers(): Promise<Job[]> {
   try {
     // ✅ Use production API endpoints
-    const res = await fetch("https://www.treasureprops.com/api/careers", {
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(
+      "https://treasurepal-backened.onrender.com/careers",
+      {
+        next: { revalidate: 60 },
+      }
+    );
 
     if (!res.ok) {
       console.error("Careers API returned non-OK:", res.status);
@@ -48,9 +51,12 @@ async function fetchCareers(): Promise<Job[]> {
 
     // Fallback: try Zimbabwe domain if global fails
     try {
-      const res = await fetch("https://www.treasureprops.co.zw/api/careers", {
-        next: { revalidate: 60 },
-      });
+      const res = await fetch(
+        "https://treasurepal-backened.onrender.com/api/careers",
+        {
+          next: { revalidate: 60 },
+        }
+      );
       if (!res.ok) return [];
       const data = await res.json();
       if (!Array.isArray(data)) return [];

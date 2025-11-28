@@ -56,7 +56,7 @@ type Property = {
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
     // ✅ Use production API
-    const url = `https://www.treasureprops.com/api/properties/${typePath}`;
+    const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
       console.error("API error", res.status, url);
@@ -89,7 +89,7 @@ async function fetchByType(typePath: string): Promise<Property[]> {
 
     // ✅ Fallback to Zimbabwe domain
     try {
-      const url = `https://www.treasureprops.co.zw/api/properties/${typePath}`;
+      const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
       const res = await fetch(url, { next: { revalidate: 60 } });
       if (!res.ok) return [];
       const data: unknown = await res.json();

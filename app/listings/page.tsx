@@ -91,7 +91,7 @@ async function fetchListings(): Promise<Property[]> {
   try {
     // ✅ Use production API endpoint
     const res = await fetch(
-      "https://www.treasureprops.com/api/properties/all",
+      "https://treasurepal-backened.onrender.com/api/properties/all",
       {
         next: { revalidate: 60 },
       }
@@ -109,7 +109,7 @@ async function fetchListings(): Promise<Property[]> {
     // ✅ Fallback to Zimbabwe domain if global fails
     try {
       const res = await fetch(
-        "https://www.treasureprops.co.zw/api/properties/all",
+        "https://treasurepal-backened.onrender.com/api/properties/all",
         {
           next: { revalidate: 60 },
         }

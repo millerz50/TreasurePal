@@ -7,12 +7,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   outputFileTracingRoot: __dirname,
   images: {
-    domains: [
-      "ui-avatars.com",
-      "images.pexels.com",
-      "treasurepal-backened.onrender.com",
-    ],
-
+    // ✅ All allowed domains
+    domains: ["ui-avatars.com", "images.pexels.com", "www.treasureprops.com"],
+    // ✅ Remote patterns for stricter matching
     remotePatterns: [
       {
         protocol: "https",
@@ -24,17 +21,9 @@ const nextConfig = {
         hostname: "images.pexels.com",
         pathname: "/**",
       },
-    ],
-    domains: ["ui-avatars.com", "images.pexels.com"],
-    remotePatterns: [
       {
         protocol: "https",
-        hostname: "ui-avatars.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "images.pexels.com",
+        hostname: "www.treasureprops.com",
         pathname: "/**",
       },
     ],

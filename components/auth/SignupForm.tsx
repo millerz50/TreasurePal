@@ -88,20 +88,26 @@ export default function SignupForm({
       };
 
       // ✅ Use production API domain
-      let res = await fetch("https://www.treasureprops.com/api/users/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let res = await fetch(
+        "https://treasurepal-backened.onrender.com/users/signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       // ✅ Optional fallback to regional domain if global fails
       if (!res.ok) {
         console.warn("Primary signup failed, trying fallback…");
-        res = await fetch("https://www.treasureprops.co.zw/api/users/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        res = await fetch(
+          "https://treasurepal-backened.onrender.com/api/users/signup",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
       }
 
       const body = await res.json().catch(() => ({}));

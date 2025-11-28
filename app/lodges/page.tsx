@@ -89,7 +89,7 @@ function parseProperty(raw: RawRecord): Property {
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
     // ✅ Use production API endpoint
-    const url = `https://www.treasureprops.com/api/properties/${typePath}`;
+    const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
       console.error("API error", res.status, url);
@@ -103,7 +103,7 @@ async function fetchByType(typePath: string): Promise<Property[]> {
 
     // ✅ Fallback to Zimbabwe domain if global fails
     try {
-      const url = `https://www.treasureprops.co.zw/api/properties/${typePath}`;
+      const url = `https://treasurepal-backened.onrender.com/properties/${typePath}`;
       const res = await fetch(url, { next: { revalidate: 60 } });
       if (!res.ok) return [];
       const data = await res.json();
