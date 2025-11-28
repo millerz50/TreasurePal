@@ -19,7 +19,7 @@ type Agent = {
   metadata?: string[];
   accountid: string;
   imageFileId?: string | null;
-  location?: string; // ✅ add location field in your Appwrite schema
+  location?: string;
 };
 
 const locations = [
@@ -48,8 +48,15 @@ export default function AgencySection() {
           }
         );
         if (!res.ok) throw new Error(`Failed to fetch agents: ${res.status}`);
-        const data: Agent[] = await res.json();
-        setAgents(data);
+        const data = await res.json();
+
+        // ✅ Ensure data is an array
+        if (Array.isArray(data)) {
+          setAgents(data);
+        } else {
+          console.error("❌ API did not return an array:", data);
+          setAgents([]);
+        }
       } catch (error) {
         console.error("❌ Error fetching agents:", error);
         setAgents([]);
@@ -60,8 +67,8 @@ export default function AgencySection() {
     fetchAgents();
   }, []);
 
-  // ✅ Filter agents by location
-  const filteredAgents =
+  // ✅ Filter agents by location safely
+  const filteredAgents: Agent[] =
     selectedLocation === "All"
       ? agents
       : agents.filter((agent) => agent.location === selectedLocation);

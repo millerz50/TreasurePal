@@ -56,6 +56,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 py-8">
         <Hero />
         <PropertyList />
+        {/* ✅ BlogSection should internally guard against non-array data */}
         <BlogSection />
         <FaqFull includeSchema={true} storageKey="faq.home.open" />
         <AgencySection />
