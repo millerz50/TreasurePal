@@ -55,16 +55,18 @@ type Property = {
   summary?: string;
 };
 
-function toString(v: unknown) {
+function toString(v: unknown): string {
   return typeof v === "string" ? v : v == null ? "" : String(v);
 }
-function toNumberOrUndefined(v: unknown) {
-  return typeof v === "number"
-    ? v
-    : typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))
-    ? Number(v)
-    : undefined;
+
+function toNumberOrUndefined(v: unknown): number | undefined {
+  if (typeof v === "number") return v;
+  if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) {
+    return Number(v);
+  }
+  return undefined;
 }
+
 function parseProperty(raw: RawRecord): Property {
   return {
     id: toString(
@@ -89,31 +91,18 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
-    // ✅ Use production API endpoint
     const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
-      console.error("API error", res.status, url);
+      console.error("API error:", res.status, url);
       return [];
     }
     const data = await res.json();
     if (!Array.isArray(data)) return [];
-    return data.map((p) => parseProperty(p as RawRecord));
+    return data.map((p: RawRecord) => parseProperty(p));
   } catch (err) {
     console.error("Fetch failed:", err);
-
-    // ✅ Fallback to Zimbabwe domain if global fails
-    try {
-      const url = `https://treasurepal-backened.onrender.com/properties/${typePath}`;
-      const res = await fetch(url, { next: { revalidate: 60 } });
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.map((p) => parseProperty(p as RawRecord));
-    } catch (err2) {
-      console.error("Fallback fetch also failed:", err2);
-      return [];
-    }
+    return [];
   }
 }
 

@@ -1,8 +1,9 @@
+import { Fragment } from "react";
+
 export function Hreflang({ path }: { path: string }) {
   const baseCom = "https://www.treasureprops.com";
   const baseZw = "https://treasurepal.co.zw";
 
-  // Languages without ISO 639-1 codes (manual injection)
   const customLangs = [
     { code: "chw", label: "Chibarwe" },
     { code: "kck", label: "Kalanga" },
@@ -16,20 +17,18 @@ export function Hreflang({ path }: { path: string }) {
   return (
     <>
       {customLangs.map((l) => (
-        <>
+        <Fragment key={l.code}>
           <link
-            key={`${l.code}-com`}
             rel="alternate"
             hrefLang={l.code}
             href={`${baseCom}/${l.code}${path}`}
           />
           <link
-            key={`${l.code}-zw`}
             rel="alternate"
             hrefLang={`${l.code}-zw`}
             href={`${baseZw}/${l.code}${path}`}
           />
-        </>
+        </Fragment>
       ))}
       {/* x-default fallback */}
       <link

@@ -55,16 +55,18 @@ type Property = {
   summary?: string;
 };
 
-function toString(v: unknown) {
+function toString(v: unknown): string {
   return typeof v === "string" ? v : v == null ? "" : String(v);
 }
-function toNumberOrUndefined(v: unknown) {
-  return typeof v === "number"
-    ? v
-    : typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))
-    ? Number(v)
-    : undefined;
+
+function toNumberOrUndefined(v: unknown): number | undefined {
+  if (typeof v === "number") return v;
+  if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) {
+    return Number(v);
+  }
+  return undefined;
 }
+
 function parseProperty(raw: RawRecord): Property {
   return {
     id: toString(
@@ -89,15 +91,12 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchListings(): Promise<Property[]> {
   try {
-    // ✅ Use production API endpoint
     const res = await fetch(
       "https://treasurepal-backened.onrender.com/api/properties/all",
-      {
-        next: { revalidate: 60 },
-      }
+      { next: { revalidate: 60 } }
     );
     if (!res.ok) {
-      console.error("Listings API error", res.status);
+      console.error("Listings API error:", res.status);
       return [];
     }
     const data = await res.json();
@@ -105,23 +104,7 @@ async function fetchListings(): Promise<Property[]> {
     return data.map((item: RawRecord) => parseProperty(item));
   } catch (err) {
     console.error("Failed to fetch listings:", err);
-
-    // ✅ Fallback to Zimbabwe domain if global fails
-    try {
-      const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/properties/all",
-        {
-          next: { revalidate: 60 },
-        }
-      );
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.map((item: RawRecord) => parseProperty(item));
-    } catch (err2) {
-      console.error("Fallback fetch also failed:", err2);
-      return [];
-    }
+    return [];
   }
 }
 

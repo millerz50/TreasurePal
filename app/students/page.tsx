@@ -54,16 +54,18 @@ type Property = {
   summary?: string;
 };
 
-function toString(v: unknown) {
+function toString(v: unknown): string {
   return typeof v === "string" ? v : v == null ? "" : String(v);
 }
-function toNumberOrUndefined(v: unknown) {
-  return typeof v === "number"
-    ? v
-    : typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))
-    ? Number(v)
-    : undefined;
+
+function toNumberOrUndefined(v: unknown): number | undefined {
+  if (typeof v === "number") return v;
+  if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) {
+    return Number(v);
+  }
+  return undefined;
 }
+
 function parseProperty(raw: RawRecord): Property {
   return {
     id: toString(
@@ -88,11 +90,10 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
-    // ✅ Use production API
     const url = `https://www.treasureprops.com/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
-      console.error("API error", res.status, url);
+      console.error("API error:", res.status, url);
       return [];
     }
     const data = await res.json();
@@ -101,11 +102,13 @@ async function fetchByType(typePath: string): Promise<Property[]> {
   } catch (err) {
     console.error("Fetch failed:", err);
 
-    // ✅ Fallback to Zimbabwe domain
     try {
       const url = `https://www.treasureprops.co.zw/api/properties/${typePath}`;
       const res = await fetch(url, { next: { revalidate: 60 } });
-      if (!res.ok) return [];
+      if (!res.ok) {
+        console.error("Fallback API error:", res.status, url);
+        return [];
+      }
       const data = await res.json();
       if (!Array.isArray(data)) return [];
       return data.map((p) => parseProperty(p as RawRecord));
@@ -119,7 +122,6 @@ async function fetchByType(typePath: string): Promise<Property[]> {
 export default async function StudentsPage() {
   const listings = await fetchByType("students");
 
-  // ✅ Structured Data JSON-LD
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",

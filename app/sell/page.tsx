@@ -55,11 +55,10 @@ type Property = {
 
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
-    // ✅ Use production API
     const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
-      console.error("API error", res.status, url);
+      console.error("API error:", res.status, url);
       return [];
     }
     const data: unknown = await res.json();
@@ -86,45 +85,13 @@ async function fetchByType(typePath: string): Promise<Property[]> {
     });
   } catch (err) {
     console.error("Fetch failed:", err);
-
-    // ✅ Fallback to Zimbabwe domain
-    try {
-      const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
-      const res = await fetch(url, { next: { revalidate: 60 } });
-      if (!res.ok) return [];
-      const data: unknown = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.map((raw) => {
-        const p = raw as Record<string, unknown>;
-        return {
-          id: String(
-            p.id ?? p._id ?? p.slug ?? Math.random().toString(36).slice(2)
-          ),
-          title:
-            (p.title as string) ?? (p.name as string) ?? "Untitled property",
-          location: (p.location as string) ?? (p.city as string) ?? "Unknown",
-          price:
-            p.price !== undefined
-              ? String(p.price)
-              : (p.displayPrice as string) ?? "Contact for price",
-          beds: (p.beds as number) ?? (p.bedrooms as number) ?? undefined,
-          baths: (p.baths as number) ?? (p.bathrooms as number) ?? undefined,
-          image: (p.image as string) ?? (p.photo as string) ?? null,
-          slug: (p.slug as string) ?? (p.id as string) ?? undefined,
-          summary: (p.summary as string) ?? (p.description as string) ?? "",
-        };
-      });
-    } catch (err2) {
-      console.error("Fallback fetch also failed:", err2);
-      return [];
-    }
+    return [];
   }
 }
 
 export default async function SalePage() {
   const listings = await fetchByType("sale");
 
-  // ✅ Structured Data JSON-LD
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",

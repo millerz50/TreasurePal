@@ -20,11 +20,32 @@ export default function PropertyList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/properties/all")
-      .then((res) => res.json())
-      .then((data) => setProperties(data))
-      .catch((err) => console.error("❌ Failed to fetch properties:", err))
-      .finally(() => setLoading(false));
+    const fetchProperties = async (): Promise<void> => {
+      try {
+        const res = await fetch(
+          "https://treasurepal-backened.onrender.com/api/properties/all",
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch properties: HTTP ${res.status}`);
+        }
+
+        const data: Property[] = await res.json();
+        setProperties(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch properties:", err);
+        setProperties([]); // fallback to empty list
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
   }, []);
 
   return (

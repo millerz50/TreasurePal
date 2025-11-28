@@ -99,7 +99,6 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
-    // ✅ Use production API endpoint
     const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
@@ -111,19 +110,7 @@ async function fetchByType(typePath: string): Promise<Property[]> {
     return data.map((p: RawRecord) => parseProperty(p));
   } catch (err) {
     console.error("Fetch failed:", err);
-
-    // ✅ Fallback to Zimbabwe domain if global fails
-    try {
-      const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
-      const res = await fetch(url, { next: { revalidate: 60 } });
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.map((p: RawRecord) => parseProperty(p));
-    } catch (err2) {
-      console.error("Fallback fetch also failed:", err2);
-      return [];
-    }
+    return [];
   }
 }
 

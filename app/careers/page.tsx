@@ -1,6 +1,7 @@
 import Seo from "@/components/seo/Seo";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import Link from "next/link";
+
 type RawRecord = Record<string, unknown>;
 type Job = {
   id: string;
@@ -30,7 +31,6 @@ function parseJob(raw: RawRecord): Job {
 
 async function fetchCareers(): Promise<Job[]> {
   try {
-    // ✅ Use production API endpoints
     const res = await fetch(
       "https://treasurepal-backened.onrender.com/careers",
       {
@@ -49,7 +49,7 @@ async function fetchCareers(): Promise<Job[]> {
   } catch (err) {
     console.error("Failed to fetch careers:", err);
 
-    // Fallback: try Zimbabwe domain if global fails
+    // Fallback: try alternate endpoint
     try {
       const res = await fetch(
         "https://treasurepal-backened.onrender.com/api/careers",
@@ -71,7 +71,6 @@ async function fetchCareers(): Promise<Job[]> {
 export default async function CareersPage() {
   const jobs = await fetchCareers();
 
-  // ✅ Structured Data JSON-LD
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -104,14 +103,12 @@ export default async function CareersPage() {
 
   return (
     <>
-      {/* Centralized SEO */}
       <Seo
         title={`Careers at ${SITE_NAME}`}
         description={`Join ${SITE_NAME}. See open roles, benefits, and how we hire locally in Zimbabwe.`}
         url={`${SITE_URL}/careers`}
       />
 
-      {/* Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
