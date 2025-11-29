@@ -12,7 +12,7 @@ const SignupSchema = z.object({
   email: z.string().email("Invalid email"),
   firstName: z.string().min(1, "First name required"),
   surname: z.string().min(1, "Surname required"),
-  phone: z.string().max(11).optional(),
+  phone: z.string().max(14).optional(),
   role: z.enum(["user", "agent"]).default("user"),
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
