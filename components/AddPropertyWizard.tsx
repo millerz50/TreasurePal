@@ -91,8 +91,15 @@ export default function AddPropertyWizard() {
         fd.append(key, String(value));
       });
 
+      const token = localStorage.getItem("authToken"); // or however you store it
+
       const res = await fetch(`${API_BASE}/api/properties/add`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`, // 🔑 include your token
+          // Don't set Content-Type manually when using FormData
+          // fetch will handle it correctly
+        },
         body: fd,
       });
 
@@ -180,4 +187,3 @@ export default function AddPropertyWizard() {
     </div>
   );
 }
-
