@@ -7,12 +7,16 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
 
+// ✅ Allow proper E.164 numbers (8–15 digits after +)
 const SignupSchema = z.object({
   accountId: z.string().min(1, "Account ID required"),
   email: z.string().email("Invalid email"),
   firstName: z.string().min(1, "First name required"),
   surname: z.string().min(1, "Surname required"),
-  phone: z.string().max(14).optional(),
+  phone: z
+    .string()
+    .regex(/^\+[1-9]\d{7,14}$/, "Phone must be in +E.164 format")
+    .optional(),
   role: z.enum(["user", "agent"]).default("user"),
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
@@ -181,6 +185,7 @@ export default function SignupForm({
               name="phone"
               value={form.phone}
               onChange={onChange}
+              placeholder="+2637XXXXXXXX"
               className="input"
             />
           </div>
