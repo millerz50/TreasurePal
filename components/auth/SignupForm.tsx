@@ -15,8 +15,22 @@ const SignupSchema = z.object({
   surname: z.string().min(1, "Surname required"),
   phone: z
     .string()
-    .regex(/^\+[1-9]\d{7,14}$/, "Phone must be in +E.164 format")
+    .refine(
+      (val) => {
+        if (!val) return true; // allow optional
+        // Generic E.164: + followed by 8–15 digits
+        const e164Regex = /^\+[1-9]\d{7,14}$/;
+        // Zimbabwe specific: +2637 followed by exactly 8 digits
+        const zimRegex = /^\+2637\d{8}$/;
+        return e164Regex.test(val) || zimRegex.test(val);
+      },
+      {
+        message:
+          "Phone must be valid E.164 (+XXXXXXXX…) or Zimbabwe format (+2637XXXXXXXX)",
+      }
+    )
     .optional(),
+
   role: z.enum(["user", "agent"]).default("user"),
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
