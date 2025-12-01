@@ -1,231 +1,259 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const { Client, ID, Query, TablesDB, Users } = require("node-appwrite");
+"use client";
 
-const client = new Client()
-  .setEndpoint(process.env.APPWRITE_ENDPOINT!)
-  .setProject(process.env.APPWRITE_PROJECT_ID!)
-  .setKey(process.env.APPWRITE_API_KEY!);
+import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Button } from "../../components/ui/button";
 
-const tablesDB = new TablesDB(client);
-const users = new Users(client);
+// ✅ Schema without phone validation
+const SignupSchema = z.object({
+  accountId: z.string().min(1, "Account ID required"),
+  email: z.string().email("Invalid email"),
+  firstName: z.string().min(1, "First name required"),
+  surname: z.string().min(1, "Surname required"),
+  phone: z.string().optional(),
+  role: z.enum(["user", "agent"]).default("user"),
+  status: z
+    .enum(["Not Verified", "Pending", "Active", "Suspended"])
+    .default("Pending"),
+  nationalId: z.string().optional(),
+  bio: z.string().max(300).optional(),
+  metadata: z.array(z.string()).optional(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
-const DB_ID = process.env.APPWRITE_DATABASE_ID!;
-const USERS_TABLE = process.env.APPWRITE_USERTABLE_ID || "user";
-const DEBUG = process.env.DEBUG === "true";
+type SignupFormData = z.infer<typeof SignupSchema>;
 
-if (!DB_ID || !USERS_TABLE) {
-  throw new Error(
-    `❌ Missing Appwrite config: DB_ID=${DB_ID}, USERS_TABLE=${USERS_TABLE}`
-  );
-}
-
-export interface UserRow {
-  $id?: string;
-  accountid?: string;
-  email?: string;
-  firstName?: string;
-  surname?: string;
-  phone?: string | null;
-  role?: string;
-  status?: string;
-  nationalId?: string | null;
-  bio?: string | null;
-  metadata?: string[];
-  [key: string]: unknown;
-}
-
-function safeFormat(row: unknown): UserRow | null {
-  if (!row || typeof row !== "object") return null;
-  const formatted = { ...(row as UserRow) };
-  delete (formatted as any).password; // never expose password in responses
-  return formatted;
-}
-
-function logError(
-  operation: string,
-  err: unknown,
-  context: Record<string, unknown> = {}
-) {
-  console.error(
-    JSON.stringify({
-      timestamp: new Date().toISOString(),
-      service: "userService",
-      operation,
-      context,
-      error: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : null,
-    })
-  );
-}
-
-// 🔎 Get by table row ID
-export async function getUserById(userId: string): Promise<UserRow | null> {
-  try {
-    const row = await tablesDB.getRow(DB_ID, USERS_TABLE, userId);
-    return safeFormat(row);
-  } catch (err: unknown) {
-    logError("getUserById", err, { userId });
-    return null;
-  }
-}
-
-// 🔎 Get by linked auth user ID (Appwrite accountId)
-export async function getUserByAccountId(
-  accountid: string
-): Promise<UserRow | null> {
-  try {
-    const res = await tablesDB.listRows(DB_ID, USERS_TABLE, [
-      Query.equal("accountid", accountid),
-    ]);
-    return res.total > 0 ? safeFormat(res.rows[0]) : null;
-  } catch (err: unknown) {
-    logError("getUserByAccountId", err, { accountid });
-    return null;
-  }
-}
-
-// 📋 List all users
-export async function listUsers(limit = 100, offset = 0) {
-  try {
-    const res = await tablesDB.listRows(DB_ID, USERS_TABLE, [], String(limit));
-    const rows = Array.isArray(res.rows) ? res.rows : [];
-    const usersList = rows.slice(offset, offset + limit).map(safeFormat);
-    return { total: res.total ?? usersList.length, users: usersList };
-  } catch (err: unknown) {
-    logError("listUsers", err, { limit, offset });
-    return { total: 0, users: [] };
-  }
-}
-
-// 🆕 Signup: create auth user + profile row
-export async function signupUser(payload: {
-  email: string;
-  password: string;
-  firstName: string;
-  surname: string;
-  phone?: string;
-  role?: string;
-  status?: string;
-  nationalId?: string;
-  bio?: string;
-  metadata?: string[];
+export default function SignupForm({
+  redirectTo = "/signin",
+}: {
+  redirectTo?: string;
 }) {
-  try {
-    // 1. Create auth user (Appwrite) with email + password + name
-    // 🚫 Do not send phone to Appwrite
-    const authUser = await users.create(
-      ID.unique(),
-      payload.email,
-      payload.password,
-      `${payload.firstName} ${payload.surname}`,
-      null
-    );
+  const [form, setForm] = useState<SignupFormData>({
+    accountId: crypto.randomUUID(), // ✅ use browser UUID generator
+    email: "",
+    firstName: "",
+    surname: "",
+    phone: "",
+    role: "user",
+    status: "Pending",
+    nationalId: "",
+    bio: "",
+    metadata: [],
+    password: "",
+  });
 
-    // 2. Create profile row linked to auth user (store phone here only)
-    const row = await tablesDB.createRow(DB_ID, USERS_TABLE, ID.unique(), {
-      accountid: authUser.$id,
-      email: payload.email.toLowerCase(),
-      firstName: payload.firstName,
-      surname: payload.surname,
-      phone: payload.phone ?? null, // ✅ stored only in your DB
-      role: payload.role ?? "user",
-      status: payload.status ?? "Active",
-      password: payload.password, // ⚠️ Ideally remove from schema ASAP
-      nationalId: payload.nationalId ?? null,
-      bio: payload.bio ?? null,
-      metadata: payload.metadata ?? [],
+  const [loading, setLoading] = useState(false);
+
+  function onChange(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const parsed = SignupSchema.safeParse(form);
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0].message);
+      return;
+    }
+
+    setLoading(true);
+    const tId = toast.loading("Creating your account…", {
+      description: "Please wait while we finalize your details.",
     });
 
-    if (DEBUG) console.log("signupUser auth:", authUser, "profile:", row);
-    return { authUser, profile: safeFormat(row) };
-  } catch (err: unknown) {
-    logError("signupUser", err, { payload });
-    throw err;
+    try {
+      const payload = {
+        accountId: parsed.data.accountId,
+        email: parsed.data.email.toLowerCase(),
+        firstName: parsed.data.firstName,
+        surname: parsed.data.surname,
+        password: parsed.data.password,
+        role: parsed.data.role,
+        status: "Active",
+        phone: parsed.data.phone || null,
+        nationalId: parsed.data.nationalId || null,
+        bio: parsed.data.bio || null,
+        metadata: parsed.data.metadata || [],
+      };
+
+      const res = await fetch(
+        "https://treasurepal-backened.onrender.com/api/users/signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const body = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        toast.error(
+          body.error || body.message || `Signup failed (${res.status})`
+        );
+        toast.dismiss(tId);
+        return;
+      }
+
+      toast.success("Account created successfully!", {
+        description: "Redirecting you to signin…",
+      });
+
+      toast.dismiss(tId);
+
+      setTimeout(() => {
+        window.location.href = redirectTo;
+      }, 1200);
+    } catch {
+      toast.error("Network error. Try again.");
+      toast.dismiss(tId);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  return (
+    <motion.form
+      onSubmit={handleSubmit}
+      className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl 
+                 bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}>
+      <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg">
+        <div className="grid grid-cols-1 gap-6">
+          {/* Email */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700">
+              Email
+            </label>
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={onChange}
+              placeholder="you@example.com"
+              className="input"
+            />
+          </div>
+
+          {/* First + Last Name */}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="text-sm font-semibold text-slate-700">
+                First Name
+              </label>
+              <input
+                name="firstName"
+                value={form.firstName}
+                onChange={onChange}
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-slate-700">
+                Surname
+              </label>
+              <input
+                name="surname"
+                value={form.surname}
+                onChange={onChange}
+                className="input"
+              />
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700">
+              Phone
+            </label>
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={onChange}
+              placeholder="Enter phone number"
+              className="input"
+            />
+          </div>
+
+          {/* Role + National ID */}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="text-sm font-semibold text-slate-700">
+                Role
+              </label>
+              <select
+                name="role"
+                value={form.role}
+                onChange={onChange}
+                className="input">
+                <option value="user">User</option>
+                <option value="agent">Agent</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-slate-700">
+                National ID
+              </label>
+              <input
+                name="nationalId"
+                value={form.nationalId}
+                onChange={onChange}
+                className="input"
+              />
+            </div>
+          </div>
+
+          {/* Bio */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700">Bio</label>
+            <textarea
+              name="bio"
+              value={form.bio}
+              onChange={onChange}
+              className="input"
+              rows={3}
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700">
+              Password
+            </label>
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={onChange}
+              className="input"
+            />
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
+          <Button type="submit" disabled={loading} className="btn-primary">
+            {loading ? "Creating..." : "Create Account"}
+          </Button>
+
+          <a href="/signin" className="btn-outline">
+            Already have an account?
+          </a>
+        </div>
+      </div>
+    </motion.form>
+  );
 }
 
-// ✅ Alias for backwards compatibility
-export async function createUser(payload: Parameters<typeof signupUser>[0]) {
-  return signupUser(payload);
-}
-
-// ✏️ Update profile row
-export async function updateUser(
-  userId: string,
-  updates: Record<string, unknown>
-) {
-  try {
-    if ("password" in updates) delete (updates as any).password;
-    const row = await tablesDB.updateRow(DB_ID, USERS_TABLE, userId, updates);
-    return safeFormat(row);
-  } catch (err: unknown) {
-    logError("updateUser", err, { userId, updates });
-    throw err;
-  }
-}
-
-// ❌ Delete profile row
-export async function deleteUser(userId: string) {
-  try {
-    return await tablesDB.deleteRow(DB_ID, USERS_TABLE, userId);
-  } catch (err: unknown) {
-    logError("deleteUser", err, { userId });
-    throw err;
-  }
-}
-
-// 🔧 Set role
-export async function setRole(userId: string, role: string) {
-  try {
-    const row = await tablesDB.updateRow(DB_ID, USERS_TABLE, userId, { role });
-    return safeFormat(row);
-  } catch (err: unknown) {
-    logError("setRole", err, { userId, role });
-    throw err;
-  }
-}
-
-// 🔧 Set status
-export async function setStatus(userId: string, status: string) {
-  try {
-    const row = await tablesDB.updateRow(DB_ID, USERS_TABLE, userId, {
-      status,
-    });
-    return safeFormat(row);
-  } catch (err: unknown) {
-    logError("setStatus", err, { userId, status });
-    throw err;
-  }
-}
-
-// 🔎 Find by email
-export async function findByEmail(email: string) {
-  try {
-    const res = await tablesDB.listRows(DB_ID, USERS_TABLE, [
-      Query.equal("email", email.toLowerCase()),
-    ]);
-    return res.total > 0 ? safeFormat(res.rows[0]) : null;
-  } catch (err: unknown) {
-    logError("findByEmail", err, { email });
-    return null;
-  }
-}
-
-// 🔎 List agents (users with role="agent")
-export async function listAgents(limit = 100, offset = 0) {
-  try {
-    const res = await tablesDB.listRows(
-      DB_ID,
-      USERS_TABLE,
-      [Query.equal("role", "agent")],
-      String(limit)
-    );
-    const rows = Array.isArray(res.rows) ? res.rows : [];
-    const agentsList = rows.slice(offset, offset + limit).map(safeFormat);
-    return { total: res.total ?? agentsList.length, agents: agentsList };
-  } catch (err: unknown) {
-    logError("listAgents", err, { limit, offset });
-    return { total: 0, agents: [] };
-  }
-}
 
