@@ -12,10 +12,7 @@ const SignupSchema = z.object({
   email: z.string().email("Invalid email"),
   firstName: z.string().min(1, "First name required"),
   surname: z.string().min(1, "Surname required"),
-<<<<<<< HEAD
-=======
-  phone: z.string().optional(),
->>>>>>> 6e3919ce1e9604b8c3f6c7e4f44f93630d7f28a2
+
   role: z.enum(["user", "agent"]).default("user"),
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
@@ -80,10 +77,6 @@ export default function SignupForm({
         password: parsed.data.password,
         role: parsed.data.role,
         status: "Active",
-<<<<<<< HEAD
-=======
-        phone: parsed.data.phone || null,
->>>>>>> 6e3919ce1e9604b8c3f6c7e4f44f93630d7f28a2
         nationalId: parsed.data.nationalId || null,
         bio: parsed.data.bio || null,
         metadata: parsed.data.metadata || [],
@@ -246,5 +239,3 @@ export default function SignupForm({
     </motion.form>
   );
 }
-
-
