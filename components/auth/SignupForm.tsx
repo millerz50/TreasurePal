@@ -7,30 +7,13 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
 
-// ✅ Allow proper E.164 numbers (8–15 digits after +)
+// ❌ Removed phone regex validation
 const SignupSchema = z.object({
   accountId: z.string().min(1, "Account ID required"),
   email: z.string().email("Invalid email"),
   firstName: z.string().min(1, "First name required"),
   surname: z.string().min(1, "Surname required"),
-  phone: z
-    .string()
-    .refine(
-      (val) => {
-        if (!val) return true; // allow optional
-        // Generic E.164: + followed by 8–15 digits
-        const e164Regex = /^\+[1-9]\d{7,14}$/;
-        // Zimbabwe specific: +2637 followed by exactly 8 digits
-        const zimRegex = /^\+2637\d{8}$/;
-        return e164Regex.test(val) || zimRegex.test(val);
-      },
-      {
-        message:
-          "Phone must be valid E.164 (+XXXXXXXX…) or Zimbabwe format (+2637XXXXXXXX)",
-      }
-    )
-    .optional(),
-
+  phone: z.string().optional(), // ✅ no validation, just optional string
   role: z.enum(["user", "agent"]).default("user"),
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
@@ -96,7 +79,7 @@ export default function SignupForm({
         password: parsed.data.password,
         role: parsed.data.role,
         status: "Active",
-        phone: parsed.data.phone || null,
+        phone: parsed.data.phone || null, // ✅ passed as-is, no validation
         nationalId: parsed.data.nationalId || null,
         bio: parsed.data.bio || null,
         metadata: parsed.data.metadata || [],
@@ -199,7 +182,7 @@ export default function SignupForm({
               name="phone"
               value={form.phone}
               onChange={onChange}
-              placeholder="+2637XXXXXXXX"
+              placeholder="Enter phone number"
               className="input"
             />
           </div>
