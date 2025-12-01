@@ -1,19 +1,17 @@
 "use client";
 
-import { ID } from "appwrite";
 import { motion } from "framer-motion";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
 
-// ❌ Removed phone regex validation
+// ✅ Schema without phone validation
 const SignupSchema = z.object({
   accountId: z.string().min(1, "Account ID required"),
   email: z.string().email("Invalid email"),
   firstName: z.string().min(1, "First name required"),
   surname: z.string().min(1, "Surname required"),
-  phone: z.string().optional(), // ✅ no validation, just optional string
   role: z.enum(["user", "agent"]).default("user"),
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
@@ -32,11 +30,10 @@ export default function SignupForm({
   redirectTo?: string;
 }) {
   const [form, setForm] = useState<SignupFormData>({
-    accountId: ID.unique(),
+    accountId: crypto.randomUUID(), // ✅ use browser UUID generator
     email: "",
     firstName: "",
     surname: "",
-    phone: "",
     role: "user",
     status: "Pending",
     nationalId: "",
@@ -79,7 +76,6 @@ export default function SignupForm({
         password: parsed.data.password,
         role: parsed.data.role,
         status: "Active",
-        phone: parsed.data.phone || null, // ✅ passed as-is, no validation
         nationalId: parsed.data.nationalId || null,
         bio: parsed.data.bio || null,
         metadata: parsed.data.metadata || [],
@@ -171,20 +167,6 @@ export default function SignupForm({
                 className="input"
               />
             </div>
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="text-sm font-semibold text-slate-700">
-              Phone
-            </label>
-            <input
-              name="phone"
-              value={form.phone}
-              onChange={onChange}
-              placeholder="Enter phone number"
-              className="input"
-            />
           </div>
 
           {/* Role + National ID */}
