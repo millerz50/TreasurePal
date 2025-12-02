@@ -3,14 +3,15 @@
 import { Button } from "../../components/ui/button";
 
 export default function SocialSignup() {
+  const backendUrl = "https://treasurepal-backened.onrender.com"; // ✅ Render backend
+
   return (
     <div className="mt-6 flex flex-col gap-3">
       <Button
         type="button"
         className="w-full bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-medium"
         onClick={() =>
-          (window.location.href =
-            "https://treasurepal-backened.onrender.com/api/auth/google")
+          (window.location.href = `${backendUrl}/api/auth/google`)
         }>
         Continue with Google
       </Button>
@@ -18,8 +19,7 @@ export default function SocialSignup() {
         type="button"
         className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-medium"
         onClick={() =>
-          (window.location.href =
-            "https://treasurepal-backened.onrender.com/api/auth/facebook")
+          (window.location.href = `${backendUrl}/api/auth/facebook`)
         }>
         Continue with Facebook
       </Button>

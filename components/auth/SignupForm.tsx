@@ -9,6 +9,13 @@ import LocationSearch from "./LocationSearch";
 import { SignupFormData, SignupSchema } from "./SignupSchema";
 import SocialSignup from "./SocialSignup";
 
+/**
+ * Client-side signup form
+ * - Normalizes and validates phone to a conservative E.164-ish format before sending
+ * - Does not send client-generated accountId to the backend (server creates auth user)
+ * - Fixes endpoint typo and surfaces server error messages
+ */
+
 export default function SignupForm({
   redirectTo = "/signin",
 }: {
@@ -43,6 +50,17 @@ export default function SignupForm({
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  // Conservative client-side normalizer (matches server rules)
+  function normalizePhoneClient(phone?: string): string | null {
+    if (!phone || typeof phone !== "string") return null;
+    const trimmed = phone.trim();
+    const cleaned = trimmed.replace(/[\s\-().]/g, "");
+    if (!cleaned.startsWith("+")) return null;
+    const digits = cleaned.replace(/^\+/, "");
+    if (!/^\d{1,15}$/.test(digits)) return null;
+    return `+${digits}`;
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -58,9 +76,27 @@ export default function SignupForm({
     });
 
     try {
+      // Normalize and validate phone on the client
+      const normalizedPhone = normalizePhoneClient(parsed.data.phone);
+      if (parsed.data.phone && !normalizedPhone) {
+        toast.error(
+          "Phone must be in international format, e.g. +263771234567"
+        );
+        toast.dismiss(tId);
+        setLoading(false);
+        return;
+      }
+
+      // Build payload explicitly (do not send client accountId)
       const payload = {
-        ...parsed.data,
         email: parsed.data.email.toLowerCase(),
+        password: parsed.data.password,
+        firstName: parsed.data.firstName,
+        surname: parsed.data.surname,
+        phone: normalizedPhone, // either +263... or null
+        country: parsed.data.country || null,
+        location: parsed.data.location || null,
+        role: parsed.data.role || "user",
         status: "Active",
         nationalId: parsed.data.nationalId || null,
         bio: parsed.data.bio || null,
@@ -69,8 +105,9 @@ export default function SignupForm({
         dateOfBirth: parsed.data.dateOfBirth || null,
       };
 
+      // NOTE: ensure this matches your deployed service hostname
       const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/users/signup",
+        "https://treasurepal-backend.onrender.com/api/users/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -84,7 +121,9 @@ export default function SignupForm({
         toast.error(
           body.error || body.message || `Signup failed (${res.status})`
         );
+        console.error("Signup failed:", res.status, body);
         toast.dismiss(tId);
+        setLoading(false);
         return;
       }
 
@@ -97,7 +136,8 @@ export default function SignupForm({
       setTimeout(() => {
         window.location.href = redirectTo;
       }, 1200);
-    } catch {
+    } catch (err) {
+      console.error("Signup network error:", err);
       toast.error("Network error. Try again.");
       toast.dismiss(tId);
     } finally {
