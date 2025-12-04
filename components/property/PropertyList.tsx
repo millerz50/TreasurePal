@@ -1,19 +1,76 @@
 "use client";
 
-import PropertyCard from "@/components/property/PropertyCard";
 import { useEffect, useState } from "react";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
+
+type PropertyImage = {
+  fileId: string | null;
+  previewUrl: string | null;
+};
 
 type Property = {
-  id: number;
+  $id: string;
   title: string;
   description: string;
-  imageUrl: string;
   price: string;
   type: string;
   location: string;
   rooms: number;
   amenities: string[];
+  images: {
+    frontElevation?: PropertyImage;
+    southView?: PropertyImage;
+    westView?: PropertyImage;
+    eastView?: PropertyImage;
+    floorPlan?: PropertyImage;
+  };
 };
+
+function PropertyCard({ property }: { property: Property }) {
+  // Collect all available preview URLs
+  const imageUrls = Object.values(property.images)
+    .map((img) => img?.previewUrl)
+    .filter(Boolean) as string[];
+
+  return (
+    <div className="card shadow-md rounded-md overflow-hidden">
+      {imageUrls.length > 0 ? (
+        <Swiper spaceBetween={10} slidesPerView={1}>
+          {imageUrls.map((url, idx) => (
+            <SwiperSlide key={idx}>
+              <img
+                src={url}
+                alt={`${property.title} view ${idx + 1}`}
+                className="w-full h-56 object-cover"
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      ) : (
+        <div className="w-full h-56 bg-gray-200 flex items-center justify-center">
+          <span className="text-gray-500">No images available</span>
+        </div>
+      )}
+
+      <div className="p-4">
+        <h3 className="text-lg font-bold">{property.title}</h3>
+        <p className="text-sm text-muted-foreground">{property.location}</p>
+        <p className="text-primary font-semibold mt-2">${property.price}</p>
+        <p className="text-xs mt-1">{property.rooms} rooms</p>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {property.amenities.map((amenity, idx) => (
+            <span
+              key={idx}
+              className="text-xs bg-gray-100 px-2 py-1 rounded-md">
+              {amenity}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -75,7 +132,7 @@ export default function PropertyList() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+              <PropertyCard key={property.$id} property={property} />
             ))}
           </div>
         )}
