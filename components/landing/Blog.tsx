@@ -53,7 +53,7 @@ export default function BlogSection() {
   return (
     <section className="py-16 px-6 sm:px-10 max-w-screen-xl mx-auto">
       <h2 className="text-5xl font-extrabold text-center bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text mb-14">
-        Netspace Insights
+        Treasurepal Insights
       </h2>
 
       {loading ? (
