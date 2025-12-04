@@ -11,10 +11,10 @@ import ReviewStep from "./steps/ReviewStep";
 
 export type Step = 1 | 2 | 3 | 4 | 5;
 
-// ✅ Central form type for all steps
+// At the top of AddPropertyWizard.tsx (or in a shared types file)
 export interface PropertyFormValues {
   title: string;
-  price: string;
+  price: string | number;
   location: string;
   address: string;
   rooms: number;
@@ -25,7 +25,7 @@ export interface PropertyFormValues {
   amenities: string[];
   locationLat: number;
   locationLng: number;
-  userId: string;
+  agentId: string; // ✅ aligned with backend
   frontElevation?: File | null;
   southView?: File | null;
   westView?: File | null;
@@ -38,7 +38,6 @@ export default function AddPropertyWizard() {
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [formData, setFormData] = useState<PropertyFormValues>({
     title: "",
     price: "",
@@ -52,12 +51,12 @@ export default function AddPropertyWizard() {
     amenities: [],
     locationLat: -17.9306,
     locationLng: 31.3306,
-    userId: "",
+    agentId: "", // ✅ instead of userId
   });
 
   useEffect(() => {
     if (user?.userId) {
-      setFormData((prev) => ({ ...prev, userId: user.userId }));
+      setFormData((prev) => ({ ...prev, agentId: user.userId }));
     }
   }, [user]);
 
