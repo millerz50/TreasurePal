@@ -182,28 +182,26 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right: Hero Image with hover-reveal text */}
-        <div className="w-full h-full group relative">
-          {!imageLoaded ? (
-            <div className="skeleton w-full h-64 md:h-80 rounded-lg bg-blue-100 dark:bg-gray-700 animate-pulse" />
-          ) : (
-            <>
-              <Image
-                src="/heroimg.jpg"
-                alt="Featured Property"
-                width={1200}
-                height={600}
-                className="rounded-lg shadow-xl border-4 border-accent object-cover w-full h-64 md:h-80 transition-opacity duration-500"
-                priority
-                onLoad={() => setImageLoaded(true)}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-transparent group-hover:text-white text-xl font-bold transition duration-300">
-                  Featured Property
-                </span>
-              </div>
-            </>
+        {/* Right: Hero Image with fade-in */}
+        <div className="relative w-full h-64 md:h-80 group">
+          <Image
+            src="/heroimg.jpg"
+            alt="Featured Property"
+            fill
+            className={`rounded-lg shadow-xl border-4 border-accent object-cover transition-opacity duration-500 ${
+              imageLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            priority
+            onLoad={() => setImageLoaded(true)}
+          />
+          {!imageLoaded && (
+            <div className="absolute inset-0 skeleton rounded-lg bg-blue-100 dark:bg-gray-700 animate-pulse" />
           )}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-transparent group-hover:text-white text-xl font-bold transition duration-300">
+              Featured Property
+            </span>
+          </div>
         </div>
       </div>
     </section>
