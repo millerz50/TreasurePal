@@ -93,7 +93,7 @@ export default function SignupForm({
         password: parsed.data.password,
         firstName: parsed.data.firstName,
         surname: parsed.data.surname,
-        phone: normalizedPhone, // either +263... or null
+        //phone: normalizedPhone, // either +263... or null
         country: parsed.data.country || null,
         location: parsed.data.location || null,
         role: parsed.data.role || "user",
