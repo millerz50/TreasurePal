@@ -34,8 +34,15 @@ export default function SigninForm({
       icon: "⏳",
     });
     try {
+      // 🔑 Create session
       await account.createEmailPasswordSession(email.toLowerCase(), password);
+
+      // 👤 Get user info
       const user = await account.get();
+
+      // 🎟️ Generate JWT for backend calls
+      const jwt = await account.createJWT();
+      localStorage.setItem("token", jwt.jwt);
 
       toast.success(`Welcome back, ${user.name || user.email}!`, {
         description: "Redirecting to your dashboard…",
