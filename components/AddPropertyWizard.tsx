@@ -91,16 +91,26 @@ export default function AddPropertyWizard() {
         fd.append(key, String(value));
       });
 
-      const token = localStorage.getItem("authToken"); // or however you store it
+      // ✅ Read JWT from localStorage (stored during login)
+      const token = localStorage.getItem("token");
+
+      if (!token || token.split(".").length !== 3) {
+        throw new Error("Invalid or missing JWT token");
+      }
+
+      console.log("🔍 Token from localStorage:", token);
 
       const res = await fetch(`${API_BASE}/api/properties/add`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // 🔑 include your token
+          Authorization: `Bearer ${token}`, // ✅ must be full JWT string
           // Don't set Content-Type manually when using FormData
-          // fetch will handle it correctly
         },
         body: fd,
+      });
+
+      console.log("🔍 Request headers:", {
+        Authorization: `Bearer ${token}`,
       });
 
       if (!res.ok) {
@@ -108,9 +118,11 @@ export default function AddPropertyWizard() {
         try {
           const json = await res.json();
           msg = json?.error || json?.message || msg;
+          console.error("❌ API error response:", json);
         } catch {
           const text = await res.text();
           if (text) msg = text;
+          console.error("❌ API error text:", text);
         }
         throw new Error(msg);
       }
@@ -123,10 +135,16 @@ export default function AddPropertyWizard() {
 
       console.log("✅ Property submitted!", result);
     } catch (err) {
-      if (err instanceof Error) setError(err.message);
-      else setError("An unknown error occurred");
+      if (err instanceof Error) {
+        console.error("❌ Property submission failed:", err.message);
+        setError(err.message);
+      } else {
+        console.error("❌ Property submission failed (unknown):", err);
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
+      console.log("Submission finished, loading set to false");
     }
   };
 
