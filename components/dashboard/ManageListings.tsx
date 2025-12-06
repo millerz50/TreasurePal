@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // Full property type aligned with backend schema
 type Property = {
@@ -40,7 +40,8 @@ export default function ManageListings() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
-  const fetchListings = async () => {
+  // ✅ Memoize fetchListings so ESLint is happy
+  const fetchListings = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/properties`);
@@ -51,7 +52,7 @@ export default function ManageListings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -70,7 +71,7 @@ export default function ManageListings() {
 
   useEffect(() => {
     fetchListings();
-  }, []);
+  }, [fetchListings]); // ✅ include fetchListings in deps
 
   const filtered = properties.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())

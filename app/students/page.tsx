@@ -1,7 +1,7 @@
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import type { Metadata } from "next";
+import Image from "next/image"; // ✅ Use Next.js Image
 import Link from "next/link";
-import React from "react"; // ✅ Import React so JSX types are recognized
 
 import {
   baseAlternates,
@@ -107,8 +107,8 @@ async function fetchByType(typePath: string): Promise<Property[]> {
   }
 }
 
-// ✅ Explicitly type component as React.FC
-const StudentsPage: React.FC = async () => {
+// ✅ Just export async function, not React.FC
+export default async function StudentsPage() {
   const listings = await fetchByType("students");
 
   const structuredData = {
@@ -187,11 +187,14 @@ const StudentsPage: React.FC = async () => {
                   className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                   <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                     {p.image ? (
-                      <img
+                      <Image
                         src={p.image}
                         alt={p.title}
-                        className="object-cover w-full h-full"
-                        loading="lazy"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw,
+                               (max-width: 1200px) 50vw,
+                               33vw"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-sm text-slate-500">
@@ -233,6 +236,4 @@ const StudentsPage: React.FC = async () => {
       </main>
     </>
   );
-};
-
-export default StudentsPage;
+}

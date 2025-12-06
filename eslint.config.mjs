@@ -1,5 +1,6 @@
+// eslint.config.js
 import js from "@eslint/js";
-import next from "@next/eslint-plugin-next";
+import nextPlugin from "@next/eslint-plugin-next";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import react from "eslint-plugin-react";
@@ -23,7 +24,7 @@ export default [
       js,
       react,
       "react-hooks": reactHooks,
-      "@next/next": next,
+      "@next/next": nextPlugin,
       "@typescript-eslint": tseslint,
     },
     settings: {
@@ -35,12 +36,37 @@ export default [
       ...js.configs.recommended.rules,
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
-      ...next.configs.recommended.rules,
+      ...nextPlugin.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
+
+      // Custom overrides
       "react/react-in-jsx-scope": "off",
       "no-undef": "off",
       "@typescript-eslint/triple-slash-reference": "off",
       "react/prop-types": "off",
+      "@next/next/no-img-element": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
+      ],
+      "react/no-unescaped-entities": "error",
+      "react/jsx-no-duplicate-props": "error",
+      "react/jsx-key": "error",
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-debugger": "error",
+      eqeqeq: ["error", "always"],
+      curly: ["error", "all"],
+      semi: ["error", "always"],
+      quotes: ["error", "double", { avoidEscape: true }],
+      indent: ["error", 2, { SwitchCase: 1 }],
+      "object-curly-spacing": ["error", "always"],
+      "array-bracket-spacing": ["error", "never"],
+      "keyword-spacing": ["error", { before: true, after: true }],
+      "space-before-blocks": ["error", "always"],
+      "space-in-parens": ["error", "never"],
+      "arrow-spacing": ["error", { before: true, after: true }],
     },
   },
 ];
