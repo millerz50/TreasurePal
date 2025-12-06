@@ -24,11 +24,16 @@ export default function MapPicker({
   const popupRef = useRef<L.Popup | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Initialize map only once
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current || mapInstance.current) {
-        return;
+      if (!mapRef.current) return;
+
+      // ✅ Clear any existing Leaflet instance on this container
+      if ((mapRef.current as any)._leaflet_id) {
+        (mapRef.current as any)._leaflet_id = null;
       }
+
       const L = await import("leaflet");
 
       const map = L.map(mapRef.current).setView(
@@ -61,19 +66,16 @@ export default function MapPicker({
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
           );
-          if (!res.ok) {
+          if (!res.ok)
             throw new Error("Reverse geocoding HTTP error " + res.status);
-          }
           const data: { display_name: string } = await res.json();
           const address = data.display_name;
-          if (setAddress) {
-            setAddress(address);
-          }
+          if (setAddress) setAddress(address);
           popupRef.current
             ?.setLatLng([lat, lng])
             .setContent(address)
             .openOn(map);
-        } catch (err: unknown) {
+        } catch (err) {
           console.error("❌ Reverse geocoding failed:", err);
         }
       };
@@ -104,34 +106,33 @@ export default function MapPicker({
         mapInstance.current = null;
       }
     };
-  }, [coordinates, setCoordinates, setAddress]);
+  }, []); // 👈 run only once
+
+  // Update marker/view when coordinates change
+  useEffect(() => {
+    if (mapInstance.current && markerRef.current) {
+      mapInstance.current.setView(coordinates as LatLngExpression, 13);
+      markerRef.current.setLatLng(coordinates as LatLngExpression);
+    }
+  }, [coordinates]);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      return;
-    }
+    if (!searchQuery.trim()) return;
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           searchQuery
         )}`
       );
-      if (!res.ok) {
-        throw new Error("Search HTTP error " + res.status);
-      }
-      const results: Array<{
-        lat: string;
-        lon: string;
-        display_name: string;
-      }> = await res.json();
+      if (!res.ok) throw new Error("Search HTTP error " + res.status);
+      const results: Array<{ lat: string; lon: string; display_name: string }> =
+        await res.json();
 
       if (results.length > 0) {
         const { lat, lon, display_name } = results[0];
         const coords: [number, number] = [parseFloat(lat), parseFloat(lon)];
         setCoordinates(coords);
-        if (setAddress) {
-          setAddress(display_name);
-        }
+        if (setAddress) setAddress(display_name);
         mapInstance.current?.setView(coords as LatLngExpression, 13);
         markerRef.current?.setLatLng(coords as LatLngExpression);
         popupRef.current
@@ -139,7 +140,7 @@ export default function MapPicker({
           .setContent(display_name)
           .openOn(mapInstance.current!);
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("❌ Search failed:", err);
     }
   };
