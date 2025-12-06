@@ -17,7 +17,6 @@ interface Props {
   setError: Dispatch<SetStateAction<string | null>>;
 }
 
-// ✅ Define as a typed React functional component
 const BasicInfoStep: React.FC<Props> = ({
   formData,
   setFormData,
@@ -37,7 +36,7 @@ const BasicInfoStep: React.FC<Props> = ({
 
   const validate = (): string | null => {
     if (!formData.title.trim()) return "Title is required.";
-    if (!formData.price.trim()) return "Price is required.";
+    if (!String(formData.price).trim()) return "Price is required.";
     if (isNaN(Number(formData.price))) return "Price must be a number.";
     if (!formData.location.trim()) return "Location is required.";
     if (!formData.address.trim()) return "Address is required.";

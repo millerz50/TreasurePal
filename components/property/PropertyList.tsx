@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import "swiper/css";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -28,7 +29,6 @@ type Property = {
 };
 
 function PropertyCard({ property }: { property: Property }) {
-  // Collect all available preview URLs
   const imageUrls = Object.values(property.images)
     .map((img) => img?.previewUrl)
     .filter(Boolean) as string[];
@@ -39,9 +39,11 @@ function PropertyCard({ property }: { property: Property }) {
         <Swiper spaceBetween={10} slidesPerView={1}>
           {imageUrls.map((url, idx) => (
             <SwiperSlide key={idx}>
-              <img
+              <Image
                 src={url}
                 alt={`${property.title} view ${idx + 1}`}
+                width={600}
+                height={400}
                 className="w-full h-56 object-cover"
               />
             </SwiperSlide>
@@ -96,7 +98,7 @@ export default function PropertyList() {
         setProperties(data);
       } catch (err) {
         console.error("❌ Failed to fetch properties:", err);
-        setProperties([]); // fallback to empty list
+        setProperties([]);
       } finally {
         setLoading(false);
       }
