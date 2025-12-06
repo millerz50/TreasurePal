@@ -90,7 +90,8 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
-    const url = `https://treasurepal-backened.onrender.com/api/properties/${typePath}`;
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+    const url = `${API_BASE}/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
       console.error("API error:", res.status, url);

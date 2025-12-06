@@ -31,12 +31,9 @@ function parseJob(raw: RawRecord): Job {
 
 async function fetchCareers(): Promise<Job[]> {
   try {
-    const res = await fetch(
-      "https://treasurepal-backened.onrender.com/careers",
-      {
-        next: { revalidate: 60 },
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/careers`, {
+      next: { revalidate: 60 },
+    });
 
     if (!res.ok) {
       console.error("Careers API returned non-OK:", res.status);
@@ -48,23 +45,7 @@ async function fetchCareers(): Promise<Job[]> {
     return data.map((j: RawRecord) => parseJob(j));
   } catch (err) {
     console.error("Failed to fetch careers:", err);
-
-    // Fallback: try alternate endpoint
-    try {
-      const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/careers",
-        {
-          next: { revalidate: 60 },
-        }
-      );
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.map((j: RawRecord) => parseJob(j));
-    } catch (err2) {
-      console.error("Fallback fetch also failed:", err2);
-      return [];
-    }
+    return [];
   }
 }
 

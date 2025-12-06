@@ -1,4 +1,3 @@
-// components/AuthProvider.tsx
 "use client";
 
 import { account } from "@/lib/appwrite";
@@ -11,12 +10,10 @@ import React, {
   useState,
 } from "react";
 
-// ✅ Hard‑coded API base URL (production)
-const API_BASE_URL = "https://treasurepal-backened.onrender.com/api";
-
-// ✅ Hard‑coded Appwrite endpoint + project
-const APPWRITE_ENDPOINT = "https://nyc.cloud.appwrite.io/v1";
-const APPWRITE_PROJECT_ID = "treasureproject";
+// ✅ Use environment variables instead of hardcoding
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
 async function fetchProfileMe(jwt: string) {
   try {
@@ -87,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         let avatarUrl: string | undefined;
         const fileId =
           profile?.avatarFileId ?? appwriteUser.prefs?.avatarFileId;
-        if (fileId) {
+        if (fileId && APPWRITE_ENDPOINT && APPWRITE_PROJECT_ID) {
           avatarUrl = `${APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${fileId}/view?project=${APPWRITE_PROJECT_ID}`;
         } else {
           const displayName = profile?.firstName

@@ -91,10 +91,10 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchListings(): Promise<Property[]> {
   try {
-    const res = await fetch(
-      "https://treasurepal-backened.onrender.com/api/properties/all",
-      { next: { revalidate: 60 } }
-    );
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+    const res = await fetch(`${API_BASE}/api/properties/all`, {
+      next: { revalidate: 60 },
+    });
     if (!res.ok) {
       console.error("Listings API error:", res.status);
       return [];

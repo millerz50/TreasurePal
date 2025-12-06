@@ -5,13 +5,32 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
 import { useEffect, useState } from "react";
 
+// Full property type aligned with backend schema
 type Property = {
   _id: string;
   title: string;
   price: string;
   location: string;
-  status: string;
+  address: string;
+  rooms: number;
+  description: string;
   type: string;
+  status: string;
+  country: string;
+  amenities: string[];
+  locationLat?: number | null;
+  locationLng?: number | null;
+  agentId?: string | null;
+  frontElevation?: string | null;
+  southView?: string | null;
+  westView?: string | null;
+  eastView?: string | null;
+  floorPlan?: string | null;
+  published?: boolean;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  $createdAt?: string;
+  $updatedAt?: string;
 };
 
 export default function ManageListings() {
@@ -19,10 +38,12 @@ export default function ManageListings() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
   const fetchListings = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/properties");
+      const res = await fetch(`${API_BASE}/api/properties`);
       const data = await res.json();
       setProperties(data);
     } catch (err) {
@@ -34,7 +55,7 @@ export default function ManageListings() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/properties/${id}`, {
+      const res = await fetch(`${API_BASE}/api/properties/${id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -86,6 +107,8 @@ export default function ManageListings() {
                 <th>Price</th>
                 <th>Status</th>
                 <th>Type</th>
+                <th>Rooms</th>
+                <th>Country</th>
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
@@ -106,6 +129,8 @@ export default function ManageListings() {
                     </span>
                   </td>
                   <td>{property.type}</td>
+                  <td>{property.rooms}</td>
+                  <td>{property.country}</td>
                   <td className="text-right space-x-2">
                     <Button
                       variant="outline"

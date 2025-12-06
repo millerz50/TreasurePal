@@ -11,7 +11,7 @@ import ReviewStep from "./steps/ReviewStep";
 
 export type Step = 1 | 2 | 3 | 4 | 5;
 
-// At the top of AddPropertyWizard.tsx (or in a shared types file)
+// Shared form values interface
 export interface PropertyFormValues {
   title: string;
   price: string | number;
@@ -60,7 +60,8 @@ export default function AddPropertyWizard() {
     }
   }, [user]);
 
-  const API_BASE = "https://treasurepal-backened.onrender.com";
+  // ✅ Use env variable instead of hardcoding
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
   const handleSubmit = async () => {
     setLoading(true);

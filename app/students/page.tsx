@@ -1,6 +1,7 @@
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import type { Metadata } from "next";
 import Link from "next/link";
+import React from "react"; // ✅ Import React so JSX types are recognized
 
 import {
   baseAlternates,
@@ -90,7 +91,8 @@ function parseProperty(raw: RawRecord): Property {
 
 async function fetchByType(typePath: string): Promise<Property[]> {
   try {
-    const url = `https://www.treasureprops.com/api/properties/${typePath}`;
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+    const url = `${API_BASE}/api/properties/${typePath}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) {
       console.error("API error:", res.status, url);
@@ -101,25 +103,12 @@ async function fetchByType(typePath: string): Promise<Property[]> {
     return data.map((p) => parseProperty(p as RawRecord));
   } catch (err) {
     console.error("Fetch failed:", err);
-
-    try {
-      const url = `https://www.treasureprops.co.zw/api/properties/${typePath}`;
-      const res = await fetch(url, { next: { revalidate: 60 } });
-      if (!res.ok) {
-        console.error("Fallback API error:", res.status, url);
-        return [];
-      }
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.map((p) => parseProperty(p as RawRecord));
-    } catch (err2) {
-      console.error("Fallback fetch also failed:", err2);
-      return [];
-    }
+    return [];
   }
 }
 
-export default async function StudentsPage() {
+// ✅ Explicitly type component as React.FC
+const StudentsPage: React.FC = async () => {
   const listings = await fetchByType("students");
 
   const structuredData = {
@@ -198,7 +187,6 @@ export default async function StudentsPage() {
                   className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                   <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                     {p.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={p.image}
                         alt={p.title}
@@ -245,4 +233,6 @@ export default async function StudentsPage() {
       </main>
     </>
   );
-}
+};
+
+export default StudentsPage;

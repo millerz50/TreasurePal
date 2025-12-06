@@ -107,7 +107,7 @@ export default function SignupForm({
 
       // NOTE: ensure this matches your deployed service hostname
       const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/users/signup",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
