@@ -13,11 +13,15 @@ interface Props {
 }
 
 const LocationStep: React.FC<Props> = ({ formData, setFormData, setStep }) => {
+  // Ensure coordinates are always numbers
+  const lat = formData.locationLat ?? 0;
+  const lng = formData.locationLng ?? 0;
+
   return (
     <div className="space-y-4">
       <div className="w-full h-64 rounded-lg border overflow-hidden">
         <MapPicker
-          coordinates={[formData.locationLat, formData.locationLng]}
+          coordinates={[lat, lng]}
           setCoordinates={(coords) =>
             setFormData((prev) => ({
               ...prev,

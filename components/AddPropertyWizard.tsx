@@ -44,6 +44,8 @@ export const PropertySchema = z.object({
   subscriptionPlan: z.string().optional(),
   whatsappGroup: z.string().optional(),
   ads: z.string().optional(),
+  depositOption: z.enum(["none", "required"]).default("none"),
+  depositPercentage: z.union([z.string(), z.number()]).optional(),
 });
 
 export type PropertyFormValues = z.infer<typeof PropertySchema>;

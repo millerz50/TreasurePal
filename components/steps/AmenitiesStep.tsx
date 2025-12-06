@@ -17,15 +17,18 @@ export default function AmenitiesStep({
   setStep,
 }: Props) {
   const toggleAmenity = (amenity: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter((a) => a !== amenity)
-        : [...prev.amenities, amenity],
-    }));
+    setFormData((prev) => {
+      const currentAmenities = prev.amenities ?? [];
+      return {
+        ...prev,
+        amenities: currentAmenities.includes(amenity)
+          ? currentAmenities.filter((a) => a !== amenity)
+          : [...currentAmenities, amenity],
+      };
+    });
   };
 
-  const selectedCount = formData.amenities.length;
+  const selectedCount = (formData.amenities ?? []).length;
 
   return (
     <div className="space-y-6">
@@ -40,7 +43,7 @@ export default function AmenitiesStep({
             <h3 className="font-semibold text-primary mb-2">{category}</h3>
             <div className="flex flex-wrap gap-3">
               {items.map(({ name, icon: Icon }) => {
-                const selected = formData.amenities.includes(name);
+                const selected = (formData.amenities ?? []).includes(name);
                 return (
                   <button
                     type="button"
