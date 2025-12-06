@@ -6,9 +6,7 @@ import tsParser from "@typescript-eslint/parser";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
-import { Linter } from "eslint"; // 👈 add this
 
-/** @type {Linter.FlatConfig[]} */
 export default [
   {
     ignores: ["**/.next/**", "**/node_modules/**", "**/dist/**", "**/*.log"],
@@ -61,7 +59,7 @@ export default [
       eqeqeq: ["error", "always"],
       curly: ["error", "all"],
       semi: ["error", "always"],
-      quotes: ["error", "double", { avoidEscape": true }],
+      quotes: ["error", "double", { avoidEscape: true }],
       indent: ["error", 2, { SwitchCase: 1 }],
       "object-curly-spacing": ["error", "always"],
       "array-bracket-spacing": ["error", "never"],
@@ -70,14 +68,13 @@ export default [
       "space-in-parens": ["error", "never"],
       "arrow-spacing": ["error", { before: true, after: true }],
     },
-    overrides: [
-      {
-        files: ["components/ui/**"],
-        rules: {
-          semi: "off", // disable semicolon rule for Shadcn UI files
-        },
-      },
-    ],
+  },
+
+  // separate override block
+  {
+    files: ["components/ui/**"],
+    rules: {
+      semi: "off", // disable semicolon rule for Shadcn UI files
+    },
   },
 ];
-
