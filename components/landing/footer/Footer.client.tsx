@@ -5,7 +5,9 @@ import { useEffect } from "react";
 export default function FooterClient() {
   useEffect(() => {
     const footer = document.getElementById("treasurepal-footer");
-    if (!footer) return;
+    if (!footer) {
+      return;
+    }
 
     // Entrance animation
     const io = new IntersectionObserver(
@@ -35,7 +37,9 @@ export default function FooterClient() {
       cta.addEventListener(
         "pointerdown",
         () => {
-          if (pulseTimer) window.clearInterval(pulseTimer);
+          if (pulseTimer) {
+            window.clearInterval(pulseTimer);
+          }
         },
         { once: true }
       );
@@ -76,7 +80,9 @@ export default function FooterClient() {
       );
       const submitHandler = async (e: Event) => {
         e.preventDefault();
-        if (!input || !status) return;
+        if (!input || !status) {
+          return;
+        }
         if (!input.checkValidity()) {
           input.focus();
           status.textContent = "Please enter a valid email address.";
@@ -124,14 +130,18 @@ export default function FooterClient() {
       form.addEventListener("submit", submitHandler);
 
       return () => {
-        if (pulseTimer) window.clearInterval(pulseTimer);
+        if (pulseTimer) {
+          window.clearInterval(pulseTimer);
+        }
         io.disconnect();
         form.removeEventListener("submit", submitHandler);
       };
     }
 
     return () => {
-      if (pulseTimer) window.clearInterval(pulseTimer);
+      if (pulseTimer) {
+        window.clearInterval(pulseTimer);
+      }
       io.disconnect();
     };
   }, []);

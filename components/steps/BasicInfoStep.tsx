@@ -35,11 +35,21 @@ const BasicInfoStep: React.FC<Props> = ({
   };
 
   const validate = (): string | null => {
-    if (!formData.title.trim()) return "Title is required.";
-    if (!String(formData.price).trim()) return "Price is required.";
-    if (isNaN(Number(formData.price))) return "Price must be a number.";
-    if (!formData.location.trim()) return "Location is required.";
-    if (!formData.address.trim()) return "Address is required.";
+    if (!formData.title.trim()) {
+      return "Title is required.";
+    }
+    if (!String(formData.price).trim()) {
+      return "Price is required.";
+    }
+    if (isNaN(Number(formData.price))) {
+      return "Price must be a number.";
+    }
+    if (!formData.location.trim()) {
+      return "Location is required.";
+    }
+    if (!formData.address.trim()) {
+      return "Address is required.";
+    }
     return null;
   };
 
@@ -109,7 +119,9 @@ const BasicInfoStep: React.FC<Props> = ({
         <Button
           onClick={() => {
             const err = validate();
-            if (err) return setError(err);
+            if (err) {
+              return setError(err);
+            }
             setError(null);
             setStep(2);
           }}>

@@ -12,7 +12,6 @@ import { BedDouble, MapPin, ShieldCheck, Sparkles, Wifi } from "lucide-react";
 import type { ComponentType } from "react";
 import { MdOutlineHome } from "react-icons/md";
 
-// ✅ import Leaflet types only (no runtime code)
 import type Map from "leaflet";
 
 type PropertyDetailsProps = {
@@ -39,7 +38,7 @@ export default function PropertyDetails({
   coordinates,
 }: PropertyDetailsProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<Map | null>(null); // ✅ typed correctly
+  const mapInstance = useRef<Map | null>(null);
 
   useEffect(() => {
     const initMap = async () => {
@@ -47,10 +46,10 @@ export default function PropertyDetails({
         typeof window === "undefined" ||
         !mapContainer.current ||
         mapInstance.current
-      )
+      ) {
         return;
+      }
 
-      // ✅ dynamic import for Leaflet runtime
       const L: typeof import("leaflet") = await import("leaflet");
 
       mapInstance.current = L.map(mapContainer.current).setView(
@@ -89,7 +88,6 @@ export default function PropertyDetails({
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      {/* Image */}
       <div className="rounded-xl overflow-hidden shadow-md">
         <Image
           src={image}
@@ -101,7 +99,6 @@ export default function PropertyDetails({
         />
       </div>
 
-      {/* Card */}
       <Card className="bg-base-100 shadow-sm border border-base-300">
         <CardHeader>
           <h2 className="text-2xl font-bold text-primary">{title}</h2>
@@ -124,7 +121,6 @@ export default function PropertyDetails({
             </div>
           </div>
 
-          {/* Amenities */}
           {amenities.length > 0 && (
             <div className="pt-2">
               <h3 className="text-sm font-semibold text-primary mb-2">
@@ -152,7 +148,6 @@ export default function PropertyDetails({
             </div>
           )}
 
-          {/* Map */}
           <div className="pt-4">
             <h3 className="text-sm font-semibold text-primary mb-2">
               Location Map
@@ -163,7 +158,6 @@ export default function PropertyDetails({
             />
           </div>
 
-          {/* CTA */}
           <div className="pt-4 flex justify-end">
             <Button type="button" variant="primary" className="text-sm">
               Contact Agent
@@ -175,7 +169,6 @@ export default function PropertyDetails({
   );
 }
 
-// ✅ Icon registry
 const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   "Wi-Fi": Wifi,
   Kitchen: MdOutlineHome,

@@ -56,11 +56,13 @@ type Property = {
 };
 
 function toString(v: unknown): string {
-  return typeof v === "string" ? v : v == null ? "" : String(v);
+  return typeof v === "string" ? v : v === null ? "" : String(v);
 }
 
 function toNumberOrUndefined(v: unknown): number | undefined {
-  if (typeof v === "number") return v;
+  if (typeof v === "number") {
+    return v;
+  }
   if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) {
     return Number(v);
   }
@@ -99,7 +101,9 @@ async function fetchByType(typePath: string): Promise<Property[]> {
       return [];
     }
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      return [];
+    }
     return data.map((p: RawRecord) => parseProperty(p));
   } catch (err) {
     console.error("Fetch failed:", err);
@@ -135,12 +139,14 @@ export default async function RentPage() {
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/sell/new"
-                className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm">
+                className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm"
+              >
                 List a rental
               </Link>
               <Link
                 href="/support"
-                className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm">
+                className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm"
+              >
                 Need help listing?
               </Link>
             </div>
@@ -150,10 +156,10 @@ export default async function RentPage() {
             {listings.map((p) => (
               <article
                 key={p.id}
-                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
+                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm"
+              >
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={p.image}
                       alt={p.title}
@@ -184,7 +190,8 @@ export default async function RentPage() {
                       href={
                         p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`
                       }
-                      className="text-sm text-blue-600 dark:text-blue-400 underline">
+                      className="text-sm text-blue-600 dark:text-blue-400 underline"
+                    >
                       View
                     </Link>
                     <span className="text-xs text-slate-500 dark:text-slate-400">

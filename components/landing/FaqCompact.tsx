@@ -39,7 +39,9 @@ const DEFAULT: FaqItem[] = [
 
 const usePrefersReducedMotion = (): boolean => {
   const getInitial = () => {
-    if (typeof window === "undefined") return false;
+    if (typeof window === "undefined") {
+      return false;
+    }
     try {
       return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     } catch {
@@ -50,7 +52,9 @@ const usePrefersReducedMotion = (): boolean => {
   const [reduced, setReduced] = useState<boolean>(getInitial);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const handler = () => setReduced(mq.matches);
     mq.addEventListener?.("change", handler);
@@ -126,11 +130,17 @@ const Faq: React.FC<Props> = ({
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const getInitialOpenIndex = (): number | null => {
-    if (typeof window === "undefined") return defaultOpenIndex ?? null;
-    if (!storageKey) return defaultOpenIndex ?? null;
+    if (typeof window === "undefined") {
+      return defaultOpenIndex ?? null;
+    }
+    if (!storageKey) {
+      return defaultOpenIndex ?? null;
+    }
     try {
       const raw = window.localStorage.getItem(storageKey);
-      if (raw === null) return defaultOpenIndex ?? null;
+      if (raw === null) {
+        return defaultOpenIndex ?? null;
+      }
       const idx = Number(raw);
       return !Number.isNaN(idx) && idx >= 0 && idx < list.length ? idx : null;
     } catch {
@@ -143,10 +153,15 @@ const Faq: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    if (!storageKey) return;
+    if (!storageKey) {
+      return;
+    }
     try {
-      if (openIndex === null) window.localStorage.removeItem(storageKey);
-      else window.localStorage.setItem(storageKey, String(openIndex));
+      if (openIndex === null) {
+        window.localStorage.removeItem(storageKey);
+      } else {
+        window.localStorage.setItem(storageKey, String(openIndex));
+      }
     } catch {
       // ignore storage errors
     }

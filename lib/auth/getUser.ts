@@ -5,10 +5,12 @@ export async function getUser(): Promise<User | null> {
   const cookieStore = await cookies(); // ✅ Await here
   const token = cookieStore.get("auth_token")?.value;
 
-  if (!token) return null;
+  if (!token) {
+    return null;
+  }
 
   const res = await fetch(
-    "https://treasurepal-backened.onrender.com/api/user/me",
+    `${process.env.NEXT_PUBLIC_API_URL}/api/user/me`, // ✅ use env
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -17,13 +19,17 @@ export async function getUser(): Promise<User | null> {
     }
   );
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    return null;
+  }
 
   const data = await res.json();
-  return data?.user
-    ? {
-        name: data.user.name,
-        avatarUrl: data.user.avatarUrl,
-      }
-    : null;
+  if (data?.user) {
+    return {
+      name: data.user.name,
+      avatarUrl: data.user.avatarUrl,
+    };
+  } else {
+    return null;
+  }
 }

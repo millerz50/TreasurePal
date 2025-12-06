@@ -56,7 +56,7 @@ type Property = {
 };
 
 function toString(v: unknown): string {
-  return typeof v === "string" ? v : v == null ? "" : String(v);
+  return typeof v === "string" ? v : v === null ? "" : String(v);
 }
 
 function toNumberOrUndefined(v: unknown): number | undefined {
@@ -99,7 +99,9 @@ async function fetchByType(typePath: string): Promise<Property[]> {
       return [];
     }
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      return [];
+    }
     return data.map((p) => parseProperty(p as RawRecord));
   } catch (err) {
     console.error("Fetch failed:", err);
@@ -116,7 +118,7 @@ export default async function StudentsPage() {
     "@type": "CollectionPage",
     name: `Student Housing • ${SITE_NAME}`,
     url: `${SITE_URL}/students`,
-    description: `Affordable student rooms and shared housing across Zimbabwe.`,
+    description: "Affordable student rooms and shared housing across Zimbabwe.",
     hasPart: listings.map((p) => ({
       "@type": "Accommodation",
       name: p.title,

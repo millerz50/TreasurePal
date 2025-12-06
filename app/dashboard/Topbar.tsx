@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
 export default function Topbar() {
   const { user } = useAuth();
   const router = useRouter();
@@ -38,7 +39,9 @@ export default function Topbar() {
 
   // Role‑specific quick actions
   const roleActions = () => {
-    if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
     switch (user.role) {
       case "agent":

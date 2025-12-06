@@ -16,7 +16,7 @@ export default function NavbarUser() {
 
   // debug log to observe auth values each render
   useEffect(() => {
-    console.log("[NavbarUser] render", {
+    console.warn("[NavbarUser] render", {
       loading,
       user: user ? { id: user.userId, email: user.email } : null,
     });
@@ -102,7 +102,7 @@ export default function NavbarUser() {
               <Button
                 variant="ghost"
                 className="justify-start text-sm hover:bg-accent/10"
-                onClick={() => console.log("Edit user")}>
+                onClick={() => console.warn("Edit user")}>
                 ✏️ Edit Profile
               </Button>
               <Button

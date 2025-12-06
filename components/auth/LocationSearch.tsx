@@ -14,7 +14,9 @@ export default function LocationSearch({ onSelect }: Props) {
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (query.length < 3) return;
+      if (query.length < 3) {
+        return;
+      }
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(
           query

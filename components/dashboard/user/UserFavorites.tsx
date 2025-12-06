@@ -26,7 +26,9 @@ export default function UserFavorites() {
             credentials: "include",
           }
         );
-        if (!res.ok) throw new Error("Failed to load favorites");
+        if (!res.ok) {
+          throw new Error("Failed to load favorites");
+        }
         const data: Favorite[] = await res.json();
         setFavorites(data);
       } catch (err) {
@@ -39,8 +41,12 @@ export default function UserFavorites() {
     fetchFavorites();
   }, []);
 
-  if (loading) return <p>Loading favorites...</p>;
-  if (favorites.length === 0) return <p>No favorites found.</p>;
+  if (loading) {
+    return <p>Loading favorites...</p>;
+  }
+  if (favorites.length === 0) {
+    return <p>No favorites found.</p>;
+  }
 
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-lg shadow-sm space-y-6">

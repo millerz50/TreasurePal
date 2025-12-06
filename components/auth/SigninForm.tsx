@@ -39,19 +39,19 @@ export default function SigninForm({
 
       // 👤 Get user info
       const user = await account.get();
-      console.log("User info from Appwrite:", user);
+      console.warn("User info from Appwrite:", user);
 
       // 🎟️ Generate JWT for backend calls
       const jwt = await account.createJWT();
 
       // ✅ Debug: log the raw JWT string
-      console.log("Generated JWT:", jwt.jwt);
+      console.warn("Generated JWT:", jwt.jwt);
 
       // Store JWT in localStorage
       localStorage.setItem("token", jwt.jwt);
 
       // ✅ Debug: confirm what’s stored
-      console.log(
+      console.warn(
         "Stored token in localStorage:",
         localStorage.getItem("token")
       );
@@ -64,7 +64,7 @@ export default function SigninForm({
       toast.dismiss(tId);
 
       // ✅ Debug: show where we’re redirecting
-      console.log("Redirecting to:", redirectTo);
+      console.warn("Redirecting to:", redirectTo);
 
       router.push(redirectTo);
     } catch (err: unknown) {
@@ -89,7 +89,7 @@ export default function SigninForm({
       toast.dismiss(tId);
     } finally {
       setLoading(false);
-      console.log("Signin process finished, loading set to false");
+      console.warn("Signin process finished, loading set to false");
     }
   }
 

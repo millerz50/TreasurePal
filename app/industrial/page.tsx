@@ -62,15 +62,21 @@ type Property = {
 };
 
 function toString(v: unknown): string {
-  return typeof v === "string" ? v : v == null ? "" : String(v);
+  return typeof v === "string" ? v : v === null ? "" : String(v);
 }
 
 function toStringOrNumber(v: unknown): string | number | undefined {
-  if (typeof v === "number") return v;
+  if (typeof v === "number") {
+    return v;
+  }
   if (typeof v === "string") {
     const trimmed = v.trim();
-    if (trimmed === "") return undefined;
-    if (!Number.isNaN(Number(trimmed))) return Number(trimmed);
+    if (trimmed === "") {
+      return undefined;
+    }
+    if (!Number.isNaN(Number(trimmed))) {
+      return Number(trimmed);
+    }
     return trimmed;
   }
   return undefined;
@@ -107,7 +113,9 @@ async function fetchByType(typePath: string): Promise<Property[]> {
       return [];
     }
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      return [];
+    }
     return data.map((p: RawRecord) => parseProperty(p));
   } catch (err) {
     console.error("Fetch failed:", err);
@@ -161,7 +169,6 @@ export default async function IndustrialPage() {
                 className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={p.image}
                       alt={p.title}

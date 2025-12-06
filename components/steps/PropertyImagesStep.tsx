@@ -44,7 +44,9 @@ const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
   const handleFileChange = (key: string, file: File | null) => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     setFormData((prev) => ({ ...prev, [key]: file }));
     setPreviews((prev) => ({ ...prev, [key]: URL.createObjectURL(file) }));
   };
@@ -64,6 +66,7 @@ const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
                   src={previews[key]}
                   alt={label}
                   fill
+                  sizes="100%"
                   className="object-cover"
                 />
               ) : (
@@ -71,6 +74,7 @@ const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
                   src={mock}
                   alt={`${label} mock`}
                   fill
+                  sizes="100%"
                   className="object-contain opacity-50"
                 />
               )}

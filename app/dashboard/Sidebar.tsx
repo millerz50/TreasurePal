@@ -66,10 +66,15 @@ export default function Sidebar() {
   // Build nav grouped by role
   const sections: Section[] = [{ title: "General", items: baseItems }];
 
-  if (role === "user") sections.push({ title: "Your Space", items: userItems });
-  if (role === "agent")
+  if (role === "user") {
+    sections.push({ title: "Your Space", items: userItems });
+  }
+  if (role === "agent") {
     sections.push({ title: "Agent Tools", items: agentItems });
-  if (role === "admin") sections.push({ title: "Admin", items: adminItems });
+  }
+  if (role === "admin") {
+    sections.push({ title: "Admin", items: adminItems });
+  }
 
   return (
     <aside className="w-64 bg-base-100 border-r border-base-300 p-4 hidden md:block">

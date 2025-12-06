@@ -1,4 +1,3 @@
-// components/user/JoinHero.tsx
 "use client";
 
 import Link from "next/link";
@@ -6,7 +5,9 @@ import { useEffect, useState } from "react";
 
 /** Synchronous check for reduced motion preference (safe on server) */
 function prefersReducedMotionSync(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return false;
+  }
   try {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch {
@@ -21,7 +22,9 @@ export default function JoinHero() {
 
   useEffect(() => {
     // If user prefers reduced motion, we already set visible above — no setState here
-    if (initialVisible) return;
+    if (initialVisible) {
+      return;
+    }
 
     const timeout = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(timeout);

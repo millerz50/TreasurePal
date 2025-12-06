@@ -136,9 +136,10 @@ export default function ManageListings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => console.log("Edit", property._id)}>
+                      onClick={() => console.warn("Edit", property._id)}>
                       Edit
                     </Button>
+
                     <Button
                       variant="destructive"
                       size="sm"

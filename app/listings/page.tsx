@@ -56,7 +56,7 @@ type Property = {
 };
 
 function toString(v: unknown): string {
-  return typeof v === "string" ? v : v == null ? "" : String(v);
+  return typeof v === "string" ? v : v === null ? "" : String(v);
 }
 
 function toNumberOrUndefined(v: unknown): number | undefined {
@@ -100,7 +100,9 @@ async function fetchListings(): Promise<Property[]> {
       return [];
     }
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      return [];
+    }
     return data.map((item: RawRecord) => parseProperty(item));
   } catch (err) {
     console.error("Failed to fetch listings:", err);
@@ -155,7 +157,6 @@ export default async function ListingsPage() {
                 className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={p.image}
                       alt={p.title}

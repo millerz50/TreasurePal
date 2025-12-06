@@ -24,5 +24,13 @@
     "space-before-blocks": ["error", "always"],
     "space-in-parens": ["error", "never"],
     "arrow-spacing": ["error", { "before": true, "after": true }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["components/ui/**"],
+      "rules": {
+        "semi": "off"
+      }
+    }
+  ]
 }

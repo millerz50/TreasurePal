@@ -23,16 +23,15 @@ export default function BlogSection() {
   useEffect(() => {
     const fetchPosts = async (): Promise<void> => {
       try {
-        const res = await fetch(
-          "https://treasurepal-backened.onrender.com/api/blogs",
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (!res.ok)
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${API_BASE}/api/blogs`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (!res.ok) {
           throw new Error(`Failed to fetch blog posts: ${res.status}`);
+        }
         const data: BlogPost[] = await res.json();
         setBlogPosts(data);
         if (data.length > 0) {

@@ -25,7 +25,7 @@ export interface PropertyFormValues {
   amenities: string[];
   locationLat: number;
   locationLng: number;
-  agentId: string; // ✅ aligned with backend
+  agentId: string;
   frontElevation?: File | null;
   southView?: File | null;
   westView?: File | null;
@@ -51,7 +51,7 @@ export default function AddPropertyWizard() {
     amenities: [],
     locationLat: -17.9306,
     locationLng: 31.3306,
-    agentId: "", // ✅ instead of userId
+    agentId: "",
   });
 
   useEffect(() => {
@@ -60,7 +60,6 @@ export default function AddPropertyWizard() {
     }
   }, [user]);
 
-  // ✅ Use env variable instead of hardcoding
   const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
   const handleSubmit = async () => {
@@ -75,7 +74,9 @@ export default function AddPropertyWizard() {
       const fd = new FormData();
 
       Object.entries(formData).forEach(([key, value]) => {
-        if (value === undefined || value === null) return;
+        if (value === undefined || value === null) {
+          return;
+        }
 
         if (value instanceof File) {
           fd.append(key, value);
@@ -83,7 +84,9 @@ export default function AddPropertyWizard() {
         }
 
         if (Array.isArray(value)) {
-          if (value.length === 0) return; // ✅ skip empty arrays
+          if (value.length === 0) {
+            return;
+          }
           value.forEach((v) => fd.append(key, String(v)));
           return;
         }
@@ -91,26 +94,18 @@ export default function AddPropertyWizard() {
         fd.append(key, String(value));
       });
 
-      // ✅ Read JWT from localStorage (stored during login)
       const token = localStorage.getItem("token");
 
       if (!token || token.split(".").length !== 3) {
         throw new Error("Invalid or missing JWT token");
       }
 
-      console.log("🔍 Token from localStorage:", token);
-
       const res = await fetch(`${API_BASE}/api/properties/add`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // ✅ must be full JWT string
-          // Don't set Content-Type manually when using FormData
+          Authorization: `Bearer ${token}`,
         },
         body: fd,
-      });
-
-      console.log("🔍 Request headers:", {
-        Authorization: `Bearer ${token}`,
       });
 
       if (!res.ok) {
@@ -121,7 +116,9 @@ export default function AddPropertyWizard() {
           console.error("❌ API error response:", json);
         } catch {
           const text = await res.text();
-          if (text) msg = text;
+          if (text) {
+            msg = text;
+          }
           console.error("❌ API error text:", text);
         }
         throw new Error(msg);
@@ -129,11 +126,11 @@ export default function AddPropertyWizard() {
 
       const result = await res.json();
       if (!result || Object.keys(result).length === 0) {
-        console.log("⚠️ API returned empty data");
+        console.warn("⚠️ API returned empty data");
         return;
       }
 
-      console.log("✅ Property submitted!", result);
+      console.warn("✅ Property submitted!", result);
     } catch (err) {
       if (err instanceof Error) {
         console.error("❌ Property submission failed:", err.message);
@@ -144,7 +141,7 @@ export default function AddPropertyWizard() {
       }
     } finally {
       setLoading(false);
-      console.log("Submission finished, loading set to false");
+      console.warn("Submission finished, loading set to false");
     }
   };
 

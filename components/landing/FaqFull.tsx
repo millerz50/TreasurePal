@@ -71,29 +71,42 @@ const FaqFull: React.FC<FaqProps> = ({
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const getInitialOpenIndex = (): number | null => {
-    if (typeof window === "undefined") return defaultOpenIndex ?? null;
-    if (!storageKey) return defaultOpenIndex ?? null;
+    if (typeof window === "undefined") {
+      return defaultOpenIndex ?? null;
+    }
+    if (!storageKey) {
+      return defaultOpenIndex ?? null;
+    }
     try {
       const raw = window.localStorage.getItem(storageKey);
-      if (raw === null) return defaultOpenIndex ?? null;
+      if (raw === null) {
+        return defaultOpenIndex ?? null;
+      }
       const parsed = Number(raw);
-      return !Number.isNaN(parsed) && parsed >= 0 && parsed < list.length
-        ? parsed
-        : null;
+      if (!Number.isNaN(parsed) && parsed >= 0 && parsed < list.length) {
+        return parsed;
+      } else {
+        return null;
+      }
     } catch {
       return defaultOpenIndex ?? null;
     }
   };
 
   const [openIndex, setOpenIndex] = useState<number | null>(
-    getInitialOpenIndex
+    getInitialOpenIndex()
   );
 
   useEffect(() => {
-    if (!storageKey) return;
+    if (!storageKey) {
+      return;
+    }
     try {
-      if (openIndex === null) window.localStorage.removeItem(storageKey);
-      else window.localStorage.setItem(storageKey, String(openIndex));
+      if (openIndex === null) {
+        window.localStorage.removeItem(storageKey);
+      } else {
+        window.localStorage.setItem(storageKey, String(openIndex));
+      }
     } catch {
       // ignore storage errors
     }
@@ -107,8 +120,9 @@ const FaqFull: React.FC<FaqProps> = ({
     [list.length]
   );
 
-  const toggleIndex = (i: number) =>
+  const toggleIndex = (i: number) => {
     setOpenIndex((prev) => (prev === i ? null : i));
+  };
 
   const faqSchema = useMemo(() => {
     if (!includeSchema) return null;

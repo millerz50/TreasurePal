@@ -26,7 +26,9 @@ export default function MapPicker({
 
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current || mapInstance.current) return;
+      if (!mapRef.current || mapInstance.current) {
+        return;
+      }
       const L = await import("leaflet");
 
       const map = L.map(mapRef.current).setView(
@@ -102,10 +104,12 @@ export default function MapPicker({
         mapInstance.current = null;
       }
     };
-  }, [coordinates, setCoordinates, setAddress]); // dependencies fixed here
+  }, [coordinates, setCoordinates, setAddress]);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      return;
+    }
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(

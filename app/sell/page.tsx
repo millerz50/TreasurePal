@@ -63,7 +63,9 @@ async function fetchByType(typePath: string): Promise<Property[]> {
       return [];
     }
     const data: unknown = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      return [];
+    }
 
     return data.map((raw) => {
       const p = raw as Record<string, unknown>;
@@ -98,7 +100,8 @@ export default async function SalePage() {
     "@type": "CollectionPage",
     name: `Properties for Sale • ${SITE_NAME}`,
     url: `${SITE_URL}/sale`,
-    description: `Browse houses, stands, and commercial plots for sale across Zimbabwe.`,
+    description:
+      "Browse houses, stands, and commercial plots for sale across Zimbabwe.",
     hasPart: listings.map((p) => ({
       "@type": "Product",
       name: p.title,

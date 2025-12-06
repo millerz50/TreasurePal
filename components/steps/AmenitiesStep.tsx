@@ -46,13 +46,11 @@ export default function AmenitiesStep({
                     type="button"
                     key={name}
                     onClick={() => toggleAmenity(name)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition 
-                      ${
-                        selected
-                          ? "bg-primary text-white border-primary"
-                          : "bg-white hover:bg-muted border-gray-300"
-                      }
-                    `}>
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition ${
+                      selected
+                        ? "bg-primary text-white border-primary"
+                        : "bg-white hover:bg-muted border-gray-300"
+                    }`}>
                     {Icon && (
                       <Icon
                         className={`w-5 h-5 ${

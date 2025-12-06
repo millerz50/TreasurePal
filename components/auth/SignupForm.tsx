@@ -52,12 +52,23 @@ export default function SignupForm({
 
   // Conservative client-side normalizer (matches server rules)
   function normalizePhoneClient(phone?: string): string | null {
-    if (!phone || typeof phone !== "string") return null;
+    if (!phone || typeof phone !== "string") {
+      return null;
+    }
+
     const trimmed = phone.trim();
     const cleaned = trimmed.replace(/[\s\-().]/g, "");
-    if (!cleaned.startsWith("+")) return null;
+
+    if (!cleaned.startsWith("+")) {
+      return null;
+    }
+
     const digits = cleaned.replace(/^\+/, "");
-    if (!/^\d{1,15}$/.test(digits)) return null;
+
+    if (!/^\d{1,15}$/.test(digits)) {
+      return null;
+    }
+
     return `+${digits}`;
   }
 

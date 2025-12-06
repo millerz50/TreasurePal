@@ -16,7 +16,9 @@ export function NavbarBrand({
   const inView = useInView(ref, { once: true });
 
   useEffect(() => {
-    if (inView) controls.start("visible");
+    if (inView) {
+      controls.start("visible");
+    }
   }, [inView, controls]);
 
   return (

@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-// Define Agent type based on Appwrite row
 type Agent = {
   $id: string;
   email: string;
@@ -37,7 +36,6 @@ export default function AgencySection() {
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch agents from API
   useEffect(() => {
     const fetchAgents = async (): Promise<void> => {
       try {
@@ -47,10 +45,11 @@ export default function AgencySection() {
             headers: { "Content-Type": "application/json" },
           }
         );
-        if (!res.ok) throw new Error(`Failed to fetch agents: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch agents: ${res.status}`);
+        }
         const data = await res.json();
 
-        // ✅ Ensure data is an array
         if (Array.isArray(data)) {
           setAgents(data);
         } else {
@@ -67,7 +66,6 @@ export default function AgencySection() {
     fetchAgents();
   }, []);
 
-  // ✅ Filter agents by location safely
   const filteredAgents: Agent[] =
     selectedLocation === "All"
       ? agents
@@ -83,7 +81,6 @@ export default function AgencySection() {
         Meet Our Agents
       </motion.h2>
 
-      {/* Location Filter */}
       <div className="flex justify-center mb-10">
         <select
           id="location"
@@ -98,7 +95,6 @@ export default function AgencySection() {
         </select>
       </div>
 
-      {/* Agents Grid */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <span className="loading loading-spinner text-primary" />
@@ -122,7 +118,6 @@ export default function AgencySection() {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 whileHover={{ scale: 1.03 }}
                 className="card bg-white shadow-lg border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300">
-                {/* Agent Image */}
                 <figure className="relative h-48 w-full overflow-hidden bg-gray-100">
                   {agent.imageFileId ? (
                     <Image
@@ -138,7 +133,6 @@ export default function AgencySection() {
                   )}
                 </figure>
 
-                {/* Agent Info */}
                 <div className="card-body space-y-3">
                   <h3 className="text-xl font-semibold text-blue-700">
                     {agent.firstName} {agent.surname}
@@ -150,7 +144,6 @@ export default function AgencySection() {
                   <p className="text-xs text-gray-400">📧 {agent.email}</p>
                   <p className="text-xs text-gray-400">📞 {agent.phone}</p>
 
-                  {/* CTA */}
                   <div className="pt-4">
                     <Button
                       type="button"

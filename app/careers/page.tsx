@@ -13,7 +13,7 @@ type Job = {
 };
 
 function toString(v: unknown) {
-  return typeof v === "string" ? v : v == null ? "" : String(v);
+  return typeof v === "string" ? v : v === null ? "" : String(v);
 }
 
 function parseJob(raw: RawRecord): Job {
@@ -41,7 +41,9 @@ async function fetchCareers(): Promise<Job[]> {
     }
 
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      return [];
+    }
     return data.map((j: RawRecord) => parseJob(j));
   } catch (err) {
     console.error("Failed to fetch careers:", err);
