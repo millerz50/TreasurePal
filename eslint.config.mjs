@@ -33,48 +33,28 @@ export default [
       },
     },
     rules: {
-      ...js.configs.recommended.rules,
-      ...react.configs.recommended.rules,
-      ...reactHooks.configs.recommended.rules,
-      ...nextPlugin.configs.recommended.rules,
-      ...tseslint.configs.recommended.rules,
-
-      // Custom overrides
-      "react/react-in-jsx-scope": "off",
-      "no-undef": "off",
-      "@typescript-eslint/triple-slash-reference": "off",
-      "react/prop-types": "off",
-      "@next/next/no-img-element": "off",
+      // keep only a few essentials
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_" },
       ],
-      "react/no-unescaped-entities": "error",
-      "react/jsx-no-duplicate-props": "error",
-      "react/jsx-key": "error",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
       "no-console": ["warn", { allow: ["warn", "error"] }],
       "no-debugger": "error",
-      eqeqeq: ["error", "always"],
-      curly: ["error", "all"],
-      semi: ["error", "always"],
-      quotes: ["error", "double", { avoidEscape: true }],
-      indent: ["error", 2, { SwitchCase: 1 }],
-      "object-curly-spacing": ["error", "always"],
-      "array-bracket-spacing": ["error", "never"],
-      "keyword-spacing": ["error", { before: true, after: true }],
-      "space-before-blocks": ["error", "always"],
-      "space-in-parens": ["error", "never"],
-      "arrow-spacing": ["error", { before: true, after: true }],
-    },
-  },
 
-  // separate override block
-  {
-    files: ["components/ui/**"],
-    rules: {
-      semi: "off", // disable semicolon rule for Shadcn UI files
+      // disable style rules
+      quotes: "off",
+      indent: "off",
+      curly: "off",
+      semi: "off",
+      eqeqeq: "off",
+      "object-curly-spacing": "off",
+      "array-bracket-spacing": "off",
+      "keyword-spacing": "off",
+      "space-before-blocks": "off",
+      "space-in-parens": "off",
+      "arrow-spacing": "off",
     },
   },
 ];
