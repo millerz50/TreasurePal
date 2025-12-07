@@ -17,7 +17,7 @@ const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
 async function fetchProfileMe(jwt: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/users/me`, {
+    const res = await fetch(`${API_BASE_URL}/api/users/me`, {
       credentials: "include",
       headers: { Authorization: `Bearer ${jwt}` },
     });
