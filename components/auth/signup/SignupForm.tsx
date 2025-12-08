@@ -63,7 +63,7 @@ export default function SignupForm({
       const API_BASE = process.env.NEXT_PUBLIC_API_URL;
       const payload = { ...form };
 
-      const res = await fetch(`${API_BASE}/api/users/signup`, {
+      const res = await fetch(`${API_BASE}/users/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
