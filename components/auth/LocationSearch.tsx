@@ -3,20 +3,23 @@
 import { useEffect, useState } from "react";
 
 type Props = {
+  value: string;
   onSelect: (location: { name: string; lat: number; lng: number }) => void;
 };
 
-export default function LocationSearch({ onSelect }: Props) {
-  const [query, setQuery] = useState("");
+export default function LocationSearch({ value, onSelect }: Props) {
+  const [query, setQuery] = useState(value);
   const [results, setResults] = useState<
     { display_name: string; lat: string; lon: string }[]
   >([]);
 
   useEffect(() => {
+    setQuery(value); // keep local state in sync with parent
+  }, [value]);
+
+  useEffect(() => {
     const fetchResults = async () => {
-      if (query.length < 3) {
-        return;
-      }
+      if (query.length < 3) return;
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(
           query
