@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     ...defaultOpenGraph,
     title: `Listings • ${SITE_NAME}`,
     description:
-      "Find rooms, houses, commercial spaces, and more across Zimbabwe. Filter by location, price, and type.",
+      "Find rooms, houses, commercial spaces, and more across Zimbabwe. Filter by location, price, and type..",
     url: `${SITE_URL}/listings`,
     images: [
       {
