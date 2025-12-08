@@ -1,103 +1,216 @@
-"use client";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
+import Link from "next/link";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { Button } from "../../../components/ui/button";
+import {
+  baseAlternates,
+  defaultOpenGraph,
+  defaultTwitter,
+} from "@/app/seo/seoConfig";
 
-import { SignupFormData } from "../SignupSchema";
-import SocialSignup from "../SocialSignup";
+export const metadata: Metadata = {
+  title: `Listings • ${SITE_NAME}`,
+  description:
+    "Browse property listings across Zimbabwe. Filter by location, price, and type.",
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    ...baseAlternates,
+    canonical: `${SITE_URL}/listings`,
+  },
+  openGraph: {
+    ...defaultOpenGraph,
+    title: `Listings • ${SITE_NAME}`,
+    description:
+      "Find rooms, houses, commercial spaces, and more across Zimbabwe. Filter by location, price, and type.",
+    url: `${SITE_URL}/listings`,
+    images: [
+      {
+        url: "/og/listings.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Property listings in Zimbabwe",
+      },
+    ],
+  },
+  twitter: {
+    ...defaultTwitter,
+    title: `Listings • ${SITE_NAME}`,
+    description:
+      "Browse property listings across Zimbabwe. Rooms, houses, and commercial spaces available.",
+    images: ["/og/listings.jpg"],
+  },
+};
 
-// Child components
-import AvatarField from "./AvatarField";
-import BioField from "./BioField";
-import ContactFields from "./ContactFields";
-import CountryLocationFields from "./CountryLocationFields";
-import DOBField from "./DOBField";
-import NameFields from "./NameFields";
-import PasswordField from "./PasswordField";
-import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
+type RawRecord = Record<string, unknown>;
 
-export default function SignupForm({ redirectTo = "/signin" }) {
-  const [form, setForm] = useState<SignupFormData>({
-    accountId: crypto.randomUUID(),
-    email: "",
-    firstName: "",
-    surname: "",
-    phone: "",
-    country: "",
-    location: "",
-    role: "user",
-    status: "Pending",
-    nationalId: "",
-    bio: "",
-    metadata: [],
-    password: "",
-    avatarUrl: "",
-    dateOfBirth: "",
-  });
+type Property = {
+  id: string;
+  title: string;
+  location?: string;
+  price?: string;
+  beds?: number;
+  baths?: number;
+  image?: string | null;
+  slug?: string;
+  summary?: string;
+};
 
-  const [loading, setLoading] = useState(false);
+function toString(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (v === null || v === undefined) return "";
+  return String(v);
+}
 
-  function onChange(
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+function toNumberOrUndefined(v: unknown): number | undefined {
+  if (typeof v === "number") return v;
+  if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) {
+    return Number(v);
   }
+  return undefined;
+}
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
+function parseProperty(raw: RawRecord): Property {
+  return {
+    id: toString(
+      raw.id ?? raw._id ?? raw.slug ?? Math.random().toString(36).slice(2)
+    ),
+    title: toString(raw.title ?? raw.name ?? "Untitled property"),
+    location: toString(raw.location ?? raw.city ?? "Unknown"),
+    price: raw.price
+      ? toString(raw.price)
+      : toString(raw.displayPrice ?? "Contact for price"),
+    beds: toNumberOrUndefined(raw.beds ?? raw.bedrooms),
+    baths: toNumberOrUndefined(raw.baths ?? raw.bathrooms),
+    image: raw.image
+      ? toString(raw.image)
+      : raw.photo
+      ? toString(raw.photo)
+      : null,
+    slug: raw.slug ? toString(raw.slug) : raw.id ? toString(raw.id) : undefined,
+    summary: toString(raw.summary ?? raw.description ?? ""),
+  };
+}
 
-    try {
-      const payload = { ...form };
-      console.log("Submitting form:", payload);
-      window.location.href = redirectTo;
-    } catch (error) {
-      console.error("Signup failed:", error);
-    } finally {
-      setLoading(false);
+async function fetchListings(): Promise<Property[]> {
+  try {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+    if (!API_BASE) {
+      console.error("NEXT_PUBLIC_API_URL is not defined");
+      return [];
     }
+
+    const res = await fetch(`${API_BASE}/api/properties/all`, {
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) {
+      console.error("Listings API error:", res.status, res.statusText);
+      return [];
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data)) {
+      console.error("Listings API returned non-array:", data);
+      return [];
+    }
+
+    return data.map((item: RawRecord) => parseProperty(item));
+  } catch (err) {
+    console.error("Failed to fetch listings:", err);
+    return [];
   }
+}
+
+export default async function ListingsPage() {
+  const listings = await fetchListings();
 
   return (
-    <motion.form
-      onSubmit={handleSubmit}
-      className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl 
-                 shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}>
-      <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6">
-        <NameFields form={form} onChange={onChange} />
-        <ContactFields form={form} onChange={onChange} />
-        <CountryLocationFields
-          form={form}
-          onChange={onChange}
-          onLocationSelect={(loc) =>
-            setForm((prev) => ({ ...prev, location: loc.name }))
-          }
-        />
-        <RoleAndNationalIdFields form={form} onChange={onChange} />
-        <BioField form={form} onChange={onChange} />
-        <AvatarField form={form} onChange={onChange} />
-        <DOBField form={form} onChange={onChange} />
-        <PasswordField form={form} onChange={onChange} />
+    <main className="min-h-screen bg-base-200 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-6">
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">
+            Listings
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+            Find rooms, houses, commercial spaces and more.
+          </p>
+        </header>
 
-        {/* Submit */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
-          <Button type="submit" disabled={loading} className="btn-primary">
-            {loading ? "Creating..." : "Create Account"}
-          </Button>
-          <a href="/signin" className="btn-outline">
-            Already have an account?
-          </a>
-        </div>
+        {listings.length === 0 ? (
+          <section className="grid gap-6">
+            <div className="p-6 rounded-lg border border-dashed border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-center">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                No listings available
+              </h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                There are no properties listed right now. Be the first to list
+                your property and reach buyers and renters.
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/sell/new"
+                  className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm">
+                  List a property
+                </Link>
+                <Link
+                  href="/support"
+                  className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm">
+                  Need help listing?
+                </Link>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {listings.map((p) => (
+              <article
+                key={p.id}
+                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
+                <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
+                  {p.image ? (
+                    <img
+                      src={p.image}
+                      alt={p.title}
+                      className="object-cover w-full h-full"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-sm text-slate-500">
+                      No photo
+                    </div>
+                  )}
+                </div>
 
-        <SocialSignup />
+                <div className="p-4">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    {p.title}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                    {p.location} • {p.price}
+                  </p>
+                  {p.summary ? (
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
+                      {p.summary}
+                    </p>
+                  ) : null}
+                  <div className="mt-3 flex items-center justify-between">
+                    <Link
+                      href={
+                        p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`
+                      }
+                      className="text-sm text-blue-600 dark:text-blue-400 underline">
+                      View
+                    </Link>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {p.beds ?? "-"} beds • {p.baths ?? "-"} baths
+                    </span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
       </div>
-    </motion.form>
+    </main>
   );
 }
