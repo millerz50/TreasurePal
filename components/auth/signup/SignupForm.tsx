@@ -50,19 +50,31 @@ export default function SignupForm({
   // ⭐ Use phone hook, dynamically responds to selected country
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
+  /** ✨ Trim on change for all inputs */
   function onChange(
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) {
     const { name, value } = e.target;
+    const trimmed = value.trim();
 
     if (name === "phone") {
-      setPhone(value);
+      setPhone(trimmed);
       return;
     }
 
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: trimmed }));
+  }
+
+  /** ✨ Trim everything before sending */
+  function trimAll(obj: Record<string, any>) {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, val]) => [
+        key,
+        typeof val === "string" ? val.trim() : val,
+      ])
+    );
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -76,8 +88,14 @@ export default function SignupForm({
       );
       if (!API_BASE) throw new Error("API base URL is not configured");
 
-      // ✅ Use hook to ensure valid E.164 or undefined
-      const payload = { ...form, phone: getE164() };
+      // ✨ Trim entire form object
+      const cleanedForm = trimAll(form);
+
+      // ✨ Final clean, validated payload
+      const payload = {
+        ...cleanedForm,
+        phone: getE164()?.trim() || null, // ensure strict E.164
+      };
 
       const url = API_BASE.endsWith("/api")
         ? `${API_BASE}/users/signup`
@@ -129,7 +147,7 @@ export default function SignupForm({
           form={form}
           onChange={onChange}
           onLocationSelect={(loc) =>
-            setForm((prev) => ({ ...prev, location: loc.name }))
+            setForm((prev) => ({ ...prev, location: loc.name.trim() }))
           }
         />
 
