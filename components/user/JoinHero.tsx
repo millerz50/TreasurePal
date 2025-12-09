@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { domainConfig } from "../landing/Navbar/ssrWrapperNav/domains"; // import domain config
 
 /** Synchronous check for reduced motion preference (safe on server) */
 function prefersReducedMotionSync(): boolean {
@@ -16,16 +17,19 @@ function prefersReducedMotionSync(): boolean {
 }
 
 export default function JoinHero() {
-  // Derive initial visible state from reduced-motion preference to avoid setState in effect
+  // Derive initial visible state from reduced-motion preference
   const initialVisible = prefersReducedMotionSync();
   const [visible, setVisible] = useState<boolean>(initialVisible);
 
+  // 🔑 Domain-based branding
+  const [brand, setBrand] = useState(domainConfig["default"]);
   useEffect(() => {
-    // If user prefers reduced motion, we already set visible above — no setState here
-    if (initialVisible) {
-      return;
-    }
+    const host = window.location.hostname;
+    setBrand(domainConfig[host] || domainConfig["default"]);
+  }, []);
 
+  useEffect(() => {
+    if (initialVisible) return;
     const timeout = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(timeout);
   }, [initialVisible]);
@@ -41,18 +45,17 @@ export default function JoinHero() {
         <h1
           id="become-agent-title"
           className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-slate-100 mb-4 tracking-tight">
-          Join Us
+          Join {brand.name}
         </h1>
 
         <p className="text-gray-600 dark:text-slate-300 text-lg md:text-xl max-w-2xl mx-auto mb-8 leading-relaxed">
-          Empower Zimbabwean businesses through TreasurePal. Earn commissions,
-          gain skills, and grow with us.
+          {brand.description} — Earn commissions, gain skills, and grow with us.
         </p>
 
         <Link
           href="/signup"
           className="inline-block focus-visible:ring-4 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:outline-none rounded-full shadow-md transition-transform duration-200 transform hover:-translate-y-0.5 active:translate-y-0"
-          aria-label="Join TreasurePal">
+          aria-label={`Join ${brand.name}`}>
           <span className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-medium px-8 py-3 rounded-full text-base md:text-lg">
             <svg
               aria-hidden="true"
@@ -76,7 +79,7 @@ export default function JoinHero() {
                 strokeLinejoin="round"
               />
             </svg>
-            Join Us
+            Join {brand.name}
           </span>
         </Link>
       </div>

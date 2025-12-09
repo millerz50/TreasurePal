@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { domainConfig } from "../landing/Navbar/ssrWrapperNav/domains"; // import domain config
+
 type SearchType = "room" | "house" | "buy" | "booking" | "industrial";
 
 const searchOptions: { type: SearchType; label: string; icon: LucideIcon }[] = [
@@ -32,17 +34,23 @@ export default function Hero() {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [searchType, setSearchType] = useState<SearchType>("room");
 
+  // 🔑 Domain-based branding
+  const [brand, setBrand] = useState(domainConfig["default"]);
+  useEffect(() => {
+    const host = window.location.hostname;
+    setBrand(domainConfig[host] || domainConfig["default"]);
+  }, []);
+
   return (
     <section className="bg-base-100 text-base-content px-6 py-16 animate-fadeIn">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         {/* Left: Search Form */}
         <div className="space-y-8">
           <h1 className="text-5xl font-extrabold leading-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text">
-            Find Your Treasure Home
+            Find Your {brand.name} Home
           </h1>
           <p className="text-lg font-semibold text-highlight">
-            From student rooms to industrial buildings — TreasurePal helps you
-            find your next space across Zimbabwe.
+            {brand.description} — helping you find your next space.
           </p>
 
           {/* Search Type Selector */}

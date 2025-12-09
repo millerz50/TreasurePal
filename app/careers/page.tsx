@@ -99,6 +99,7 @@ export default async function CareersPage() {
 
       <main className="min-h-screen bg-base-200 text-base-content py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Page Header */}
           <header className="text-center">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-slate-100">
               Careers
@@ -109,7 +110,9 @@ export default async function CareersPage() {
             </p>
           </header>
 
+          {/* Content Sections */}
           <section className="grid gap-4">
+            {/* Why Work Here */}
             <div className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-4 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                 Why work at {SITE_NAME}
@@ -121,6 +124,7 @@ export default async function CareersPage() {
               </ul>
             </div>
 
+            {/* Open Roles */}
             <div className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-4 shadow-sm">
               <h3 className="font-semibold text-slate-800 dark:text-slate-100">
                 Open roles

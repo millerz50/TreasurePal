@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { FaBed, FaInfoCircle, FaMapMarkerAlt } from "react-icons/fa";
 import "swiper/css";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { domainConfig } from "../landing/Navbar/ssrWrapperNav/domains"; // import domain config
 
 type PropertyImage = {
   fileId: string | null;
@@ -106,6 +107,13 @@ export default function PropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔑 Domain-based branding
+  const [brand, setBrand] = useState(domainConfig["default"]);
+  useEffect(() => {
+    const host = window.location.hostname;
+    setBrand(domainConfig[host] || domainConfig["default"]);
+  }, []);
+
   useEffect(() => {
     const fetchProperties = async (): Promise<void> => {
       try {
@@ -134,12 +142,9 @@ export default function PropertyList() {
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-primary">
-            Featured Properties
+            {brand.name} Featured Properties
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Handpicked listings across Zimbabwe’s top cities—from student pods
-            to industrial investments
-          </p>
+          <p className="text-sm text-muted-foreground">{brand.description}</p>
         </div>
 
         {loading ? (

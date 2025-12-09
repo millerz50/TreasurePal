@@ -13,6 +13,7 @@ export default function AboutPage() {
 
       <main className="min-h-screen bg-base-200 py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Page Header */}
           <header className="text-center">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-slate-100">
               About {SITE_NAME}
@@ -24,7 +25,9 @@ export default function AboutPage() {
             </p>
           </header>
 
+          {/* Content Sections */}
           <section className="grid gap-4">
+            {/* Story */}
             <div className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-6 shadow-sm">
               <h2 className="font-semibold">Our story</h2>
               <p className="mt-2 text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
@@ -36,6 +39,7 @@ export default function AboutPage() {
               </p>
             </div>
 
+            {/* Values */}
             <div className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-6 shadow-sm">
               <h2 className="font-semibold">Values</h2>
               <ul className="mt-2 text-sm text-slate-700 dark:text-slate-200 space-y-2">
@@ -57,6 +61,7 @@ export default function AboutPage() {
               </ul>
             </div>
 
+            {/* Founder */}
             <div className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-6 shadow-sm">
               <h2 className="font-semibold">Founder</h2>
               <p className="mt-2 text-sm text-slate-700 dark:text-slate-200 leading-relaxed">

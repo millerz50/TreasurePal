@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { domainConfig } from "../landing/Navbar/ssrWrapperNav/domains";
 
 type Agent = {
   $id: string;
@@ -21,20 +22,17 @@ type Agent = {
   location?: string;
 };
 
-const locations = [
-  "All",
-  "Harare",
-  "Bulawayo",
-  "Bindura",
-  "Mutare",
-  "Gweru",
-  "Mt Darwin",
-];
-
 export default function AgencySection() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [loading, setLoading] = useState(true);
+
+  // 🔑 Domain-based branding
+  const [brand, setBrand] = useState(domainConfig["default"]);
+  useEffect(() => {
+    const host = window.location.hostname;
+    setBrand(domainConfig[host] || domainConfig["default"]);
+  }, []);
 
   useEffect(() => {
     const fetchAgents = async (): Promise<void> => {
@@ -45,17 +43,9 @@ export default function AgencySection() {
             headers: { "Content-Type": "application/json" },
           }
         );
-        if (!res.ok) {
-          throw new Error(`Failed to fetch agents: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Failed to fetch agents: ${res.status}`);
         const data = await res.json();
-
-        if (Array.isArray(data)) {
-          setAgents(data);
-        } else {
-          console.error("❌ API did not return an array:", data);
-          setAgents([]);
-        }
+        setAgents(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("❌ Error fetching agents:", error);
         setAgents([]);
@@ -66,7 +56,15 @@ export default function AgencySection() {
     fetchAgents();
   }, []);
 
-  const filteredAgents: Agent[] =
+  // 🔍 Build dynamic location list from agents
+  const uniqueLocations = [
+    "All",
+    ...Array.from(
+      new Set(agents.map((agent) => agent.location).filter(Boolean))
+    ),
+  ];
+
+  const filteredAgents =
     selectedLocation === "All"
       ? agents
       : agents.filter((agent) => agent.location === selectedLocation);
@@ -77,9 +75,12 @@ export default function AgencySection() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-4xl font-bold text-center text-blue-700 mb-6">
-        Meet Our Agents
+        className="text-4xl font-bold text-center text-blue-700 mb-2">
+        Meet {brand.name} Agents
       </motion.h2>
+      <p className="text-center text-sm text-gray-500 mb-6">
+        {brand.description}
+      </p>
 
       <div className="flex justify-center mb-10">
         <select
@@ -87,7 +88,7 @@ export default function AgencySection() {
           value={selectedLocation}
           onChange={(e) => setSelectedLocation(e.target.value)}
           className="select select-bordered w-full max-w-xs text-sm">
-          {locations.map((loc) => (
+          {uniqueLocations.map((loc) => (
             <option key={loc} value={loc}>
               {loc}
             </option>
