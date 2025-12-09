@@ -1,4 +1,3 @@
-// components/auth/signup/SignupForm.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -18,7 +17,9 @@ import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
 import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
 
-// ✅ Declare props type
+// NEW: phone formatting hook
+import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
+
 interface SignupFormProps {
   redirectTo?: string;
 }
@@ -46,12 +47,21 @@ export default function SignupForm({
 
   const [loading, setLoading] = useState(false);
 
+  // ⭐ Use phone hook, dynamically responds to selected country
+  const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
+
   function onChange(
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) {
     const { name, value } = e.target;
+
+    if (name === "phone") {
+      setPhone(value);
+      return;
+    }
+
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -60,24 +70,39 @@ export default function SignupForm({
     setLoading(true);
 
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-      const payload = { ...form };
+      const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(
+        /\/$/,
+        ""
+      );
+      if (!API_BASE) throw new Error("API base URL is not configured");
 
-      const res = await fetch(`${API_BASE}/users/signup`, {
+      // ✅ Use hook to ensure valid E.164 or undefined
+      const payload = { ...form, phone: getE164() };
+
+      const url = API_BASE.endsWith("/api")
+        ? `${API_BASE}/users/signup`
+        : `${API_BASE}/api/users/signup`;
+
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
+      const text = await res.text();
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Signup failed");
+        let message = text;
+        try {
+          const json = JSON.parse(text);
+          message = json.error ?? json.message ?? JSON.stringify(json);
+        } catch {}
+        throw new Error(message || "Signup failed");
       }
 
-      const user = await res.json();
+      const user = JSON.parse(text);
       console.info("Created user:", user);
 
-      // ✅ Redirect only after success
       window.location.href = redirectTo;
     } catch (error) {
       console.error("Signup failed:", error);
@@ -90,14 +115,16 @@ export default function SignupForm({
   return (
     <motion.form
       onSubmit={handleSubmit}
-      className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl 
-                 shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
+      className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}>
       <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6">
         <NameFields form={form} onChange={onChange} />
-        <ContactFields form={form} onChange={onChange} />
+
+        {/* ⭐ Pass phone from hook */}
+        <ContactFields form={{ ...form, phone }} onChange={onChange} />
+
         <CountryLocationFields
           form={form}
           onChange={onChange}
@@ -105,13 +132,13 @@ export default function SignupForm({
             setForm((prev) => ({ ...prev, location: loc.name }))
           }
         />
+
         <RoleAndNationalIdFields form={form} onChange={onChange} />
         <BioField form={form} onChange={onChange} />
         <AvatarField form={form} onChange={onChange} />
         <DOBField form={form} onChange={onChange} />
         <PasswordField form={form} onChange={onChange} />
 
-        {/* Submit */}
         <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
           <Button type="submit" disabled={loading} className="btn-primary">
             {loading ? "Creating..." : "Create Account"}
