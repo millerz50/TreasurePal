@@ -8,7 +8,6 @@ import { SignupFormData } from "../SignupSchema";
 import SocialSignup from "../SocialSignup";
 
 // Child components
-import AvatarField from "./AvatarField";
 import BioField from "./BioField";
 import ContactFields from "./ContactFields";
 import CountryLocationFields from "./CountryLocationFields";
@@ -41,7 +40,6 @@ export default function SignupForm({
     bio: "",
     metadata: [],
     password: "",
-    avatarUrl: "",
     dateOfBirth: "",
   });
 
@@ -153,7 +151,6 @@ export default function SignupForm({
 
         <RoleAndNationalIdFields form={form} onChange={onChange} />
         <BioField form={form} onChange={onChange} />
-        <AvatarField form={form} onChange={onChange} />
         <DOBField form={form} onChange={onChange} />
         <PasswordField form={form} onChange={onChange} />
 
