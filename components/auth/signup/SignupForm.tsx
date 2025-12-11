@@ -7,7 +7,6 @@ import { Button } from "../../../components/ui/button";
 import { SignupFormData } from "../SignupSchema";
 import SocialSignup from "../SocialSignup";
 
-// Child components
 import BioField from "./BioField";
 import ContactFields from "./ContactFields";
 import CountryLocationFields from "./CountryLocationFields";
@@ -16,7 +15,6 @@ import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
 import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
 
-// Hook
 import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
 
 interface SignupFormProps {
@@ -26,6 +24,8 @@ interface SignupFormProps {
 export default function SignupForm({
   redirectTo = "/auth/verify/verifyOtp",
 }: SignupFormProps) {
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState<SignupFormData>({
     accountId: crypto.randomUUID(),
     email: "",
@@ -43,48 +43,53 @@ export default function SignupForm({
     dateOfBirth: "",
   });
 
-  const [loading, setLoading] = useState(false);
+  // Country-aware phone handler
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
-  function onChange(
+  const updateField = (name: string, value: string) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
-  ) {
+  ) => {
     const { name, value } = e.target;
 
     if (name === "phone") {
       setPhone(value);
-      setForm((prev) => ({ ...prev, phone: value }));
+      updateField("phone", value);
       return;
     }
 
-    setForm((prev) => ({ ...prev, [name]: value }));
-  }
+    updateField(name, value);
+  };
 
-  function onFieldBlur(
+  const handleBlur = (
     e: React.FocusEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
-  ) {
+  ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: typeof value === "string" ? value.trim() : value,
-    }));
-    if (name === "phone") setPhone(value.trim());
-  }
 
-  function trimAll(obj: Record<string, any>) {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, val]) => [
-        key,
-        typeof val === "string" ? val.trim() : val,
+    updateField(name, value.trim());
+
+    if (name === "phone") {
+      setPhone(value.trim());
+    }
+  };
+
+  // Sanitizes all string fields
+  const cleanForm = (obj: Record<string, any>) =>
+    Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [
+        k,
+        typeof v === "string" ? v.trim() : v,
       ])
     );
-  }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -95,10 +100,12 @@ export default function SignupForm({
       );
       if (!API_BASE) throw new Error("API base URL is not configured");
 
-      const cleanedForm = trimAll(form);
-      const payload = { ...cleanedForm, phone: getE164()?.trim() || null };
+      const payload = {
+        ...cleanForm(form),
+        phone: getE164() || null,
+      };
 
-      const url = API_BASE.endsWith("/api")
+      const url = API_BASE.includes("/api")
         ? `${API_BASE}/users/signup`
         : `${API_BASE}/api/users/signup`;
 
@@ -109,27 +116,29 @@ export default function SignupForm({
       });
 
       const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+
       if (!res.ok) {
-        let message = text;
-        try {
-          const json = JSON.parse(text);
-          message = json.error ?? json.message ?? JSON.stringify(json);
-        } catch {}
-        throw new Error(message || "Signup failed");
+        throw new Error(
+          data.error || data.message || "Unable to create user account"
+        );
       }
 
-      const user = JSON.parse(text);
-      console.info("Created user:", user);
+      console.info("Created user:", data);
 
-      // ✅ Redirect to OTP page with userId
-      window.location.href = `${redirectTo}?userId=${user.userId}`;
-    } catch (error) {
-      console.error("Signup failed:", error);
-      alert("Signup failed: " + (error as Error).message);
+      if (!data.userId) {
+        throw new Error("Missing userId in API response");
+      }
+
+      // Redirect to OTP page
+      window.location.href = `${redirectTo}?userId=${data.userId}`;
+    } catch (err: any) {
+      console.error("Signup failed:", err);
+      alert(err.message);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <motion.form
@@ -139,27 +148,37 @@ export default function SignupForm({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}>
       <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
-        <NameFields form={form} onChange={onChange} onBlur={onFieldBlur} />
+        <NameFields form={form} onChange={handleChange} onBlur={handleBlur} />
+
         <ContactFields
           form={{ ...form, phone }}
-          onChange={onChange}
-          onBlur={onFieldBlur}
+          onChange={handleChange}
+          onBlur={handleBlur}
         />
+
         <CountryLocationFields
           form={form}
-          onChange={onChange}
+          onChange={handleChange}
           onLocationSelect={(loc) =>
             setForm((prev) => ({ ...prev, location: loc.name.trim() }))
           }
         />
+
         <RoleAndNationalIdFields
           form={form}
-          onChange={onChange}
-          onBlur={onFieldBlur}
+          onChange={handleChange}
+          onBlur={handleBlur}
         />
-        <BioField form={form} onChange={onChange} />
-        <DOBField form={form} onChange={onChange} onBlur={onFieldBlur} />
-        <PasswordField form={form} onChange={onChange} onBlur={onFieldBlur} />
+
+        <BioField form={form} onChange={handleChange} />
+
+        <DOBField form={form} onChange={handleChange} onBlur={handleBlur} />
+
+        <PasswordField
+          form={form}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
 
         <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full">
           <Button
@@ -168,6 +187,7 @@ export default function SignupForm({
             className="btn-primary w-full sm:w-auto">
             {loading ? "Creating..." : "Create Account"}
           </Button>
+
           <a
             href="/signin"
             className="btn-outline w-full sm:w-auto text-center">
