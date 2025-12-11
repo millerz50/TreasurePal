@@ -122,7 +122,7 @@ export default function SignupForm({
       console.info("Created user:", user);
 
       // ✅ Redirect to OTP page with userId
-      window.location.href = `${redirectTo}?userId=${user.id}`;
+      window.location.href = `${redirectTo}?userId=${user.userId}`;
     } catch (error) {
       console.error("Signup failed:", error);
       alert("Signup failed: " + (error as Error).message);
