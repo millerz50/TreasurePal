@@ -26,6 +26,7 @@ export default function SignupForm({
 }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
 
+  // 🔥 "phone" must always be a string (never null)
   const [form, setForm] = useState<SignupFormData>({
     accountId: crypto.randomUUID(),
     email: "",
@@ -56,6 +57,7 @@ export default function SignupForm({
   ) => {
     const { name, value } = e.target;
 
+    // Phone uses formatter hook
     if (name === "phone") {
       setPhone(value);
       updateField("phone", value);
@@ -71,7 +73,6 @@ export default function SignupForm({
     >
   ) => {
     const { name, value } = e.target;
-
     updateField(name, value.trim());
 
     if (name === "phone") {
@@ -87,18 +88,21 @@ export default function SignupForm({
       ])
     );
 
-  // 🚀 FIXED: all fields exist on payload
+  // CLIENT ONLY SIGNUP (Option A)
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // ✔ phone must always be string, never null
+      const formattedPhone = getE164() || "";
+
       const payload: SignupFormData = {
         ...(cleanForm(form) as SignupFormData),
-        phone: getE164() || null,
+        phone: formattedPhone,
       };
 
-      // 1. Create Appwrite user
+      // 1️⃣ Create Appwrite user
       const user = await account.create(
         payload.accountId,
         payload.email,
@@ -108,19 +112,19 @@ export default function SignupForm({
 
       console.log("User created:", user);
 
-      // 2. Email verification
+      // 2️⃣ Send email verification
       await account.createVerification(
         `${window.location.origin}${redirectTo}`
       );
 
-      // 3. Login session
+      // 3️⃣ Auto-login
       await account.createEmailPasswordSession(payload.email, payload.password);
 
-      // 4. Redirect
+      // 4️⃣ Redirect with user ID
       window.location.href = `${redirectTo}?userId=${user.$id}`;
     } catch (err: any) {
       console.error("Signup failed:", err);
-      alert(err.message);
+      alert(err.message || "Signup failed.");
     } finally {
       setLoading(false);
     }
