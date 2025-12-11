@@ -16,7 +16,7 @@ import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
 import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
 
-// NEW: phone formatting hook
+// Hook
 import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
 
 interface SignupFormProps {
@@ -24,7 +24,7 @@ interface SignupFormProps {
 }
 
 export default function SignupForm({
-  redirectTo = "/signin",
+  redirectTo = "/auth/verify/verifyOtp",
 }: SignupFormProps) {
   const [form, setForm] = useState<SignupFormData>({
     accountId: crypto.randomUUID(),
@@ -46,9 +46,6 @@ export default function SignupForm({
   const [loading, setLoading] = useState(false);
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
-  /**
-   * Keep raw input while typing. Do NOT trim here.
-   */
   function onChange(
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -57,9 +54,7 @@ export default function SignupForm({
     const { name, value } = e.target;
 
     if (name === "phone") {
-      // keep phone formatting hook in sync (do not trim)
       setPhone(value);
-      // also keep form.phone in sync if you want
       setForm((prev) => ({ ...prev, phone: value }));
       return;
     }
@@ -67,25 +62,17 @@ export default function SignupForm({
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  /**
-   * Optional: trim a single field on blur (so users can still type spaces,
-   * but we remove accidental leading/trailing whitespace when they leave the field).
-   */
   function onFieldBlur(
     e: React.FocusEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) {
     const { name, value } = e.target;
-    // only trim strings
     setForm((prev) => ({
       ...prev,
       [name]: typeof value === "string" ? value.trim() : value,
     }));
-    if (name === "phone") {
-      // keep phone hook in sync with trimmed phone if desired
-      setPhone(value.trim());
-    }
+    if (name === "phone") setPhone(value.trim());
   }
 
   function trimAll(obj: Record<string, any>) {
@@ -108,7 +95,6 @@ export default function SignupForm({
       );
       if (!API_BASE) throw new Error("API base URL is not configured");
 
-      // Trim everything once before sending
       const cleanedForm = trimAll(form);
       const payload = { ...cleanedForm, phone: getE164()?.trim() || null };
 
@@ -134,7 +120,9 @@ export default function SignupForm({
 
       const user = JSON.parse(text);
       console.info("Created user:", user);
-      window.location.href = redirectTo;
+
+      // ✅ Redirect to OTP page with userId
+      window.location.href = `${redirectTo}?userId=${user.id}`;
     } catch (error) {
       console.error("Signup failed:", error);
       alert("Signup failed: " + (error as Error).message);
@@ -169,7 +157,6 @@ export default function SignupForm({
           onChange={onChange}
           onBlur={onFieldBlur}
         />
-        {/* BioField receives the same onChange signature and will preserve spaces */}
         <BioField form={form} onChange={onChange} />
         <DOBField form={form} onChange={onChange} onBlur={onFieldBlur} />
         <PasswordField form={form} onChange={onChange} onBlur={onFieldBlur} />
