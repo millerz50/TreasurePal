@@ -1,3 +1,4 @@
+// app/(auth)/signup/SignupForm.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -27,7 +28,10 @@ export default function SignupForm({
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState<SignupFormData>({
-    accountId: crypto.randomUUID(),
+    accountId:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`,
     email: "",
     firstName: "",
     surname: "",
@@ -43,11 +47,11 @@ export default function SignupForm({
     dateOfBirth: "",
   });
 
+  // phone formatter hook (assumes hook returns { phone, setPhone, getE164 })
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
-  const updateField = (name: string, value: string) => {
+  const updateField = (name: string, value: string) =>
     setForm((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -55,13 +59,11 @@ export default function SignupForm({
     >
   ) => {
     const { name, value } = e.target;
-
     if (name === "phone") {
       setPhone(value);
       updateField("phone", value);
       return;
     }
-
     updateField(name, value);
   };
 
@@ -73,10 +75,7 @@ export default function SignupForm({
     const { name, value } = e.target;
     const trimmed = value.trim();
     updateField(name, trimmed);
-
-    if (name === "phone") {
-      setPhone(trimmed);
-    }
+    if (name === "phone") setPhone(trimmed);
   };
 
   const cleanForm = (obj: Record<string, any>) =>
@@ -101,7 +100,7 @@ export default function SignupForm({
 
       payload.email = payload.email.toLowerCase().trim();
 
-      // 1️⃣ Create Appwrite user
+      // 1) Create Appwrite user on client
       const user = await account.create(
         payload.accountId,
         payload.email,
@@ -109,19 +108,37 @@ export default function SignupForm({
         `${payload.firstName} ${payload.surname}`
       );
 
-      // 2️⃣ Send email verification
+      // 2) Send verification email on client
       await account.createVerification(
         `${window.location.origin}${redirectTo}`
       );
 
-      // 3️⃣ Auto-login
+      // 3) Create session on client
       await account.createEmailPasswordSession(payload.email, payload.password);
 
-      // 4️⃣ Redirect with user ID
+      // 4) Call server to create profile row (server uses API key)
+      //    If you don't have a server endpoint, remove this block.
+      try {
+        const res = await fetch("/api/signupUser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Server error" }));
+          console.warn("Server profile creation failed:", err);
+          // continue — user account was created in Appwrite; surface server error if needed
+        }
+      } catch (serverErr) {
+        console.warn("Failed to call /api/signupUser:", serverErr);
+      }
+
+      // 5) Redirect with user ID
       window.location.href = `${redirectTo}?userId=${user.$id}`;
     } catch (err: any) {
       console.error("Signup failed:", err);
-      alert(err.message || "Signup failed.");
+      alert(err?.message || "Signup failed.");
     } finally {
       setLoading(false);
     }
