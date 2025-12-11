@@ -22,10 +22,11 @@ export default function BioField({ form, onChange }: BioFieldProps) {
       <label htmlFor="bio" className="text-sm font-semibold text-slate-700">
         Bio
       </label>
+
       <textarea
         id="bio"
         name="bio"
-        value={form.bio || ""}
+        value={form.bio ?? ""}
         onChange={onChange}
         rows={5}
         className="
@@ -38,6 +39,7 @@ export default function BioField({ form, onChange }: BioFieldProps) {
         "
         placeholder="Tell us a little about yourself..."
       />
+
       <p className="text-xs text-slate-500">
         Line breaks and spaces will be preserved when displayed.
       </p>

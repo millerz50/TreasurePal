@@ -1,15 +1,25 @@
+"use client";
+
 import React from "react";
 
 interface RoleAndNationalIdFieldsProps {
   form: { role: string; nationalId?: string };
   onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => void;
+  onBlur?: (
+    e: React.FocusEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => void;
 }
 
 export default function RoleAndNationalIdFields({
   form,
   onChange,
+  onBlur,
 }: RoleAndNationalIdFieldsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -22,6 +32,7 @@ export default function RoleAndNationalIdFields({
           name="role"
           value={form.role || ""}
           onChange={onChange}
+          onBlur={onBlur}
           className="input">
           <option value="user">User</option>
           <option value="agent">Agent</option>
@@ -39,6 +50,7 @@ export default function RoleAndNationalIdFields({
           name="nationalId"
           value={form.nationalId || ""}
           onChange={onChange}
+          onBlur={onBlur}
           className="input"
           placeholder="Enter your national ID"
         />

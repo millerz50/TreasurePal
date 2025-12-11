@@ -1,11 +1,26 @@
+"use client";
+
 import React from "react";
 
 interface NameFieldsProps {
   form: { firstName: string; surname: string };
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => void;
+  onBlur?: (
+    e: React.FocusEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => void;
 }
 
-export default function NameFields({ form, onChange }: NameFieldsProps) {
+export default function NameFields({
+  form,
+  onChange,
+  onBlur,
+}: NameFieldsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div>
@@ -20,6 +35,7 @@ export default function NameFields({ form, onChange }: NameFieldsProps) {
           name="firstName"
           value={form.firstName || ""}
           onChange={onChange}
+          onBlur={onBlur}
           className="input"
           placeholder="Enter your first name"
           required
@@ -37,6 +53,7 @@ export default function NameFields({ form, onChange }: NameFieldsProps) {
           name="surname"
           value={form.surname || ""}
           onChange={onChange}
+          onBlur={onBlur}
           className="input"
           placeholder="Enter your surname"
           required

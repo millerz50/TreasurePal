@@ -1,11 +1,22 @@
+"use client";
+
 import React from "react";
 
 interface DOBFieldProps {
   form: { dateOfBirth?: string };
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => void;
+  onBlur?: (
+    e: React.FocusEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => void;
 }
 
-export default function DOBField({ form, onChange }: DOBFieldProps) {
+export default function DOBField({ form, onChange, onBlur }: DOBFieldProps) {
   return (
     <div>
       <label
@@ -19,6 +30,7 @@ export default function DOBField({ form, onChange }: DOBFieldProps) {
         type="date"
         value={form.dateOfBirth || ""}
         onChange={onChange}
+        onBlur={onBlur}
         className="input w-full"
         required
       />
