@@ -15,14 +15,16 @@ import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
 import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
 
-import { account } from "@/lib/appwrite"; // your client-side Appwrite SDK instance
-
 interface SignupFormProps {
+  /**
+   * Where to redirect after successful signup.
+   * Default is the sign-in page so the user can log in.
+   */
   redirectTo?: string;
 }
 
 export default function SignupForm({
-  redirectTo = "/auth/verify/verifyOtp",
+  redirectTo = "/signin",
 }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
 
@@ -99,51 +101,36 @@ export default function SignupForm({
 
       payload.email = payload.email.toLowerCase().trim();
 
-      // 1) Create Appwrite account (client-side)
-      const user = await account.create(
-        payload.accountId,
-        payload.email,
-        payload.password,
-        `${payload.firstName} ${payload.surname}`
+      // Send payload to server API which now creates the auth user + profile
+      const res = await fetch(
+        "https://treasurepal-backened.onrender.com/api/users/signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
       );
-      console.log("Client: account.create succeeded", user);
-
-      // 2) Create session (client-side) — user will now have account scope in cookies
-      await account.createEmailPasswordSession(payload.email, payload.password);
-      console.log("Client: session created");
-
-      // 3) Call server to create profile row
-      // Use NEXT_PUBLIC_API_URL if you have it; otherwise use relative path.
-      const res = await fetch("/api/signupUser", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
 
       if (!res.ok) {
-        // parse structured error if possible
+        // Try to parse structured error
         const body = await res.json().catch(() => null);
-        console.warn(
-          "Server profile creation failed:",
-          body ?? (await res.text())
-        );
-        // We don't block redirect — account + session exist client-side
-      } else {
-        const body = await res.json().catch(() => null);
-        console.log("Server profile creation success:", body);
+        console.warn("Server signup failed:", body ?? (await res.text()));
+        const message =
+          (body && (body.message || body.error || JSON.stringify(body))) ??
+          "Signup failed on server";
+        throw new Error(message);
       }
 
-      // 4) Send verification email (optional here or earlier)
-      await account.createVerification(
-        `${window.location.origin}${redirectTo}`
-      );
-      console.log("Client: createVerification called");
+      const body = await res.json().catch(() => null);
+      console.log("Server signup success:", body);
 
-      // 5) redirect
-      window.location.href = `${redirectTo}?userId=${user.$id}`;
+      // Redirect user to login page (prefill email for convenience)
+      const emailParam = encodeURIComponent(payload.email);
+      window.location.href = `${redirectTo}?email=${emailParam}`;
     } catch (err: any) {
       console.error("SignupForm.handleSubmit error:", err);
-      alert(err?.message ?? "Signup failed");
+      // Show a friendly message to the user
+      alert(err?.message ?? "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
