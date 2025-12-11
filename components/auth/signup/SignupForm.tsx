@@ -43,7 +43,6 @@ export default function SignupForm({
     dateOfBirth: "",
   });
 
-  // Phone formatter (all used)
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
   const updateField = (name: string, value: string) => {
@@ -72,7 +71,6 @@ export default function SignupForm({
     >
   ) => {
     const { name, value } = e.target;
-
     const trimmed = value.trim();
     updateField(name, trimmed);
 
@@ -101,6 +99,9 @@ export default function SignupForm({
         phone: formattedPhone,
       };
 
+      payload.email = payload.email.toLowerCase().trim();
+
+      // 1️⃣ Create Appwrite user
       const user = await account.create(
         payload.accountId,
         payload.email,
@@ -108,12 +109,15 @@ export default function SignupForm({
         `${payload.firstName} ${payload.surname}`
       );
 
+      // 2️⃣ Send email verification
       await account.createVerification(
         `${window.location.origin}${redirectTo}`
       );
 
+      // 3️⃣ Auto-login
       await account.createEmailPasswordSession(payload.email, payload.password);
 
+      // 4️⃣ Redirect with user ID
       window.location.href = `${redirectTo}?userId=${user.$id}`;
     } catch (err: any) {
       console.error("Signup failed:", err);
