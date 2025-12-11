@@ -1,3 +1,5 @@
+import React from "react";
+
 interface DOBFieldProps {
   form: { dateOfBirth?: string };
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -17,7 +19,7 @@ export default function DOBField({ form, onChange }: DOBFieldProps) {
         type="date"
         value={form.dateOfBirth || ""}
         onChange={onChange}
-        className="input"
+        className="input w-full"
         required
       />
     </div>

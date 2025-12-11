@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import React from "react";
 
 interface ContactFieldsProps {
@@ -7,9 +10,13 @@ interface ContactFieldsProps {
 
 export default function ContactFields({ form, onChange }: ContactFieldsProps) {
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <motion.div
+      className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full"
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}>
       {/* Email field */}
-      <div>
+      <div className="flex flex-col space-y-2">
         <label htmlFor="email" className="text-sm font-semibold text-slate-700">
           Email
         </label>
@@ -20,13 +27,20 @@ export default function ContactFields({ form, onChange }: ContactFieldsProps) {
           value={form.email || ""}
           onChange={onChange}
           placeholder="you@example.com"
-          className="input"
+          className="
+            w-full rounded-xl border border-slate-300 
+            bg-white p-3 
+            text-slate-800 placeholder-slate-400 
+            shadow-sm
+            focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
+            transition-all duration-300 ease-in-out
+          "
           required
         />
       </div>
 
       {/* Phone field */}
-      <div>
+      <div className="flex flex-col space-y-2">
         <label htmlFor="phone" className="text-sm font-semibold text-slate-700">
           Phone
         </label>
@@ -37,10 +51,17 @@ export default function ContactFields({ form, onChange }: ContactFieldsProps) {
           value={form.phone || ""}
           onChange={onChange}
           placeholder="+263771234567"
-          className="input"
+          className="
+            w-full rounded-xl border border-slate-300 
+            bg-white p-3 
+            text-slate-800 placeholder-slate-400 
+            shadow-sm
+            focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
+            transition-all duration-300 ease-in-out
+          "
           required
         />
       </div>
-    </div>
+    </motion.div>
   );
 }

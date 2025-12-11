@@ -19,7 +19,7 @@ export default function PasswordField({ form, onChange }: PasswordFieldProps) {
         type="password"
         value={form.password || ""}
         onChange={onChange}
-        className="input"
+        className="input w-full"
         placeholder="Enter your password"
         required
       />

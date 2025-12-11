@@ -7,8 +7,7 @@ interface NameFieldsProps {
 
 export default function NameFields({ form, onChange }: NameFieldsProps) {
   return (
-    <div className="grid grid-cols-2 gap-6">
-      {/* First Name field */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div>
         <label
           htmlFor="firstName"
@@ -26,8 +25,6 @@ export default function NameFields({ form, onChange }: NameFieldsProps) {
           required
         />
       </div>
-
-      {/* Surname field */}
       <div>
         <label
           htmlFor="surname"

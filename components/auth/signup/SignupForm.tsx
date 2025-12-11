@@ -44,11 +44,8 @@ export default function SignupForm({
   });
 
   const [loading, setLoading] = useState(false);
-
-  // ⭐ Use phone hook, dynamically responds to selected country
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
-  /** ✨ Trim on change for all inputs */
   function onChange(
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -61,11 +58,9 @@ export default function SignupForm({
       setPhone(trimmed);
       return;
     }
-
     setForm((prev) => ({ ...prev, [name]: trimmed }));
   }
 
-  /** ✨ Trim everything before sending */
   function trimAll(obj: Record<string, any>) {
     return Object.fromEntries(
       Object.entries(obj).map(([key, val]) => [
@@ -86,14 +81,8 @@ export default function SignupForm({
       );
       if (!API_BASE) throw new Error("API base URL is not configured");
 
-      // ✨ Trim entire form object
       const cleanedForm = trimAll(form);
-
-      // ✨ Final clean, validated payload
-      const payload = {
-        ...cleanedForm,
-        phone: getE164()?.trim() || null, // ensure strict E.164
-      };
+      const payload = { ...cleanedForm, phone: getE164()?.trim() || null };
 
       const url = API_BASE.endsWith("/api")
         ? `${API_BASE}/users/signup`
@@ -106,7 +95,6 @@ export default function SignupForm({
       });
 
       const text = await res.text();
-
       if (!res.ok) {
         let message = text;
         try {
@@ -118,7 +106,6 @@ export default function SignupForm({
 
       const user = JSON.parse(text);
       console.info("Created user:", user);
-
       window.location.href = redirectTo;
     } catch (error) {
       console.error("Signup failed:", error);
@@ -131,16 +118,13 @@ export default function SignupForm({
   return (
     <motion.form
       onSubmit={handleSubmit}
-      className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
+      className="w-full max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}>
-      <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6">
+      <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
         <NameFields form={form} onChange={onChange} />
-
-        {/* ⭐ Pass phone from hook */}
         <ContactFields form={{ ...form, phone }} onChange={onChange} />
-
         <CountryLocationFields
           form={form}
           onChange={onChange}
@@ -148,17 +132,21 @@ export default function SignupForm({
             setForm((prev) => ({ ...prev, location: loc.name.trim() }))
           }
         />
-
         <RoleAndNationalIdFields form={form} onChange={onChange} />
         <BioField form={form} onChange={onChange} />
         <DOBField form={form} onChange={onChange} />
         <PasswordField form={form} onChange={onChange} />
 
-        <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
-          <Button type="submit" disabled={loading} className="btn-primary">
+        <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full sm:w-auto">
             {loading ? "Creating..." : "Create Account"}
           </Button>
-          <a href="/signin" className="btn-outline">
+          <a
+            href="/signin"
+            className="btn-outline w-full sm:w-auto text-center">
             Already have an account?
           </a>
         </div>

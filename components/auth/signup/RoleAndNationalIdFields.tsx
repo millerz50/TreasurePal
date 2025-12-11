@@ -1,9 +1,7 @@
 import React from "react";
+
 interface RoleAndNationalIdFieldsProps {
-  form: {
-    role: string;
-    nationalId?: string;
-  };
+  form: { role: string; nationalId?: string };
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
@@ -14,8 +12,7 @@ export default function RoleAndNationalIdFields({
   onChange,
 }: RoleAndNationalIdFieldsProps) {
   return (
-    <div className="grid grid-cols-2 gap-6">
-      {/* Role field */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div>
         <label htmlFor="role" className="text-sm font-semibold text-slate-700">
           Role
@@ -30,8 +27,6 @@ export default function RoleAndNationalIdFields({
           <option value="agent">Agent</option>
         </select>
       </div>
-
-      {/* National ID field */}
       <div>
         <label
           htmlFor="nationalId"
