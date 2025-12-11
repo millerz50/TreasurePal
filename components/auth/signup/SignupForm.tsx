@@ -4,7 +4,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Button } from "../../../components/ui/button";
-
 import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
 import { SignupFormData } from "../SignupSchema";
 import SocialSignup from "../SocialSignup";
@@ -16,7 +15,7 @@ import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
 import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
 
-import { account } from "@/lib/appwrite";
+import { account } from "@/lib/appwrite"; // your client-side Appwrite SDK instance
 
 interface SignupFormProps {
   redirectTo?: string;
@@ -47,7 +46,6 @@ export default function SignupForm({
     dateOfBirth: "",
   });
 
-  // phone formatter hook (assumes hook returns { phone, setPhone, getE164 })
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
   const updateField = (name: string, value: string) =>
@@ -91,6 +89,7 @@ export default function SignupForm({
     setLoading(true);
 
     try {
+      // Format phone to E.164 (hook)
       const formattedPhone = getE164() || "";
 
       const payload: SignupFormData = {
@@ -100,54 +99,51 @@ export default function SignupForm({
 
       payload.email = payload.email.toLowerCase().trim();
 
-      // 1) Create Appwrite user on client
+      // 1) Create Appwrite account (client-side)
       const user = await account.create(
         payload.accountId,
         payload.email,
         payload.password,
         `${payload.firstName} ${payload.surname}`
       );
+      console.log("Client: account.create succeeded", user);
 
-      // 2) Send verification email on client
-      await account.createVerification(
-        `${window.location.origin}${redirectTo}`
-      );
-
-      // 3) Create session on client
+      // 2) Create session (client-side) — user will now have account scope in cookies
       await account.createEmailPasswordSession(payload.email, payload.password);
+      console.log("Client: session created");
 
-      // 4) Call server to create profile row (server uses API key)
-      // Use NEXT_PUBLIC_API_URL if provided, otherwise fallback to relative route.
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
-      const url = API_BASE
-        ? `${API_BASE.replace(/\/$/, "")}/api/signupUser`
-        : `/api/signupUser`;
-
-      // If your Appwrite session is cookie-based, include credentials so server can access cookies.
-      // If you use token-based auth, add Authorization header instead.
-      const res = await fetch(url, {
+      // 3) Call server to create profile row
+      // Use NEXT_PUBLIC_API_URL if you have it; otherwise use relative path.
+      const res = await fetch("/api/signupUser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        // Try to parse structured error from server
+        // parse structured error if possible
         const body = await res.json().catch(() => null);
-        const serverMessage =
-          body?.error || body?.message || `Server responded ${res.status}`;
-        // Log and surface a friendly warning; do not block redirect because Appwrite account exists
-        console.warn("Server profile creation failed:", serverMessage);
-        // Optionally show user a non-blocking message:
-        // alert("Account created but profile creation failed. Please contact support.");
+        console.warn(
+          "Server profile creation failed:",
+          body ?? (await res.text())
+        );
+        // We don't block redirect — account + session exist client-side
+      } else {
+        const body = await res.json().catch(() => null);
+        console.log("Server profile creation success:", body);
       }
 
-      // 5) Redirect with user ID
+      // 4) Send verification email (optional here or earlier)
+      await account.createVerification(
+        `${window.location.origin}${redirectTo}`
+      );
+      console.log("Client: createVerification called");
+
+      // 5) redirect
       window.location.href = `${redirectTo}?userId=${user.$id}`;
     } catch (err: any) {
-      console.error("Signup failed:", err);
-      alert(err?.message || "Signup failed.");
+      console.error("SignupForm.handleSubmit error:", err);
+      alert(err?.message ?? "Signup failed");
     } finally {
       setLoading(false);
     }
