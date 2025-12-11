@@ -10,7 +10,9 @@ export const SignupSchema = z.object({
     .regex(
       /^\+?[1-9]\d{1,14}$/,
       "Phone must be valid E.164 format e.g. +263771234567"
-    ),
+    )
+    .nullable(),
+
   country: z.string().min(1, "Country required"),
   location: z.string().min(1, "Location required"),
   role: z.enum(["user", "agent"]).default("user"),

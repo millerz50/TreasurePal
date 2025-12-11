@@ -5,7 +5,8 @@ import React from "react";
 interface ContactFieldsProps {
   form: {
     email?: string;
-    phone?: string;
+    phone: string | null;
+
     [key: string]: any;
   };
   onChange: (

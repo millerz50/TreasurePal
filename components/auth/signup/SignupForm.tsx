@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Button } from "../../../components/ui/button";
 
+import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
 import { SignupFormData } from "../SignupSchema";
 import SocialSignup from "../SocialSignup";
-
 import BioField from "./BioField";
 import ContactFields from "./ContactFields";
 import CountryLocationFields from "./CountryLocationFields";
@@ -15,7 +15,7 @@ import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
 import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
 
-import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
+import { account } from "@/lib/appwrite";
 
 interface SignupFormProps {
   redirectTo?: string;
@@ -43,7 +43,6 @@ export default function SignupForm({
     dateOfBirth: "",
   });
 
-  // Country-aware phone handler
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
   const updateField = (name: string, value: string) => {
@@ -80,7 +79,6 @@ export default function SignupForm({
     }
   };
 
-  // Sanitizes all string fields
   const cleanForm = (obj: Record<string, any>) =>
     Object.fromEntries(
       Object.entries(obj).map(([k, v]) => [
@@ -89,49 +87,37 @@ export default function SignupForm({
       ])
     );
 
+  // 🚀 FIXED: all fields exist on payload
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(
-        /\/$/,
-        ""
-      );
-      if (!API_BASE) throw new Error("API base URL is not configured");
-
-      const payload = {
-        ...cleanForm(form),
+      const payload: SignupFormData = {
+        ...(cleanForm(form) as SignupFormData),
         phone: getE164() || null,
       };
 
-      const url = API_BASE.includes("/api")
-        ? `${API_BASE}/users/signup`
-        : `${API_BASE}/api/users/signup`;
+      // 1. Create Appwrite user
+      const user = await account.create(
+        payload.accountId,
+        payload.email,
+        payload.password,
+        `${payload.firstName} ${payload.surname}`
+      );
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      console.log("User created:", user);
 
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : {};
+      // 2. Email verification
+      await account.createVerification(
+        `${window.location.origin}${redirectTo}`
+      );
 
-      if (!res.ok) {
-        throw new Error(
-          data.error || data.message || "Unable to create user account"
-        );
-      }
+      // 3. Login session
+      await account.createEmailPasswordSession(payload.email, payload.password);
 
-      console.info("Created user:", data);
-
-      if (!data.userId) {
-        throw new Error("Missing userId in API response");
-      }
-
-      // Redirect to OTP page
-      window.location.href = `${redirectTo}?userId=${data.userId}`;
+      // 4. Redirect
+      window.location.href = `${redirectTo}?userId=${user.$id}`;
     } catch (err: any) {
       console.error("Signup failed:", err);
       alert(err.message);
