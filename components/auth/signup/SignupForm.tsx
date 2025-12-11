@@ -29,11 +29,10 @@ export default function SignupForm({ redirectTo = "/auth/verify/verifyOtp" }) {
     dateOfBirth: "",
   });
 
-  const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
+  /** Only use getE164 — remove unused variables */
+  const { getE164 } = usePhoneFormatter(form.country);
 
-  const updateField = (name: string, value: string) =>
-    setForm((f) => ({ ...f, [name]: value }));
-
+  /** Trim strings */
   const cleanForm = (obj: Record<string, any>) =>
     Object.fromEntries(
       Object.entries(obj).map(([k, v]) => [
@@ -54,7 +53,7 @@ export default function SignupForm({ redirectTo = "/auth/verify/verifyOtp" }) {
         phone: formattedPhone,
       };
 
-      // 1️⃣ Create Appwrite user
+      // 1️⃣ Create Appwrite Auth Account
       const user = await account.create(
         payload.accountId,
         payload.email,
@@ -70,14 +69,14 @@ export default function SignupForm({ redirectTo = "/auth/verify/verifyOtp" }) {
       // 3️⃣ Auto-login
       await account.createEmailPasswordSession(payload.email, payload.password);
 
-      // 4️⃣ Create profile in backend
+      // 4️⃣ Create backend user profile
       await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      // 5️⃣ Redirect
+      // 5️⃣ Redirect user
       window.location.href = `${redirectTo}?userId=${user.$id}`;
     } catch (err: any) {
       alert(err.message || "Signup failed");
@@ -90,7 +89,7 @@ export default function SignupForm({ redirectTo = "/auth/verify/verifyOtp" }) {
     <motion.form
       onSubmit={handleSubmit}
       className="w-full max-w-xl mx-auto p-6">
-      {/* your fields... */}
+      {/* Form fields should be added above the button */}
       <Button disabled={loading}>
         {loading ? "Creating..." : "Create Account"}
       </Button>
