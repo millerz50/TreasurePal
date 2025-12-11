@@ -117,21 +117,30 @@ export default function SignupForm({
       await account.createEmailPasswordSession(payload.email, payload.password);
 
       // 4) Call server to create profile row (server uses API key)
-      //    If you don't have a server endpoint, remove this block.
-      try {
-        const res = await fetch("/api/signupUser", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+      // Use NEXT_PUBLIC_API_URL if provided, otherwise fallback to relative route.
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+      const url = API_BASE
+        ? `${API_BASE.replace(/\/$/, "")}/api/signupUser`
+        : `/api/signupUser`;
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: "Server error" }));
-          console.warn("Server profile creation failed:", err);
-          // continue — user account was created in Appwrite; surface server error if needed
-        }
-      } catch (serverErr) {
-        console.warn("Failed to call /api/signupUser:", serverErr);
+      // If your Appwrite session is cookie-based, include credentials so server can access cookies.
+      // If you use token-based auth, add Authorization header instead.
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        // Try to parse structured error from server
+        const body = await res.json().catch(() => null);
+        const serverMessage =
+          body?.error || body?.message || `Server responded ${res.status}`;
+        // Log and surface a friendly warning; do not block redirect because Appwrite account exists
+        console.warn("Server profile creation failed:", serverMessage);
+        // Optionally show user a non-blocking message:
+        // alert("Account created but profile creation failed. Please contact support.");
       }
 
       // 5) Redirect with user ID
