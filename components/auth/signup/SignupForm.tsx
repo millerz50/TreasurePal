@@ -180,7 +180,7 @@ export default function SignupForm({
           <a
             href="/signin"
             className="btn-outline w-full sm:w-auto text-center">
-            Already have an account?
+            Already have an account..?
           </a>
         </div>
 
