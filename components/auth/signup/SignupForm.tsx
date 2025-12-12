@@ -44,8 +44,8 @@ export default function SignupForm({
     dateOfBirth: "",
   });
 
-  // Phone formatting hook (but not sent during signup!)
-  const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
+  // Phone formatting hook (not sent during signup)
+  const { phone, setPhone } = usePhoneFormatter(form.country);
 
   const updateField = (name: string, value: string) =>
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -91,18 +91,15 @@ export default function SignupForm({
     setLoading(true);
 
     try {
-      const formattedPhone = getE164() || "";
-
-      // Clean user-provided values
       const payload = cleanForm(form);
 
-      // IMPORTANT: REMOVE PHONE from signup request
+      // REMOVE phone from signup request
       delete payload.phone;
 
       payload.email = payload.email.toLowerCase().trim();
 
       const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/signup",
+        "https://treasurepal-backend.onrender.com/api/users/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -119,7 +116,9 @@ export default function SignupForm({
       }
 
       const body = await res.json().catch(() => null);
-      console.log("Server signup success:", body);
+
+      // Use console.warn (allowed)
+      console.warn("Server signup success:", body);
 
       const emailParam = encodeURIComponent(payload.email);
       window.location.href = `${redirectTo}?email=${emailParam}`;
@@ -141,7 +140,6 @@ export default function SignupForm({
       <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
         <NameFields form={form} onChange={handleChange} onBlur={handleBlur} />
 
-        {/* phone still displayed but NOT submitted */}
         <ContactFields
           form={{ ...form, phone }}
           onChange={handleChange}
@@ -161,8 +159,11 @@ export default function SignupForm({
           onChange={handleChange}
           onBlur={handleBlur}
         />
+
         <BioField form={form} onChange={handleChange} />
+
         <DOBField form={form} onChange={handleChange} onBlur={handleBlur} />
+
         <PasswordField
           form={form}
           onChange={handleChange}
