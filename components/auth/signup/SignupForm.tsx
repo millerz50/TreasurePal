@@ -118,7 +118,7 @@ export default function SignupForm({
       const body = await res.json().catch(() => null);
 
       // Use console.warn (allowed)
-      console.warn("Server signup success:", body);
+      console.warn("Server signup success yes:", body);
 
       const emailParam = encodeURIComponent(payload.email);
       window.location.href = `${redirectTo}?email=${emailParam}`;
