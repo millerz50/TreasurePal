@@ -22,35 +22,36 @@ export default function SigninForm({
 
   // phone modal fields
   const [phoneModal, setPhoneModal] = useState(false);
-  const [rawPhone, setRawPhone] = useState("");
   const { phone, setPhone, getE164 } = usePhoneFormatter("default");
 
   const [loading, setLoading] = useState(false);
 
+  /**
+   * 🔐 STEP 2 — SAVE PHONE TO APPWRITE AUTH & SEND OTP
+   */
   async function updatePhoneAndVerify() {
     const e164 = getE164();
+
     if (!e164) {
       toast.error("Invalid phone number format.");
       return;
     }
 
     try {
-      toast.loading("Updating phone number...");
+      toast.loading("Updating phone number…");
 
-      // 1️⃣ Correct Appwrite phone update (must include password)
+      // Appwrite requires PASSWORD to update phone
       await account.updatePhone({
         phone: e164,
-        password: password, // user’s existing password
+        password: password,
       });
 
       toast.success("Phone number saved!");
 
-      // 2️⃣ Send SMS verification
+      // Send OTP SMS
       await account.createPhoneVerification();
-
       toast.success("Verification code sent!");
 
-      // 3️⃣ Redirect to code entry page
       router.push("/verify-phone");
     } catch (err: any) {
       console.error("Phone update error:", err);
@@ -58,32 +59,35 @@ export default function SigninForm({
     }
   }
 
+  /**
+   * 🔐 STEP 1 — LOGIN USER
+   */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     if (!email || !password) {
       toast.error("Email and password are required");
       return;
     }
 
     setLoading(true);
-
     const tId = toast.loading("Signing you in…");
 
     try {
-      // 1️⃣ Create session
+      // Create session
       await account.createEmailPasswordSession(email.toLowerCase(), password);
 
-      // 2️⃣ Fetch user
+      // Get user from Appwrite Auth
       const user = await account.get();
 
-      // 3️⃣ User has no phone → force verification flow
+      // If no phone in auth → force modal
       if (!user.phone) {
         toast.dismiss(tId);
         setPhoneModal(true);
         return;
       }
 
-      // 4️⃣ Create JWT for backend
+      // Create JWT for backend usage
       const jwt = await account.createJWT();
       localStorage.setItem("token", jwt.jwt);
 
@@ -106,15 +110,15 @@ export default function SigninForm({
         className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}>
+        transition={{ duration: 0.5 }}>
         <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-4">
           <div className="flex flex-col">
             <label className="font-semibold">Email</label>
             <input
               type="email"
+              className="border p-3 rounded-lg"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="border p-3 rounded-lg"
             />
           </div>
 
@@ -122,9 +126,9 @@ export default function SigninForm({
             <label className="font-semibold">Password</label>
             <input
               type="password"
+              className="border p-3 rounded-lg"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="border p-3 rounded-lg"
             />
           </div>
 
@@ -150,19 +154,15 @@ export default function SigninForm({
             <h2 className="text-xl font-bold text-center">Add Phone Number</h2>
 
             <p className="text-sm text-gray-600 text-center">
-              For security, you must verify a phone number before continuing
-              please.
+              Please verify your phone number to continue.
             </p>
 
             <input
               type="tel"
-              value={phone}
-              onChange={(e) => {
-                setPhone(e.target.value);
-                setRawPhone(e.target.value);
-              }}
-              placeholder="+263 771 234 567"
               className="border p-3 rounded-lg w-full"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+263 771 234 567"
             />
 
             <Button
@@ -173,8 +173,8 @@ export default function SigninForm({
 
             <Button
               variant="ghost"
-              onClick={() => setPhoneModal(false)}
-              className="w-full text-gray-600">
+              className="w-full text-gray-600"
+              onClick={() => setPhoneModal(false)}>
               Cancel
             </Button>
           </div>
