@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/button";
 
+import usePhoneFormatter from "@/hooks/usePhoneFormatter";
 import { account } from "@/lib/appwrite";
 
 export default function SigninForm({
@@ -14,168 +15,170 @@ export default function SigninForm({
   redirectTo?: string;
 }) {
   const router = useRouter();
+
+  // login fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // phone modal fields
+  const [phoneModal, setPhoneModal] = useState(false);
+  const [rawPhone, setRawPhone] = useState("");
+  const { phone, setPhone, getE164 } = usePhoneFormatter("default");
+
   const [loading, setLoading] = useState(false);
+
+  async function updatePhoneAndVerify() {
+    const e164 = getE164();
+    if (!e164) {
+      toast.error("Invalid phone number format.");
+      return;
+    }
+
+    try {
+      toast.loading("Updating phone number...");
+
+      // 1️⃣ Correct Appwrite phone update (must include password)
+      await account.updatePhone({
+        phone: e164,
+        password: password, // user’s existing password
+      });
+
+      toast.success("Phone number saved!");
+
+      // 2️⃣ Send SMS verification
+      await account.createPhoneVerification();
+
+      toast.success("Verification code sent!");
+
+      // 3️⃣ Redirect to code entry page
+      router.push("/verify-phone");
+    } catch (err: any) {
+      console.error("Phone update error:", err);
+      toast.error(err?.message || "Failed to update phone");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!email || !password) {
-      toast.error("Email and password are required", {
-        icon: "⚠️",
-        duration: 4000,
-      });
+      toast.error("Email and password are required");
       return;
     }
 
     setLoading(true);
-    const tId = toast.loading("Signing you in…", {
-      description: "Authenticating your credentials",
-      icon: "⏳",
-    });
+
+    const tId = toast.loading("Signing you in…");
+
     try {
-      // 🔑 Create session
+      // 1️⃣ Create session
       await account.createEmailPasswordSession(email.toLowerCase(), password);
 
-      // 👤 Get user info
+      // 2️⃣ Fetch user
       const user = await account.get();
-      console.warn("User info from Appwrite:", user);
 
-      // 🎟️ Generate JWT for backend calls
-      const jwt = await account.createJWT();
-
-      // ✅ Debug: log the raw JWT string
-      console.warn("Generated JWT:", jwt.jwt);
-
-      // Store JWT in localStorage
-      localStorage.setItem("token", jwt.jwt);
-
-      // ✅ Debug: confirm what’s stored
-      console.warn(
-        "Stored token in localStorage:",
-        localStorage.getItem("token")
-      );
-
-      toast.success(`Welcome back, ${user.name || user.email}!`, {
-        description: "Redirecting to your dashboard…",
-        icon: "✅",
-        duration: 3000,
-      });
-      toast.dismiss(tId);
-
-      // ✅ Debug: show where we’re redirecting
-      console.warn("Redirecting to:", redirectTo);
-
-      router.push(redirectTo);
-    } catch (err: unknown) {
-      let msg = "Login failed";
-
-      if (err instanceof Error) {
-        msg = err.message;
-        console.error("Login error (Error):", err);
-      } else if (
-        typeof err === "object" &&
-        err !== null &&
-        "message" in err &&
-        typeof (err as { message?: unknown }).message === "string"
-      ) {
-        msg = (err as { message: string }).message;
-        console.error("Login error (object):", err);
-      } else {
-        console.error("Login error (unknown):", err);
+      // 3️⃣ User has no phone → force verification flow
+      if (!user.phone) {
+        toast.dismiss(tId);
+        setPhoneModal(true);
+        return;
       }
 
-      toast.error(msg, { icon: "❌", duration: 5000 });
+      // 4️⃣ Create JWT for backend
+      const jwt = await account.createJWT();
+      localStorage.setItem("token", jwt.jwt);
+
+      toast.success("Welcome back!");
+      router.push(redirectTo);
+    } catch (err: any) {
+      console.error("Login error:", err);
+      toast.error(err?.message || "Login failed");
       toast.dismiss(tId);
     } finally {
       setLoading(false);
-      console.warn("Signin process finished, loading set to false");
     }
   }
 
   return (
-    <motion.form
-      onSubmit={handleSubmit}
-      className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}>
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 sm:p-8 shadow-lg">
-        {/* Animated accent bar */}
-        <motion.div className="mb-6 h-1 w-32 rounded-full bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 animate-pulse" />
-
-        <motion.div
-          className="grid grid-cols-1 gap-6"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: { staggerChildren: 0.1 },
-            },
-          }}>
-          {/* Email input */}
+    <>
+      {/* MAIN LOGIN FORM */}
+      <motion.form
+        onSubmit={handleSubmit}
+        className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}>
+        <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-4">
           <div className="flex flex-col">
-            <label
-              htmlFor="email"
-              className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Email
-            </label>
+            <label className="font-semibold">Email</label>
             <input
-              id="email"
-              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 shadow-sm"
+              className="border p-3 rounded-lg"
             />
           </div>
 
-          {/* Password input */}
           <div className="flex flex-col">
-            <label
-              htmlFor="password"
-              className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Password
-            </label>
+            <label className="font-semibold">Password</label>
             <input
-              id="password"
-              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full rounded-lg border border-gray-300 bg-white/90 px-4 py-3 text-base font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
+              className="border p-3 rounded-lg"
             />
           </div>
-        </motion.div>
 
-        {/* Actions */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full sm:w-auto bg-gradient-to-r from-green-600 via-teal-500 to-blue-600 text-white font-bold shadow-md hover:from-green-500 hover:via-teal-400 hover:to-blue-500 transition-transform duration-200">
-              {loading ? "Signing in…" : "Sign in"}
-            </Button>
-          </motion.div>
-          <motion.a
-            whileHover={{ scale: 1.05 }}
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white">
+            {loading ? "Signing in…" : "Sign in"}
+          </Button>
+
+          <a
             href="/signup"
-            className="w-full sm:w-auto rounded-md border-2 border-blue-500 px-4 py-2 text-center text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
-            aria-label="Go to signup">
-            Don&apos;t have an account?
-          </motion.a>
+            className="block text-center mt-3 text-blue-700 underline">
+            Create an account
+          </a>
         </div>
-      </motion.div>
-    </motion.form>
+      </motion.form>
+
+      {/* PHONE NUMBER REQUIRED MODAL */}
+      {phoneModal && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md space-y-4">
+            <h2 className="text-xl font-bold text-center">Add Phone Number</h2>
+
+            <p className="text-sm text-gray-600 text-center">
+              For security, you must verify a phone number before continuing.
+            </p>
+
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setRawPhone(e.target.value);
+              }}
+              placeholder="+263 771 234 567"
+              className="border p-3 rounded-lg w-full"
+            />
+
+            <Button
+              onClick={updatePhoneAndVerify}
+              className="w-full bg-green-600 text-white">
+              Save & Verify Phone
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={() => setPhoneModal(false)}
+              className="w-full text-gray-600">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
