@@ -16,11 +16,7 @@ import PasswordField from "./PasswordField";
 import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
 
 interface SignupFormProps {
-  /**
-   * Where to redirect after successful signup.
-   * Default is the sign-in page so the user can log in.
-   */
-  redirectTo?: string;
+  redirectTo?: string; // default is /signin
 }
 
 export default function SignupForm({
@@ -48,6 +44,7 @@ export default function SignupForm({
     dateOfBirth: "",
   });
 
+  // Phone formatting hook (but not sent during signup!)
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
   const updateField = (name: string, value: string) =>
@@ -59,11 +56,13 @@ export default function SignupForm({
     >
   ) => {
     const { name, value } = e.target;
+
     if (name === "phone") {
       setPhone(value);
       updateField("phone", value);
       return;
     }
+
     updateField(name, value);
   };
 
@@ -74,6 +73,7 @@ export default function SignupForm({
   ) => {
     const { name, value } = e.target;
     const trimmed = value.trim();
+
     updateField(name, trimmed);
     if (name === "phone") setPhone(trimmed);
   };
@@ -91,17 +91,16 @@ export default function SignupForm({
     setLoading(true);
 
     try {
-      // Format phone to E.164 (hook)
       const formattedPhone = getE164() || "";
 
-      const payload: SignupFormData = {
-        ...(cleanForm(form) as SignupFormData),
-        phone: formattedPhone,
-      };
+      // Clean user-provided values
+      const payload = cleanForm(form);
+
+      // IMPORTANT: REMOVE PHONE from signup request
+      delete payload.phone;
 
       payload.email = payload.email.toLowerCase().trim();
 
-      // Send payload to server API which now creates the auth user + profile
       const res = await fetch(
         "https://treasurepal-backened.onrender.com/api/signup",
         {
@@ -112,9 +111,7 @@ export default function SignupForm({
       );
 
       if (!res.ok) {
-        // Try to parse structured error
         const body = await res.json().catch(() => null);
-        console.warn("Server signup failed:", body ?? (await res.text()));
         const message =
           (body && (body.message || body.error || JSON.stringify(body))) ??
           "Signup failed on server";
@@ -124,12 +121,10 @@ export default function SignupForm({
       const body = await res.json().catch(() => null);
       console.log("Server signup success:", body);
 
-      // Redirect user to login page (prefill email for convenience)
       const emailParam = encodeURIComponent(payload.email);
       window.location.href = `${redirectTo}?email=${emailParam}`;
     } catch (err: any) {
       console.error("SignupForm.handleSubmit error:", err);
-      // Show a friendly message to the user
       alert(err?.message ?? "Signup failed. Please try again.");
     } finally {
       setLoading(false);
@@ -146,6 +141,7 @@ export default function SignupForm({
       <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
         <NameFields form={form} onChange={handleChange} onBlur={handleBlur} />
 
+        {/* phone still displayed but NOT submitted */}
         <ContactFields
           form={{ ...form, phone }}
           onChange={handleChange}
@@ -165,11 +161,8 @@ export default function SignupForm({
           onChange={handleChange}
           onBlur={handleBlur}
         />
-
         <BioField form={form} onChange={handleChange} />
-
         <DOBField form={form} onChange={handleChange} onBlur={handleBlur} />
-
         <PasswordField
           form={form}
           onChange={handleChange}
