@@ -150,7 +150,8 @@ export default function SigninForm({
             <h2 className="text-xl font-bold text-center">Add Phone Number</h2>
 
             <p className="text-sm text-gray-600 text-center">
-              For security, you must verify a phone number before continuing.
+              For security, you must verify a phone number before continuing
+              please.
             </p>
 
             <input
