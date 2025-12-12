@@ -33,7 +33,7 @@ export default function SigninForm({
     const e164 = getE164();
 
     if (!e164) {
-      toast.error("Invalid phone number format.");
+      toast.error("Invalid phone number formats.");
       return;
     }
 
