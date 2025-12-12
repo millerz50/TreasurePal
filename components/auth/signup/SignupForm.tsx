@@ -99,7 +99,7 @@ export default function SignupForm({
       payload.email = payload.email.toLowerCase().trim();
 
       const res = await fetch(
-        "https://treasurepal-backend.onrender.com/api/users/signup",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
