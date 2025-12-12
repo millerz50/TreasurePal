@@ -16,7 +16,7 @@ import PasswordField from "./PasswordField";
 import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
 
 interface SignupFormProps {
-  redirectTo?: string; // default is /signin
+  redirectTo?: string;
 }
 
 export default function SignupForm({
@@ -44,8 +44,8 @@ export default function SignupForm({
     dateOfBirth: "",
   });
 
-  // Phone formatting hook (not sent during signup)
-  const { phone, setPhone } = usePhoneFormatter(form.country);
+  // Phone formatting hook
+  const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
   const updateField = (name: string, value: string) =>
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -93,10 +93,11 @@ export default function SignupForm({
     try {
       const payload = cleanForm(form);
 
-      // REMOVE phone from signup request
-      delete payload.phone;
-
       payload.email = payload.email.toLowerCase().trim();
+
+      // Convert phone to E.164 format
+      const e164 = getE164();
+      if (e164) payload.phone = e164;
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
@@ -116,9 +117,7 @@ export default function SignupForm({
       }
 
       const body = await res.json().catch(() => null);
-
-      // Use console.warn (allowed)
-      console.warn("Server signup success yes:", body);
+      console.warn("Server signup success:", body);
 
       const emailParam = encodeURIComponent(payload.email);
       window.location.href = `${redirectTo}?email=${emailParam}`;
