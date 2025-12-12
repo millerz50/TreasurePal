@@ -103,7 +103,7 @@ export default function SignupForm({
 
       // Send payload to server API which now creates the auth user + profile
       const res = await fetch(
-        "https://treasurepal-backened.onrender.com/api/users/signup",
+        "https://treasurepal-backened.onrender.com/api/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
