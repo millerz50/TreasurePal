@@ -50,7 +50,7 @@ export default function SigninForm({
 
       // Send OTP SMS
       await account.createPhoneVerification();
-      toast.success("Verification code sent!");
+      toast.success("Verification code sent  to phone !");
 
       router.push("/verify-phone");
     } catch (err: any) {
