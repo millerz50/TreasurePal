@@ -52,7 +52,7 @@ export default function SigninForm({
       await account.createPhoneVerification();
       toast.success("Verification code sent  to phone !");
 
-      router.push("/verify-phone");
+      router.push("/auth/verify");
     } catch (err: any) {
       console.error("Phone update error:", err);
       toast.error(err?.message || "Failed to update phone");
