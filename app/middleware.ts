@@ -64,7 +64,7 @@ export function middleware(req: NextRequest) {
     }
 
     // For normal browser navigation to protected pages, redirect to signin
-    const signInUrl = new URL("/signin", req.url);
+    const signInUrl = new URL("/auth/signin", req.url);
     // Optionally preserve original destination:
     // signInUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(signInUrl);
