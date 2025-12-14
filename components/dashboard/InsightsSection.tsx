@@ -19,11 +19,24 @@ export default function InsightsSection() {
     const fetchInsights = async () => {
       setLoading(true);
       setError(null);
+
       try {
-        const res = await fetch(`${API_BASE}/api/insights`);
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+
+        const res = await fetch(`${API_BASE}/api/insights`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         if (!res.ok) {
           throw new Error(`Failed to fetch insights (${res.status})`);
         }
+
         const data = await res.json();
         setPosts(data);
       } catch (err) {

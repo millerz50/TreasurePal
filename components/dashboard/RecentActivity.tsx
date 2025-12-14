@@ -32,10 +32,6 @@ export default function RecentActivity() {
       setError(null);
 
       try {
-        // Choose endpoint or query based on role
-        // Admin: fetch all recent activity
-        // Agent: fetch activity related to this agent (their listings, leads, etc.)
-        // User: fetch user-specific activity (favorites, saved searches, etc.)
         let endpoint = "/api/activity/recent";
 
         if (user?.role === "admin") {
@@ -49,14 +45,18 @@ export default function RecentActivity() {
             user.userId
           )}`;
         } else {
-          // unauthenticated or unknown role: fetch public activity only
           endpoint = "/api/activity/recent?scope=public";
         }
 
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Not authenticated");
+
         const res = await fetch(`${API_BASE}${endpoint}`, {
           method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ REQUIRED
+          },
           signal,
         });
 
@@ -65,7 +65,6 @@ export default function RecentActivity() {
         }
 
         const data = await res.json();
-        // Expecting backend to return an array of { id, message, createdAt, ... }
         setActivities(Array.isArray(data) ? data : []);
       } catch (err: any) {
         if (err.name === "AbortError") return;

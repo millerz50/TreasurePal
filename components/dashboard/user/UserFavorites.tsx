@@ -20,15 +20,23 @@ export default function UserFavorites() {
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Not authenticated");
+
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/favorites`,
           {
-            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // ✅ REQUIRED
+            },
           }
         );
+
         if (!res.ok) {
           throw new Error("Failed to load favorites");
         }
+
         const data: Favorite[] = await res.json();
         setFavorites(data);
       } catch (err) {
@@ -38,6 +46,7 @@ export default function UserFavorites() {
         setLoading(false);
       }
     };
+
     fetchFavorites();
   }, []);
 

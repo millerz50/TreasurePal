@@ -44,7 +44,20 @@ export default function ManageListings() {
   const fetchListings = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/properties`);
+      const token = localStorage.getItem("token");
+
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await fetch(`${API_BASE}/api/properties`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch listings (${res.status})`);
+      }
+
       const data = await res.json();
       setProperties(data);
     } catch (err) {
@@ -56,9 +69,17 @@ export default function ManageListings() {
 
   const handleDelete = async (id: string) => {
     try {
+      const token = localStorage.getItem("token");
+
+      if (!token) throw new Error("Not authenticated");
+
       const res = await fetch(`${API_BASE}/api/properties/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+
       if (res.ok) {
         setProperties((prev) => prev.filter((p) => p._id !== id));
       } else {
@@ -71,7 +92,7 @@ export default function ManageListings() {
 
   useEffect(() => {
     fetchListings();
-  }, [fetchListings]); // ✅ include fetchListings in deps
+  }, [fetchListings]);
 
   const filtered = properties.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())
