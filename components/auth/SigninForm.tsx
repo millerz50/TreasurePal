@@ -40,7 +40,7 @@ export default function SigninForm({
     try {
       toast.loading("Updating phone number…");
 
-      // Appwrite requires PASSWORD to update phone
+      // Update phone (requires password)
       await account.updatePhone({
         phone: e164,
         password: password,
@@ -48,11 +48,13 @@ export default function SigninForm({
 
       toast.success("Phone number saved!");
 
-      // Send OTP SMS
+      // Send OTP
       await account.createPhoneVerification();
-      toast.success("Verification code sent  to phone !");
+      toast.success("Verification code sent to phone!");
 
-      router.push("/auth/verify");
+      // 🔥 FIX: PASS USER ID
+      const user = await account.get();
+      router.push(`/auth/verify?userId=${user.$id}`);
     } catch (err: any) {
       console.error("Phone update error:", err);
       toast.error(err?.message || "Failed to update phone");
