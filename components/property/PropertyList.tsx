@@ -113,27 +113,41 @@ export default function PropertyList() {
     const host = window.location.hostname;
     setBrand(domainConfig[host] || domainConfig["default"]);
   }, []);
-
   useEffect(() => {
     const fetchProperties = async (): Promise<void> => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/properties/all`,
-          {
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-        if (!res.ok)
-          throw new Error(`Failed to fetch properties: HTTP ${res.status}`);
-        const data: Property[] = await res.json();
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
+        if (!API_BASE) {
+          throw new Error("API base URL is not configured");
+        }
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+
+        const res = await fetch(`${API_BASE}/api/properties/all`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ REQUIRED
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch properties (${res.status})`);
+        }
+
+        const data = await res.json();
         setProperties(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("❌ Failed to fetch properties:", err);
+      } catch (error) {
+        console.error("❌ Failed to fetch properties:", error);
         setProperties([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProperties();
   }, []);
 

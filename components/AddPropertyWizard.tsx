@@ -91,9 +91,12 @@ export default function AddPropertyWizard() {
 
   useEffect(() => {
     if (user?.userId) {
-      setFormData((prev) => ({ ...prev, agentId: user.userId }));
+      setFormData((prev) => ({
+        ...prev,
+        agentId: user.userId, // ✅ ensure agentId is always set
+      }));
     }
-  }, [user]);
+  }, [user?.userId]);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -102,78 +105,86 @@ export default function AddPropertyWizard() {
     setError(null);
 
     try {
-      const parsed = PropertySchema.safeParse(formData);
-      if (!parsed.success) {
-        const firstError =
-          parsed.error.errors[0]?.message || "Validation failed";
-        throw new Error(firstError);
+      if (!API_BASE) {
+        throw new Error("API base URL is not configured");
       }
 
-      if (user?.role !== "agent") {
+      if (!user || user.role !== "agent") {
         throw new Error("Only agents can add properties.");
       }
 
+      // ✅ Validate form data
+      const parsed = PropertySchema.safeParse(formData);
+      if (!parsed.success) {
+        throw new Error(parsed.error.errors[0]?.message || "Validation failed");
+      }
+
+      // ✅ Get token (client-only)
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Not authenticated. Please sign in again.");
+      }
+
+      // ✅ Build FormData
       const fd = new FormData();
       Object.entries(parsed.data).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
 
         if (value instanceof File) {
           fd.append(key, value);
-          return;
-        }
-
-        if (Array.isArray(value)) {
-          if (value.length === 0) return;
+        } else if (Array.isArray(value)) {
           value.forEach((v) => fd.append(key, String(v)));
-          return;
+        } else {
+          fd.append(key, String(value));
         }
-
-        fd.append(key, String(value));
       });
 
-      const token = localStorage.getItem("token");
-      if (!token || token.split(".").length !== 3) {
-        throw new Error("Invalid or missing JWT token");
+      // 🧠 Safety check: ensure agentId is present
+      if (!fd.get("agentId")) {
+        fd.append("agentId", user.userId);
       }
 
+      // ✅ API request with token
       const res = await fetch(`${API_BASE}/api/properties/add`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ token ALWAYS sent
+        },
         body: fd,
       });
 
       if (!res.ok) {
-        let msg = `Failed to submit property (${res.status})`;
+        let message = `Failed to submit property (${res.status})`;
+
         try {
           const json = await res.json();
-          msg = json?.error || json?.message || msg;
+          message = json?.error || json?.message || message;
           console.error("❌ API error response:", json);
         } catch {
           const text = await res.text();
-          if (text) msg = text;
+          if (text) message = text;
           console.error("❌ API error text:", text);
         }
-        throw new Error(msg);
+
+        throw new Error(message);
       }
 
       const result = await res.json();
-      if (!result || Object.keys(result).length === 0) {
-        console.warn("⚠️ API returned empty data");
-        return;
-      }
+      console.log("✅ Property submitted successfully:", result);
 
-      console.warn("✅ Property submitted!", result);
+      // OPTIONAL: reset form / redirect
+      // setFormData(initialState);
+      // router.push("/dashboard/properties");
     } catch (err) {
       if (err instanceof Error) {
         console.error("❌ Property submission failed:", err.message);
         setError(err.message);
       } else {
-        console.error("❌ Property submission failed (unknown):", err);
-        setError("An unknown error occurred");
+        console.error("❌ Property submission failed:", err);
+        setError("An unexpected error occurred");
       }
     } finally {
       setLoading(false);
-      console.warn("Submission finished, loading set to false");
     }
   };
 
