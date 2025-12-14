@@ -34,7 +34,7 @@ export function NavbarDesktopActions() {
           <Button
             variant="outline"
             className="text-sm border border-accent text-accent dark:text-accent hover:bg-accent/10"
-            onClick={() => router.push("/signin")}>
+            onClick={() => router.push("/auth/signin")}>
             Sign In
           </Button>
           <Button

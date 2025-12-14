@@ -14,7 +14,7 @@ export default function NavbarUser() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
-  // debug log to observe auth values each render
+  // Debug log to observe auth values each render
   useEffect(() => {
     console.warn("[NavbarUser] render", {
       loading,
@@ -22,6 +22,7 @@ export default function NavbarUser() {
     });
   }, [loading, user]);
 
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -52,9 +53,9 @@ export default function NavbarUser() {
       <div>
         <Button
           variant="ghost"
-          className="text-sm"
+          className="text-sm flex items-center gap-2"
           onClick={() => router.push("/signin")}>
-          🔑 Sign In
+          🔑 <span className="hidden sm:inline">Sign In</span>
         </Button>
         <div className="mt-1 text-xs text-muted-foreground/70">
           [debug: no user]
@@ -97,19 +98,34 @@ export default function NavbarUser() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 top-full mt-2 w-48 bg-base-100 dark:bg-neutral rounded-box shadow-lg border border-base-300 z-[999]">
+            className="absolute right-0 top-full mt-2 w-56 bg-base-100 dark:bg-neutral rounded-box shadow-lg border border-base-300 z-[999]">
             <div className="flex flex-col p-3 space-y-2">
               <Button
                 variant="ghost"
-                className="justify-start text-sm hover:bg-accent/10"
-                onClick={() => console.warn("Edit user")}>
-                ✏️ Edit Profile
+                className="justify-start text-sm hover:bg-accent/10 flex items-center gap-2"
+                onClick={() => router.push("/dashboard")}>
+                📊 <span className="hidden sm:inline">Dashboard</span>
               </Button>
+
               <Button
                 variant="ghost"
-                className="justify-start text-sm hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400"
+                className="justify-start text-sm hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center gap-2"
+                onClick={() => router.push("/settings")}>
+                ⚙️ <span className="hidden sm:inline">Settings</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="justify-start text-sm hover:bg-green-100 dark:hover:bg-green-900 text-green-600 dark:text-green-400 flex items-center gap-2"
+                onClick={() => router.push("/profile")}>
+                👤 <span className="hidden sm:inline">Profile</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="justify-start text-sm hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 flex items-center gap-2"
                 onClick={signOut}>
-                🚪 Sign Out
+                🚪 <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           </motion.div>
