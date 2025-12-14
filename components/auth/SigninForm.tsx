@@ -142,7 +142,7 @@ export default function SigninForm({
           </Button>
 
           <a
-            href="/signup"
+            href="/auth/signup"
             className="block text-center mt-3 text-blue-700 underline">
             Create an account
           </a>

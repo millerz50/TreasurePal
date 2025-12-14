@@ -20,7 +20,7 @@ interface SignupFormProps {
 }
 
 export default function SignupForm({
-  redirectTo = "/signin",
+  redirectTo = "/auth/signin",
 }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
 
@@ -178,7 +178,7 @@ export default function SignupForm({
           </Button>
 
           <a
-            href="/signin"
+            href="/auth/signin"
             className="btn-outline w-full sm:w-auto text-center">
             Already have an account?
           </a>
