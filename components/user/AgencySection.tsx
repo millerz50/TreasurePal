@@ -33,17 +33,23 @@ export default function AgencySection() {
     const host = window.location.hostname;
     setBrand(domainConfig[host] || domainConfig["default"]);
   }, []);
-
   useEffect(() => {
     const fetchAgents = async (): Promise<void> => {
       try {
         const res = await fetch(
-          "https://treasurepal-backened.onrender.com/api/users/agents",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/agents`,
           {
-            headers: { "Content-Type": "application/json" },
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
           }
         );
-        if (!res.ok) throw new Error(`Failed to fetch agents: ${res.status}`);
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch agents: ${res.status}`);
+        }
+
         const data = await res.json();
         setAgents(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -53,6 +59,7 @@ export default function AgencySection() {
         setLoading(false);
       }
     };
+
     fetchAgents();
   }, []);
 
