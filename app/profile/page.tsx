@@ -10,14 +10,68 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
-/* ----------------------- */
-/* PAGE */
-/* ----------------------- */
+/* ----------------------------------
+   TYPES
+----------------------------------- */
+type Agent = {
+  agentId: string;
+  agencyName?: string;
+  licenseNumber?: string;
+  experienceYears?: number;
+};
 
+/* ----------------------------------
+   PAGE
+----------------------------------- */
 export default function ProfilePage() {
   const { user, loading } = useAuth();
+  const [agent, setAgent] = useState<Agent | null>(null);
+  const [agentLoading, setAgentLoading] = useState(false);
 
+  /* ----------------------------------
+     FETCH AGENT DETAILS (ROLE-BASED)
+  ----------------------------------- */
+  useEffect(() => {
+    if (!user || user.role !== "agent" || !user.agentId) return;
+
+    const fetchAgents = async () => {
+      setAgentLoading(true);
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/agents`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch agents: ${res.status}`);
+        }
+
+        const agents: Agent[] = await res.json();
+
+        const matchedAgent = agents.find((a) => a.agentId === user.agentId);
+
+        setAgent(matchedAgent ?? null);
+      } catch (err) {
+        console.error("❌ Error fetching agent profile:", err);
+        setAgent(null);
+      } finally {
+        setAgentLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, [user]);
+
+  /* ----------------------------------
+     LOADING / GUARDS
+  ----------------------------------- */
   if (loading) {
     return (
       <div className="p-6 text-sm text-muted-foreground">Loading profile…</div>
@@ -34,6 +88,9 @@ export default function ProfilePage() {
 
   const role = user.role?.toLowerCase();
 
+  /* ----------------------------------
+     UI
+  ----------------------------------- */
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -56,11 +113,9 @@ export default function ProfilePage() {
               {user.email}
             </p>
 
-            {role && (
-              <span className="inline-block mt-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary capitalize">
-                {role}
-              </span>
-            )}
+            <span className="inline-block mt-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary capitalize">
+              {role}
+            </span>
           </div>
         </div>
       </section>
@@ -68,7 +123,6 @@ export default function ProfilePage() {
       {/* ================= BASIC INFO ================= */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <InfoCard icon={Mail} label="Email" value={user.email} />
-
         <InfoCard icon={ShieldCheck} label="Status" value={user.status} />
 
         {user.country && (
@@ -84,39 +138,53 @@ export default function ProfilePage() {
         )}
       </section>
 
-      {/* ================= ROLE SECTIONS ================= */}
+      {/* ================= AGENT PROFILE ================= */}
       {role === "agent" && (
-        <RoleSection
-          title="Agent Profile"
-          items={[
-            {
-              label: "Agent ID",
-              value: user.agentId ?? "—",
-              icon: Briefcase,
-            },
-          ]}
-        />
+        <section className="rounded-2xl border bg-base-100 p-5 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold">Agent Profile</h2>
+
+          {agentLoading ? (
+            <p className="text-sm text-muted-foreground">
+              Loading agent details…
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <AgentRow label="Agent ID" value={user.agentId ?? "—"} />
+              <AgentRow label="Agency" value={agent?.agencyName ?? "—"} />
+              <AgentRow
+                label="License Number"
+                value={agent?.licenseNumber ?? "—"}
+              />
+              <AgentRow
+                label="Experience"
+                value={
+                  agent?.experienceYears
+                    ? `${agent.experienceYears} years`
+                    : "—"
+                }
+              />
+            </div>
+          )}
+        </section>
       )}
 
+      {/* ================= ADMIN ================= */}
       {role === "admin" && (
-        <RoleSection
-          title="Admin Privileges"
-          items={[
-            {
-              label: "Access Level",
-              value: "Full system access",
-              icon: ShieldCheck,
-            },
-          ]}
-        />
+        <section className="rounded-2xl border bg-base-100 p-5 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold">Admin Privileges</h2>
+          <div className="flex items-center gap-3 text-sm">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <span>Full system access</span>
+          </div>
+        </section>
       )}
     </motion.div>
   );
 }
 
-/* ----------------------- */
-/* COMPONENTS */
-/* ----------------------- */
+/* ----------------------------------
+   COMPONENTS
+----------------------------------- */
 
 function InfoCard({
   icon: Icon,
@@ -130,8 +198,7 @@ function InfoCard({
   return (
     <div className="rounded-xl border bg-base-100 p-4 shadow-sm flex gap-3">
       <Icon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-
-      <div className="min-w-0">
+      <div>
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-sm font-medium break-words">{value}</p>
       </div>
@@ -139,30 +206,12 @@ function InfoCard({
   );
 }
 
-function RoleSection({
-  title,
-  items,
-}: {
-  title: string;
-  items: {
-    label: string;
-    value: string | number;
-    icon: React.ComponentType<{ className?: string }>;
-  }[];
-}) {
+function AgentRow({ label, value }: { label: string; value: string }) {
   return (
-    <section className="rounded-2xl border bg-base-100 p-5 shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold">{title}</h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {items.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="flex items-center gap-3 text-sm">
-            <Icon className="h-4 w-4 text-primary shrink-0" />
-            <span className="text-muted-foreground">{label}:</span>
-            <span className="font-medium break-all">{value}</span>
-          </div>
-        ))}
-      </div>
-    </section>
+    <div className="flex gap-3">
+      <Briefcase className="h-4 w-4 text-primary shrink-0" />
+      <span className="text-muted-foreground">{label}:</span>
+      <span className="font-medium break-all">{value}</span>
+    </div>
   );
 }

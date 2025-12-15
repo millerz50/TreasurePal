@@ -110,7 +110,7 @@ export default function NavbarUser() {
               <Button
                 variant="ghost"
                 className="justify-start text-sm hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center gap-2"
-                onClick={() => router.push("/settings")}>
+                onClick={() => router.push("/profile/settings")}>
                 ⚙️ <span className="hidden sm:inline">Settings</span>
               </Button>
 
