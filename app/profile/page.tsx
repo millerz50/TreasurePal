@@ -11,6 +11,10 @@ import {
   User,
 } from "lucide-react";
 
+/* ----------------------- */
+/* PAGE */
+/* ----------------------- */
+
 export default function ProfilePage() {
   const { user, loading } = useAuth();
 
@@ -32,38 +36,40 @@ export default function ProfilePage() {
 
   return (
     <motion.div
-      className="max-w-4xl mx-auto p-6 space-y-6"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}>
-      {/* HEADER */}
-      <section className="bg-base-100 border border-base-300 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
-            <User className="h-6 w-6 text-primary" />
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="mx-auto max-w-4xl px-4 py-6 space-y-6">
+      {/* ================= HEADER ================= */}
+      <section className="rounded-2xl border bg-base-100 p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <User className="h-7 w-7 text-primary" />
           </div>
 
-          <div>
-            <h1 className="text-xl font-semibold">
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold leading-tight">
               {user.firstName} {user.surname}
             </h1>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
 
-            <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-              {role}
-            </span>
+            <p className="text-sm text-muted-foreground break-all">
+              {user.email}
+            </p>
+
+            {role && (
+              <span className="inline-block mt-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary capitalize">
+                {role}
+              </span>
+            )}
           </div>
         </div>
       </section>
 
-      {/* BASIC INFO */}
+      {/* ================= BASIC INFO ================= */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <InfoCard icon={Mail} label="Email" value={user.email} />
 
-        <InfoCard
-          icon={ShieldCheck}
-          label="Status"
-          value={user.status ?? "Active"}
-        />
+        <InfoCard icon={ShieldCheck} label="Status" value={user.status} />
 
         {user.country && (
           <InfoCard icon={MapPin} label="Country" value={user.country} />
@@ -78,7 +84,7 @@ export default function ProfilePage() {
         )}
       </section>
 
-      {/* ROLE-SPECIFIC SECTIONS */}
+      {/* ================= ROLE SECTIONS ================= */}
       {role === "agent" && (
         <RoleSection
           title="Agent Profile"
@@ -87,11 +93,6 @@ export default function ProfilePage() {
               label: "Agent ID",
               value: user.agentId ?? "—",
               icon: Briefcase,
-            },
-            {
-              label: "Listings",
-              value: user.propertiesCount ?? "—",
-              icon: Home,
             },
           ]}
         />
@@ -114,7 +115,7 @@ export default function ProfilePage() {
 }
 
 /* ----------------------- */
-/* REUSABLE COMPONENTS */
+/* COMPONENTS */
 /* ----------------------- */
 
 function InfoCard({
@@ -127,11 +128,12 @@ function InfoCard({
   value: string;
 }) {
   return (
-    <div className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-      <Icon className="h-5 w-5 text-primary mt-0.5" />
-      <div>
+    <div className="rounded-xl border bg-base-100 p-4 shadow-sm flex gap-3">
+      <Icon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+
+      <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium">{value}</p>
+        <p className="text-sm font-medium break-words">{value}</p>
       </div>
     </div>
   );
@@ -149,14 +151,15 @@ function RoleSection({
   }[];
 }) {
   return (
-    <section className="bg-base-100 border border-base-300 rounded-2xl p-6 shadow-sm">
-      <h2 className="text-lg font-semibold mb-4">{title}</h2>
+    <section className="rounded-2xl border bg-base-100 p-5 shadow-sm">
+      <h2 className="mb-4 text-lg font-semibold">{title}</h2>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {items.map(({ label, value, icon: Icon }) => (
           <div key={label} className="flex items-center gap-3 text-sm">
-            <Icon className="h-4 w-4 text-primary" />
+            <Icon className="h-4 w-4 text-primary shrink-0" />
             <span className="text-muted-foreground">{label}:</span>
-            <span className="font-medium">{value}</span>
+            <span className="font-medium break-all">{value}</span>
           </div>
         ))}
       </div>

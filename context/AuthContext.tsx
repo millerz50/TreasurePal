@@ -10,31 +10,54 @@ import React, {
   useState,
 } from "react";
 
-// ✅ Use environment variables instead of hardcoding
+/* ----------------------------------
+   ENV
+----------------------------------- */
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
 const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
+/* ----------------------------------
+   API
+----------------------------------- */
 async function fetchProfileMe(jwt: string) {
   try {
     const res = await fetch(`${API_BASE_URL}/api/users/me`, {
       credentials: "include",
-      headers: { Authorization: `Bearer ${jwt}` },
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
     });
+
     if (!res.ok) throw new Error("Profile fetch failed");
+
     return await res.json();
   } catch {
     return null;
   }
 }
 
+/* ----------------------------------
+   TYPES (THIS IS THE CONTRACT)
+----------------------------------- */
 export type UserPayload = {
   userId: string;
-  email?: string;
-  status?: boolean | string;
-  role?: string;
+
+  email: string;
+
+  firstName: string;
+  surname: string;
+
+  role: string;
+  status: string;
+
   phone?: string;
   bio?: string;
+
+  country?: string;
+  dateOfBirth?: string;
+  agentId?: string;
+
   avatarUrl?: string;
 };
 
@@ -44,12 +67,18 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
+/* ----------------------------------
+   CONTEXT
+----------------------------------- */
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   signOut: async () => {},
 });
 
+/* ----------------------------------
+   PROVIDER
+----------------------------------- */
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     mounted.current = true;
     return () => {
       mounted.current = false;
-      if (abortCtrl.current) abortCtrl.current.abort();
+      abortCtrl.current?.abort();
     };
   }, []);
 
@@ -71,45 +100,71 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     fetchLock.current = true;
 
     abortCtrl.current = new AbortController();
-    const signal = abortCtrl.current.signal;
 
     (async () => {
       try {
+        /* -----------------------------
+           APPWRITE SESSION
+        ------------------------------ */
         const appwriteUser: Models.User<any> = await account.get();
         const jwt = await account.createJWT();
 
+        /* -----------------------------
+           BACKEND PROFILE
+        ------------------------------ */
         const profile = await fetchProfileMe(jwt.jwt);
 
-        // ✅ Avatar URL logic
+        /* -----------------------------
+           AVATAR
+        ------------------------------ */
         let avatarUrl: string | undefined;
+
         const fileId =
           profile?.avatarFileId ?? appwriteUser.prefs?.avatarFileId;
+
         if (fileId && APPWRITE_ENDPOINT && APPWRITE_PROJECT_ID) {
           avatarUrl = `${APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${fileId}/view?project=${APPWRITE_PROJECT_ID}`;
         } else {
-          const displayName = profile?.firstName
-            ? `${profile.firstName} ${profile.surname ?? ""}`
-            : appwriteUser.name || appwriteUser.email;
+          const displayName =
+            profile?.firstName || appwriteUser.name || appwriteUser.email;
 
-          if (displayName) {
-            avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              displayName
-            )}&background=random&color=fff`;
-          }
+          avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+            displayName
+          )}&background=random&color=fff`;
         }
 
+        /* -----------------------------
+           NORMALIZED USER (IMPORTANT)
+        ------------------------------ */
         const payload: UserPayload = {
           userId: appwriteUser.$id,
+
           email: appwriteUser.email,
-          role: (profile?.role ?? appwriteUser.prefs?.role)?.toLowerCase(),
-          status: profile?.status ?? appwriteUser.status,
-          phone: profile?.phone,
-          bio: profile?.bio,
+
+          firstName: profile?.firstName ?? "",
+          surname: profile?.surname ?? "",
+
+          role: (
+            profile?.role ??
+            appwriteUser.prefs?.role ??
+            "user"
+          ).toLowerCase(),
+
+          status:
+            typeof profile?.status === "string" ? profile.status : "Active",
+
+          phone: profile?.phone ?? undefined,
+          bio: profile?.bio ?? undefined,
+
+          country: profile?.country ?? undefined,
+          dateOfBirth: profile?.dateOfBirth ?? undefined,
+          agentId: profile?.agentId ?? undefined,
+
           avatarUrl,
         };
 
         if (mounted.current) setUser(payload);
-      } catch (err) {
+      } catch {
         if (mounted.current) setUser(null);
       } finally {
         if (mounted.current) setLoading(false);
@@ -118,12 +173,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     })();
   }, []);
 
+  /* ----------------------------------
+     SIGN OUT
+  ----------------------------------- */
   const signOut = async () => {
     try {
       await account.deleteSession("current");
       setUser(null);
     } catch {
-      // swallow error or handle UI notification
+      // optional toast
     }
   };
 
@@ -134,4 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/* ----------------------------------
+   HOOK
+----------------------------------- */
 export const useAuth = () => useContext(AuthContext);
