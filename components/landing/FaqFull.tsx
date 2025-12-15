@@ -29,7 +29,7 @@ const DEFAULT_ITEMS: FaqItem[] = [
         Click{" "}
         <a
           className="text-blue-600 underline dark:text-blue-400"
-          href="/signup">
+          href="/auth/signup">
           Sign up
         </a>{" "}
         and complete the short registration form.
@@ -49,7 +49,7 @@ const DEFAULT_ITEMS: FaqItem[] = [
         Visit the Join page and complete the agent application or click{" "}
         <a
           className="text-blue-600 underline dark:text-blue-400"
-          href="/signup">
+          href="/auth/signup">
           Join Us
         </a>
         .

@@ -24,7 +24,9 @@ const DEFAULT: FaqItem[] = [
     q: "How do I sign up?",
     a: (
       <>
-        <a className="text-primary underline dark:text-accent" href="/signup">
+        <a
+          className="text-primary underline dark:text-accent"
+          href="/auth/signup">
           Sign up
         </a>{" "}
         and complete the form.
