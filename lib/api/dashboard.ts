@@ -43,10 +43,16 @@ async function fetchJson(url: string, opts: RequestInit = {}) {
 export async function fetchAgentMetrics(agentId: string) {
   if (!agentId) throw new Error("agentId is required");
   const url = buildUrl(`/api/dashboard/agent/${encodeURIComponent(agentId)}`);
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
   return fetchJson(url, {
     method: "GET",
-    credentials: "include", // keep if your server uses cookie sessions; remove if using token auth
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 }
 
@@ -58,10 +64,16 @@ export async function postAgentMetricsRecord(agentId: string, payload?: any) {
   const url = buildUrl(
     `/api/dashboard/agent/${encodeURIComponent(agentId)}/record`
   );
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
   return fetchJson(url, {
     method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ metrics: payload ?? null }),
   });
 }
