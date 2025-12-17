@@ -7,7 +7,6 @@ import { z } from "zod";
 import AmenitiesStep from "./steps/AmenitiesStep";
 import BasicInfoStep from "./steps/BasicInfoStep";
 import LocationStep from "./steps/LocationStep";
-import MarketingStep from "./steps/MarketingStep"; // 👈 new import
 import PropertyImagesStep from "./steps/PropertyImagesStep";
 import ReviewStep from "./steps/ReviewStep";
 
@@ -194,7 +193,7 @@ export default function AddPropertyWizard() {
       <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Amenities</li>
       <li className={`step ${step >= 3 ? "step-primary" : ""}`}>Location</li>
       <li className={`step ${step >= 4 ? "step-primary" : ""}`}>Images</li>
-      <li className={`step ${step >= 5 ? "step-primary" : ""}`}>Marketing</li>
+      {/* <li className={`step ${step >= 5 ? "step-primary" : ""}`}>Marketing</li> */}
       <li className={`step ${step >= 6 ? "step-primary" : ""}`}>Review</li>
     </ul>
   );
@@ -234,13 +233,13 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
-      {step === 5 && (
+      {/* {step === 5 && (
         <MarketingStep
           formData={formData}
           setFormData={setFormData}
           setStep={setStep}
         />
-      )}
+      )} */}
       {step === 6 && (
         <ReviewStep
           formData={formData}

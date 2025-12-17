@@ -1,4 +1,3 @@
-// app/(auth)/signup/SignupForm.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -24,30 +23,45 @@ export default function SignupForm({
 }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
 
+  /* ----------------------------------
+     FORM STATE (MATCHES ZOD SCHEMA)
+  ----------------------------------- */
   const [form, setForm] = useState<SignupFormData>({
     accountId:
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random()}`,
+
     email: "",
     firstName: "",
     surname: "",
-    phone: "",
+
+    phone: undefined,
     country: "",
     location: "",
+
     role: "user",
     status: "Pending",
-    nationalId: "",
-    bio: "",
+
+    nationalId: undefined,
+    bio: undefined,
     metadata: [],
+
     password: "",
-    dateOfBirth: "",
+
+    dateOfBirth: undefined,
+
+    // 🪙 Coins system (important)
+    coins: 0,
+    lastLoginReward: undefined,
   });
 
-  // Phone formatting hook
+  /* ----------------------------------
+     PHONE FORMATTER
+  ----------------------------------- */
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
-  const updateField = (name: string, value: string) =>
+  const updateField = (name: string, value: any) =>
     setForm((prev) => ({ ...prev, [name]: value }));
 
   const handleChange = (
@@ -74,18 +88,29 @@ export default function SignupForm({
     const { name, value } = e.target;
     const trimmed = value.trim();
 
-    updateField(name, trimmed);
+    updateField(name, trimmed === "" ? undefined : trimmed);
     if (name === "phone") setPhone(trimmed);
   };
 
+  /* ----------------------------------
+     CLEAN PAYLOAD (NO EMPTY STRINGS)
+  ----------------------------------- */
   const cleanForm = (obj: Record<string, any>) =>
     Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [
-        k,
-        typeof v === "string" ? v.trim() : v,
-      ])
+      Object.entries(obj)
+        .map(([k, v]) => {
+          if (typeof v === "string") {
+            const trimmed = v.trim();
+            return [k, trimmed === "" ? undefined : trimmed];
+          }
+          return [k, v];
+        })
+        .filter(([, v]) => v !== undefined)
     );
 
+  /* ----------------------------------
+     SUBMIT
+  ----------------------------------- */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -93,11 +118,11 @@ export default function SignupForm({
     try {
       const payload = cleanForm(form);
 
-      payload.email = payload.email.toLowerCase().trim();
+      payload.email = payload.email.toLowerCase();
 
-      // Convert phone to E.164 format
+      // Convert phone → E.164
       const e164 = getE164();
-      if (e164) payload.phone = e164;
+      payload.phone = e164 ?? undefined;
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
@@ -111,24 +136,26 @@ export default function SignupForm({
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         const message =
-          (body && (body.message || body.error || JSON.stringify(body))) ??
-          "Signup failed on server";
+          body?.message ||
+          body?.error ||
+          JSON.stringify(body) ||
+          "Signup failed";
         throw new Error(message);
       }
-
-      const body = await res.json().catch(() => null);
-      console.warn("Server signup success:", body);
 
       const emailParam = encodeURIComponent(payload.email);
       window.location.href = `${redirectTo}?email=${emailParam}`;
     } catch (err: any) {
-      console.error("SignupForm.handleSubmit error:", err);
+      console.error("Signup error:", err);
       alert(err?.message ?? "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ----------------------------------
+     UI
+  ----------------------------------- */
   return (
     <motion.form
       onSubmit={handleSubmit}
