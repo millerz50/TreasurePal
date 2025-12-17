@@ -2,6 +2,8 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { account } from "@/lib/appwrite";
+import { Coins } from "lucide-react";
+
 import {
   BarChart,
   Building2,
@@ -97,73 +99,88 @@ export default function Topbar() {
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center shadow-sm">
-      {/* Logo + Title */}
-      <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
-          TP
+  {/* Logo + Title */}
+  <div className="flex items-center gap-3">
+    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
+      TP
+    </div>
+    <h1 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600">
+      Treasure Pal
+    </h1>
+  </div>
+
+  {/* Right side controls */}
+  <div className="flex items-center gap-4 relative">
+    <button className="btn btn-sm btn-outline hidden sm:inline-block">
+      Theme
+    </button>
+
+    {user && (
+      <div className="flex items-center gap-4">
+        {/* Credits */}
+        <div className="flex items-center gap-1 text-sm font-medium text-gray-700">
+          <Coins className="h-5 w-5 text-yellow-500" />
+          <span>{user.credits ?? 0}</span>
         </div>
-        <h1 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600">
-          Treasure Pal
-        </h1>
-      </div>
 
-      {/* Right side controls */}
-      <div className="flex items-center gap-4 relative">
-        <button className="btn btn-sm btn-outline hidden sm:inline-block">
-          Theme
-        </button>
+        {/* Avatar + Role */}
+        <div className="relative group">
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded-md transition"
+          >
+            <CircleUserRound className="h-6 w-6 text-green-600" />
+            <span className="text-sm font-medium text-gray-700 hidden sm:inline">
+              {user.role ?? "User"}
+            </span>
+          </button>
 
-        {user && (
-          <div className="relative group">
-            {/* Avatar + Role */}
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded-md transition">
-              <CircleUserRound className="h-6 w-6 text-green-600" />
-              <span className="text-sm font-medium text-gray-700 hidden sm:inline">
-                {user.role ?? "User"}
-              </span>
-            </button>
-
-            {/* Tooltip */}
-            <div className="absolute top-full left-0 mt-1 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
-              {user.email ?? "No email"}
-            </div>
-
-            {/* Dropdown */}
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg z-50">
-                <div className="px-4 py-2 text-sm text-gray-600">
-                  <strong>User ID:</strong>
-                  <br />
-                  {user.userId ?? "Unknown"}
-                </div>
-                <div className="px-4 py-2 text-sm text-gray-600">
-                  <strong>Role:</strong> {user.role ?? "User"}
-                </div>
-                <hr className="border-gray-200" />
-
-                {/* Role‑specific actions */}
-                {roleActions()}
-
-                {/* Common actions */}
-                <button
-                  onClick={handleEdit}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-                  <Pencil className="h-4 w-4" />
-                  Edit Profile
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-red-500">
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
-              </div>
-            )}
+          {/* Tooltip */}
+          <div className="absolute top-full left-0 mt-1 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+            {user.email ?? "No email"}
           </div>
-        )}
+
+          {/* Dropdown */}
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg z-50">
+              <div className="px-4 py-2 text-sm text-gray-600">
+                <strong>User ID:</strong>
+                <br />
+                {user.userId ?? "Unknown"}
+              </div>
+              <div className="px-4 py-2 text-sm text-gray-600">
+                <strong>Role:</strong> {user.role ?? "User"}
+              </div>
+              <div className="px-4 py-2 text-sm text-gray-600">
+                <strong>Credits:</strong> {user.credits ?? 0}
+              </div>
+              <hr className="border-gray-200" />
+
+              {/* Role‑specific actions */}
+              {roleActions()}
+
+              {/* Common actions */}
+              <button
+                onClick={handleEdit}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <Pencil className="h-4 w-4" />
+                Edit Profile
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-red-500"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </header>
+    )}
+  </div>
+</header>
+
   );
 }

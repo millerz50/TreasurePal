@@ -59,6 +59,7 @@ export type UserPayload = {
   agentId?: string;
 
   avatarUrl?: string;
+  credits?: string;
 };
 
 interface AuthContextType {
@@ -159,6 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           country: profile?.country ?? undefined,
           dateOfBirth: profile?.dateOfBirth ?? undefined,
           agentId: profile?.agentId ?? undefined,
+          credits: profile?.credits ?? undefined,
 
           avatarUrl,
         };
