@@ -81,7 +81,7 @@ export default function VerifyOtp() {
       }
 
       // SUCCESS → redirect
-      window.location.href = "/signin";
+      window.location.href = "/auth/signin";
     } catch (err) {
       setMessage((err as Error).message);
     } finally {

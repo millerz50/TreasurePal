@@ -27,7 +27,7 @@ export default function Topbar() {
       localStorage.removeItem("userToken");
 
       // Redirect
-      router.push("/signin");
+      router.push("/auth/signin");
     } catch (err) {
       console.error("❌ Logout failed:", err);
     }
