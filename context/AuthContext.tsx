@@ -59,7 +59,7 @@ export type UserPayload = {
   agentId?: string;
 
   avatarUrl?: string;
-  credits?: string;
+  credits?: number;
 };
 
 interface AuthContextType {
