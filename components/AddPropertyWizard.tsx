@@ -10,7 +10,8 @@ import LocationStep from "./steps/LocationStep";
 import PropertyImagesStep from "./steps/PropertyImagesStep";
 import ReviewStep from "./steps/ReviewStep";
 
-export type Step = 1 | 2 | 3 | 4 | 5 | 6;
+// ✅ Step type now ends at 5
+export type Step = 1 | 2 | 3 | 4 | 5;
 
 // ✅ Zod schema for validation
 export const PropertySchema = z.object({
@@ -36,7 +37,7 @@ export const PropertySchema = z.object({
   eastView: z.instanceof(File).nullable().optional(),
   floorPlan: z.instanceof(File).nullable().optional(),
 
-  // 👇 Marketing fields
+  // 👇 Marketing fields (still part of schema, but no step in wizard)
   website: z.string().url().optional(),
   flyers: z.string().optional(),
   hireDesigner: z.boolean().optional(),
@@ -78,14 +79,6 @@ export default function AddPropertyWizard() {
     // 👇 new deposit fields
     depositOption: "none",
     depositPercentage: "",
-
-    // marketing defaults
-    website: "",
-    flyers: "",
-    hireDesigner: false,
-    subscriptionPlan: "",
-    whatsappGroup: "",
-    ads: "",
   });
 
   useEffect(() => {
@@ -193,8 +186,7 @@ export default function AddPropertyWizard() {
       <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Amenities</li>
       <li className={`step ${step >= 3 ? "step-primary" : ""}`}>Location</li>
       <li className={`step ${step >= 4 ? "step-primary" : ""}`}>Images</li>
-      {/* <li className={`step ${step >= 5 ? "step-primary" : ""}`}>Marketing</li> */}
-      <li className={`step ${step >= 6 ? "step-primary" : ""}`}>Review</li>
+      <li className={`step ${step >= 5 ? "step-primary" : ""}`}>Review</li>
     </ul>
   );
 
@@ -233,14 +225,7 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
-      {/* {step === 5 && (
-        <MarketingStep
-          formData={formData}
-          setFormData={setFormData}
-          setStep={setStep}
-        />
-      )} */}
-      {step === 6 && (
+      {step === 5 && (
         <ReviewStep
           formData={formData}
           setStep={setStep}
