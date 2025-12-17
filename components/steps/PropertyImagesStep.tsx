@@ -42,17 +42,17 @@ const imageFields = [
 ];
 
 const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
-  // previews now hold arrays of URLs
-  const [previews, setPreviews] = useState<Record<string, string[]>>({});
+  // previews hold single URL per exterior field, array for inside
+  const [previews, setPreviews] = useState<Record<string, string | string[]>>(
+    {}
+  );
 
-  const handleFileChange = (key: string, files: FileList | null) => {
+  const handleSingleFileChange = (key: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
-
-    const fileArray = Array.from(files);
-    setFormData((prev) => ({ ...prev, [key]: fileArray }));
-
-    const urls = fileArray.map((file) => URL.createObjectURL(file));
-    setPreviews((prev) => ({ ...prev, [key]: urls }));
+    const file = files[0]; // only one file
+    setFormData((prev) => ({ ...prev, [key]: file }));
+    const url = URL.createObjectURL(file);
+    setPreviews((prev) => ({ ...prev, [key]: url }));
   };
 
   return (
@@ -61,7 +61,7 @@ const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
         Upload Property Images
       </h3>
 
-      {/* Exterior fields */}
+      {/* Exterior fields (single image each) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {imageFields.map(({ key, label, mock }) => (
           <div key={key} className="space-y-2">
@@ -69,20 +69,14 @@ const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
               {label}
             </label>
             <div className="relative aspect-video w-full border rounded-lg overflow-hidden bg-gray-100 group">
-              {previews[key] && previews[key].length > 0 ? (
-                <div className="grid grid-cols-2 gap-1 w-full h-full">
-                  {previews[key].map((src, idx) => (
-                    <div key={idx} className="relative w-full h-32">
-                      <Image
-                        src={src}
-                        alt={`${label} ${idx + 1}`}
-                        fill
-                        sizes="100%"
-                        className="object-cover rounded"
-                      />
-                    </div>
-                  ))}
-                </div>
+              {previews[key] ? (
+                <Image
+                  src={previews[key] as string}
+                  alt={label}
+                  fill
+                  sizes="100%"
+                  className="object-cover rounded"
+                />
               ) : (
                 <Image
                   src={mock}
@@ -102,8 +96,7 @@ const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
             <input
               type="file"
               accept="image/*"
-              multiple
-              onChange={(e) => handleFileChange(key, e.target.files)}
+              onChange={(e) => handleSingleFileChange(key, e.target.files)}
               className="block w-full text-sm file:mr-4 file:py-2 file:px-4
                          file:rounded-md file:border-0
                          file:text-sm file:font-semibold
@@ -114,15 +107,16 @@ const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
         ))}
       </div>
 
-      {/* Inside section */}
+      {/* Inside section (up to 3 images) */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">
           Inside Views (up to 3)
         </label>
         <div className="relative aspect-video w-full border rounded-lg overflow-hidden bg-gray-100 group">
-          {previews["inside"] && previews["inside"].length > 0 ? (
+          {Array.isArray(previews["inside"]) &&
+          previews["inside"].length > 0 ? (
             <div className="grid grid-cols-3 gap-1 w-full h-full">
-              {previews["inside"].map((src, idx) => (
+              {(previews["inside"] as string[]).map((src, idx) => (
                 <div key={idx} className="relative w-full h-32">
                   <Image
                     src={src}
@@ -148,7 +142,6 @@ const PropertyImagesStep: React.FC<Props> = ({ setFormData, setStep }) => {
           onChange={(e) => {
             const files = e.target.files;
             if (!files) return;
-            // limit to 3 files
             const fileArray = Array.from(files).slice(0, 3);
             setFormData((prev) => ({ ...prev, inside: fileArray }));
             const urls = fileArray.map((file) => URL.createObjectURL(file));
