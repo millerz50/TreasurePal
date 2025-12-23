@@ -38,8 +38,8 @@ export default function AdminPanel() {
 
         const data = await res.json();
         setUsers(data);
-      } catch (err: any) {
-        setError(err.message ?? "Error loading users");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Error loading users");
       } finally {
         setLoading(false);
       }
@@ -53,6 +53,7 @@ export default function AdminPanel() {
   ----------------------------------- */
   const promote = async (userId: string, role: "agent" | "admin") => {
     setActionLoading(userId);
+
     try {
       const res = await fetch("/api/admin/promote", {
         method: "POST",
@@ -69,7 +70,7 @@ export default function AdminPanel() {
             : u
         )
       );
-    } catch (err) {
+    } catch (_err) {
       alert("❌ Failed to update role");
     } finally {
       setActionLoading(null);
