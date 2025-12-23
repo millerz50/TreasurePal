@@ -1,14 +1,28 @@
 import { z } from "zod";
 
+/**
+ * SignupSchema
+ * --------------------
+ * Frontend → Backend signup payload ONLY
+ * ❌ No roles selection
+ * ❌ No credits
+ * ❌ No admin/agent control
+ */
 export const SignupSchema = z.object({
   /* --------------------
-     CORE USER
+     CORE AUTH
   -------------------- */
 
-  // ✅ Appwrite attribute name
+  // Appwrite userId (generated client-side)
   accountid: z.string().min(1, "Account ID required"),
 
-  email: z.string().email("Invalid email"),
+  email: z.string().email("Invalid email address"),
+
+  password: z.string().min(8, "Password must be at least 8 characters"),
+
+  /* --------------------
+     BASIC PROFILE
+  -------------------- */
 
   firstName: z.string().min(1, "First name required"),
 
@@ -20,40 +34,11 @@ export const SignupSchema = z.object({
       /^\+?[1-9]\d{1,14}$/,
       "Phone must be valid E.164 format e.g. +263771234567"
     )
-    .optional()
-    .nullable(),
+    .optional(),
 
   country: z.string().min(1, "Country required"),
 
-  location: z.string().min(1, "Location required"),
-
-  /* --------------------
-     RBAC
-  -------------------- */
-
-  // ✅ roles ARRAY (not role)
-  roles: z
-    .array(z.enum(["user", "agent", "admin"]))
-    .min(1)
-    .default(["user"]),
-
-  status: z
-    .enum(["Not Verified", "Pending", "Active", "Suspended"])
-    .default("Pending"),
-
-  /* --------------------
-     OPTIONAL PROFILE
-  -------------------- */
-
-  nationalId: z.string().optional(),
-
-  bio: z.string().max(300).optional(),
-
-  metadata: z.array(z.string()).optional(),
-
-  password: z.string().min(8, "Password must be at least 8 characters"),
-
-  avatarUrl: z.string().url("Invalid URL").optional(),
+  location: z.string().optional(),
 
   dateOfBirth: z
     .string()
@@ -61,13 +46,23 @@ export const SignupSchema = z.object({
     .optional(),
 
   /* --------------------
-     ECONOMY SYSTEM
+     OPTIONAL PROFILE
   -------------------- */
 
-  // ✅ credits (not coins)
-  credits: z.number().int().nonnegative().default(0),
+  bio: z.string().max(300, "Bio must be 300 characters or less").optional(),
 
-  lastLoginReward: z.string().optional(),
+  avatarUrl: z.string().url("Invalid avatar URL").optional(),
+
+  /* --------------------
+     SERVER-ENFORCED FIELDS
+     (Hidden from UI)
+  -------------------- */
+
+  // 🔒 LOCKED: user only
+  roles: z.array(z.literal("user")).length(1).default(["user"]),
+
+  // 🔒 LOCKED: admin approval flow
+  status: z.literal("Pending").default("Pending"),
 });
 
 export type SignupFormData = z.infer<typeof SignupSchema>;

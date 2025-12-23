@@ -6,48 +6,56 @@ import { Button } from "../../../components/ui/button";
 import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
 import { SignupFormData } from "../SignupSchema";
 import SocialSignup from "../SocialSignup";
+
 import BioField from "./BioField";
 import ContactFields from "./ContactFields";
 import CountryLocationFields from "./CountryLocationFields";
 import DOBField from "./DOBField";
 import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
-import RoleAndNationalIdFields from "./RoleAndNationalIdFields";
+
+/* ----------------------------------
+   PROPS
+----------------------------------- */
 
 interface SignupFormProps {
   redirectTo?: string;
 }
 
+/* ----------------------------------
+   COMPONENT
+----------------------------------- */
+
 export default function SignupForm({
   redirectTo = "/auth/signin",
 }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
+  const [avatar, setAvatar] = useState<File | null>(null);
 
   /* ----------------------------------
-     FORM STATE (BACKEND-ALIGNED)
+     FORM STATE (SERVER-ALIGNED)
+     🔒 USER ALWAYS STARTS AS "user"
   ----------------------------------- */
+
   const [form, setForm] = useState<SignupFormData>({
-  accountid: crypto.randomUUID(),
-  email: "",
-  firstName: "",
-  surname: "",
-  phone: undefined,
-  country: "",
-  location: "",
-  roles: ["user"], // ✅ REQUIRED
-  status: "Pending",
-  nationalId: undefined,
-  bio: undefined,
-  metadata: [],
-  password: "",
-  dateOfBirth: undefined,
-  credits: 0,
-  lastLoginReward: undefined,
-});
+    accountid: crypto.randomUUID(),
+    email: "",
+    firstName: "",
+    surname: "",
+    phone: undefined,
+    country: "",
+    location: "",
+    roles: ["user"], // 🔒 FIXED
+    status: "Pending",
+    bio: undefined,
+    password: "",
+    dateOfBirth: undefined,
+  });
 
   /* ----------------------------------
      PHONE FORMATTER
   ----------------------------------- */
+
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
   const updateField = (name: string, value: any) =>
@@ -76,14 +84,31 @@ export default function SignupForm({
   ) => {
     const { name, value } = e.target;
     const trimmed = value.trim();
-
     updateField(name, trimmed === "" ? undefined : trimmed);
+
     if (name === "phone") setPhone(trimmed);
+  };
+
+  /* ----------------------------------
+     IMAGE UPLOAD
+  ----------------------------------- */
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image");
+      return;
+    }
+
+    setAvatar(file);
   };
 
   /* ----------------------------------
      CLEAN PAYLOAD
   ----------------------------------- */
+
   const cleanForm = (obj: Record<string, any>) =>
     Object.fromEntries(
       Object.entries(obj)
@@ -100,31 +125,37 @@ export default function SignupForm({
   /* ----------------------------------
      SUBMIT
   ----------------------------------- */
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const payload = cleanForm(form);
-
       payload.email = payload.email.toLowerCase();
 
       // 📞 Phone → E.164
-      const e164 = getE164();
-      payload.phone = e164 ?? undefined;
+      payload.phone = getE164() ?? undefined;
+
+      // 📦 Multipart (image + json)
+      const formData = new FormData();
+      formData.append("data", JSON.stringify(payload));
+
+      if (avatar) {
+        formData.append("avatar", avatar);
+      }
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: formData,
         }
       );
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        throw new Error(body?.message || body?.error || "Signup failed");
+        throw new Error(body?.message || "Signup failed");
       }
 
       window.location.href = `${redirectTo}?email=${encodeURIComponent(
@@ -141,6 +172,7 @@ export default function SignupForm({
   /* ----------------------------------
      UI
   ----------------------------------- */
+
   return (
     <motion.form
       onSubmit={handleSubmit}
@@ -152,6 +184,17 @@ export default function SignupForm({
       <div
         className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md
                       p-6 shadow-lg space-y-6 flex flex-col">
+        {/* IMAGE */}
+        <div className="flex flex-col items-center gap-3">
+          <label className="font-medium text-sm">Profile Photo</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="text-sm"
+          />
+        </div>
+
         <NameFields form={form} onChange={handleChange} onBlur={handleBlur} />
 
         <ContactFields
@@ -166,15 +209,6 @@ export default function SignupForm({
           onLocationSelect={(loc) =>
             setForm((prev) => ({ ...prev, location: loc.name.trim() }))
           }
-        />
-
-        <RoleAndNationalIdFields
-          form={form}
-          onRoleChange={(role) =>
-            setForm((prev) => ({ ...prev, roles: [role] }))
-          }
-          onChange={handleChange}
-          onBlur={handleBlur}
         />
 
         <BioField form={form} onChange={handleChange} />
