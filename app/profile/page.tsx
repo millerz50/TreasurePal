@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { hasRole } from "@/lib/auth/role";
 import { motion } from "framer-motion";
 import {
   Briefcase,
@@ -34,7 +35,7 @@ export default function ProfilePage() {
      FETCH AGENT DETAILS (ROLE-BASED)
   ----------------------------------- */
   useEffect(() => {
-    if (!user || user.role !== "agent" || !user.agentId) return;
+    if (!user || !hasRole(user, "agent") || !user.userId) return;
 
     const fetchAgents = async () => {
       setAgentLoading(true);
@@ -55,7 +56,7 @@ export default function ProfilePage() {
 
         const agents: Agent[] = await res.json();
 
-        const matchedAgent = agents.find((a) => a.agentId === user.agentId);
+        const matchedAgent = agents.find((a) => a.agentId === user.userId);
 
         setAgent(matchedAgent ?? null);
       } catch (err) {
@@ -86,7 +87,8 @@ export default function ProfilePage() {
     );
   }
 
-  const role = user.role?.toLowerCase();
+  const isAgent = hasRole(user, "agent");
+  const isAdmin = hasRole(user, "admin");
 
   /* ----------------------------------
      UI
@@ -113,9 +115,15 @@ export default function ProfilePage() {
               {user.email}
             </p>
 
-            <span className="inline-block mt-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary capitalize">
-              {role}
-            </span>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {user.roles.map((r) => (
+                <span
+                  key={r}
+                  className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary capitalize">
+                  {r}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -139,7 +147,7 @@ export default function ProfilePage() {
       </section>
 
       {/* ================= AGENT PROFILE ================= */}
-      {role === "agent" && (
+      {isAgent && (
         <section className="rounded-2xl border bg-base-100 p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold">Agent Profile</h2>
 
@@ -149,7 +157,7 @@ export default function ProfilePage() {
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <AgentRow label="Agent ID" value={user.agentId ?? "—"} />
+              <AgentRow label="Agent ID" value={user.userId} />
               <AgentRow label="Agency" value={agent?.agencyName ?? "—"} />
               <AgentRow
                 label="License Number"
@@ -169,7 +177,7 @@ export default function ProfilePage() {
       )}
 
       {/* ================= ADMIN ================= */}
-      {role === "admin" && (
+      {isAdmin && (
         <section className="rounded-2xl border bg-base-100 p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold">Admin Privileges</h2>
           <div className="flex items-center gap-3 text-sm">

@@ -4,16 +4,19 @@ import { Separator } from "@/components/ui/Separator";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+
 import AmenitiesStep from "./steps/AmenitiesStep";
 import BasicInfoStep from "./steps/BasicInfoStep";
 import LocationStep from "./steps/LocationStep";
 import PropertyImagesStep from "./steps/PropertyImagesStep";
 import ReviewStep from "./steps/ReviewStep";
 
-// ✅ Step type now ends at 5
+import { hasRole } from "@/lib/auth/role";
+
+// ✅ Step type
 export type Step = 1 | 2 | 3 | 4 | 5;
 
-// ✅ Zod schema for validation
+// ✅ Zod schema
 export const PropertySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   price: z.union([z.string(), z.number()]).refine((val) => Number(val) > 0, {
@@ -31,19 +34,21 @@ export const PropertySchema = z.object({
   locationLng: z.number().nullable().optional(),
   agentId: z.string().min(1, "Agent ID required"),
   depositAvailable: z.boolean().default(false),
+
   frontElevation: z.instanceof(File).nullable().optional(),
   southView: z.instanceof(File).nullable().optional(),
   westView: z.instanceof(File).nullable().optional(),
   eastView: z.instanceof(File).nullable().optional(),
   floorPlan: z.instanceof(File).nullable().optional(),
 
-  // 👇 Marketing fields (still part of schema, but no step in wizard)
+  // Marketing fields
   website: z.string().url().optional(),
   flyers: z.string().optional(),
   hireDesigner: z.boolean().optional(),
   subscriptionPlan: z.string().optional(),
   whatsappGroup: z.string().optional(),
   ads: z.string().optional(),
+
   depositOption: z.enum(["none", "required"]).default("none"),
   depositPercentage: z.union([z.string(), z.number()]).optional(),
 });
@@ -52,15 +57,12 @@ export type PropertyFormValues = z.infer<typeof PropertySchema>;
 
 export default function AddPropertyWizard() {
   const { user } = useAuth();
+
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<
-    PropertyFormValues & {
-      depositOption?: "none" | "required";
-      depositPercentage?: string | number;
-    }
-  >({
+
+  const [formData, setFormData] = useState<PropertyFormValues>({
     title: "",
     price: "",
     location: "",
@@ -75,17 +77,16 @@ export default function AddPropertyWizard() {
     locationLng: null,
     agentId: "",
     depositAvailable: false,
-
-    // 👇 new deposit fields
     depositOption: "none",
     depositPercentage: "",
   });
 
+  // ✅ Always inject agentId from authenticated user
   useEffect(() => {
     if (user?.userId) {
       setFormData((prev) => ({
         ...prev,
-        agentId: user.userId, // ✅ ensure agentId is always set
+        agentId: user.userId,
       }));
     }
   }, [user?.userId]);
@@ -101,17 +102,17 @@ export default function AddPropertyWizard() {
         throw new Error("API base URL is not configured");
       }
 
-      if (!user || user.role !== "agent") {
+      if (!user || !hasRole(user, "agent")) {
         throw new Error("Only agents can add properties.");
       }
 
-      // ✅ Validate form data
+      // ✅ Validate data
       const parsed = PropertySchema.safeParse(formData);
       if (!parsed.success) {
         throw new Error(parsed.error.errors[0]?.message || "Validation failed");
       }
 
-      // ✅ Get token (client-only)
+      // ✅ Token
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("Not authenticated. Please sign in again.");
@@ -131,16 +132,16 @@ export default function AddPropertyWizard() {
         }
       });
 
-      // 🧠 Safety check: ensure agentId is present
+      // Extra safety
       if (!fd.get("agentId")) {
         fd.append("agentId", user.userId);
       }
 
-      // ✅ API request with token
+      // ✅ Submit
       const res = await fetch(`${API_BASE}/api/properties/add`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // ✅ token ALWAYS sent
+          Authorization: `Bearer ${token}`,
         },
         body: fd,
       });
@@ -151,11 +152,9 @@ export default function AddPropertyWizard() {
         try {
           const json = await res.json();
           message = json?.error || json?.message || message;
-          console.error("❌ API error response:", json);
         } catch {
           const text = await res.text();
           if (text) message = text;
-          console.error("❌ API error text:", text);
         }
 
         throw new Error(message);
@@ -163,17 +162,13 @@ export default function AddPropertyWizard() {
 
       const result = await res.json();
       console.log("✅ Property submitted successfully:", result);
-
-      // OPTIONAL: reset form / redirect
-      // setFormData(initialState);
-      // router.push("/dashboard/properties");
     } catch (err) {
       if (err instanceof Error) {
-        console.error("❌ Property submission failed:", err.message);
         setError(err.message);
+        console.error(err.message);
       } else {
-        console.error("❌ Property submission failed:", err);
         setError("An unexpected error occurred");
+        console.error(err);
       }
     } finally {
       setLoading(false);
@@ -204,6 +199,7 @@ export default function AddPropertyWizard() {
           setError={setError}
         />
       )}
+
       {step === 2 && (
         <AmenitiesStep
           formData={formData}
@@ -211,6 +207,7 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
+
       {step === 3 && (
         <LocationStep
           formData={formData}
@@ -218,6 +215,7 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
+
       {step === 4 && (
         <PropertyImagesStep
           formData={formData}
@@ -225,6 +223,7 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
+
       {step === 5 && (
         <ReviewStep
           formData={formData}

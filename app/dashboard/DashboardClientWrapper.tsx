@@ -8,8 +8,11 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import UserFavorites from "@/components/dashboard/user/UserFavorites";
 import { useAuth } from "@/context/AuthContext";
 import { fetchAgentMetrics } from "@/lib/api/dashboard";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
+/* ----------------------------------
+   TYPES
+----------------------------------- */
 export type Metrics = {
   agentId?: string;
   propertiesCount?: number;
@@ -26,11 +29,25 @@ export type Metrics = {
 
 const DashboardClientWrapper: React.FC = () => {
   const { user, loading } = useAuth();
+
   const [ready, setReady] = useState(false);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingMetrics, setLoadingMetrics] = useState(false);
 
+  /* ----------------------------------
+     RESOLVE PRIMARY ROLE
+  ----------------------------------- */
+  const primaryRole = useMemo<"admin" | "agent" | "user" | null>(() => {
+    if (!user?.roles?.length) return null;
+    if (user.roles.includes("admin")) return "admin";
+    if (user.roles.includes("agent")) return "agent";
+    return "user";
+  }, [user?.roles]);
+
+  /* ----------------------------------
+     READY STATE
+  ----------------------------------- */
   useEffect(() => {
     if (loading) return;
 
@@ -43,14 +60,18 @@ const DashboardClientWrapper: React.FC = () => {
     return () => clearTimeout(t);
   }, [user, loading]);
 
+  /* ----------------------------------
+     AGENT METRICS
+  ----------------------------------- */
   useEffect(() => {
     if (!ready || loading) return;
     if (!user?.userId) return;
+    if (primaryRole !== "agent") return;
 
     const load = async () => {
-      if (user.role !== "agent") return;
       setLoadingMetrics(true);
       setError(null);
+
       try {
         const res = await fetchAgentMetrics(user.userId);
         const data = res?.metrics ?? res;
@@ -65,32 +86,39 @@ const DashboardClientWrapper: React.FC = () => {
     };
 
     load();
-  }, [ready, loading, user]);
+  }, [ready, loading, user?.userId, primaryRole]);
 
+  /* ----------------------------------
+     LOADING STATE
+  ----------------------------------- */
   if (loading || !ready) {
     return <div className="text-center py-10">Loading dashboard...</div>;
   }
 
+  /* ----------------------------------
+     RENDER
+  ----------------------------------- */
   return (
     <div className="space-y-6">
       <OverviewCards
         metrics={metrics}
-        role={user?.role ?? null}
+        role={primaryRole}
         loading={loadingMetrics}
       />
+
       <RecentActivity />
 
       {error && <div className="text-sm text-red-600">{error}</div>}
 
-      {user?.role === "agent" && (
+      {primaryRole === "agent" && (
         <AgentTools metrics={metrics} loading={loadingMetrics} />
       )}
 
-      {user?.role === "user" && <UserFavorites />}
+      {primaryRole === "user" && <UserFavorites />}
 
-      {user?.role === "admin" && (
+      {primaryRole === "admin" && (
         <>
-          <QuickActions role={user.role} loading={loadingMetrics} />
+          <QuickActions role={primaryRole} loading={loadingMetrics} />
           <AdminPanel />
         </>
       )}

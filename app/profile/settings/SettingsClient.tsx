@@ -18,9 +18,11 @@ import { Card } from "@/components/settings/Card";
 import { NavItem } from "@/components/settings/NavItem";
 import { SettingRow } from "@/components/settings/SettingRow";
 import { ToggleRow } from "@/components/settings/ToggleRow";
+import { getPrimaryRole } from "@/lib/auth/role";
 
 export default function SettingsClient({ user }: { user: UserPayload }) {
   const { signOut } = useAuth();
+  const role = getPrimaryRole(user);
 
   return (
     <motion.div
@@ -28,7 +30,6 @@ export default function SettingsClient({ user }: { user: UserPayload }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className="mx-auto max-w-5xl px-4 py-6 space-y-6">
-      {/* HEADER */}
       <header>
         <h1 className="text-2xl font-semibold">Settings</h1>
         <p className="text-sm text-muted-foreground">
@@ -51,7 +52,7 @@ export default function SettingsClient({ user }: { user: UserPayload }) {
               value={`${user.firstName} ${user.surname}`}
             />
             <SettingRow label="Email" value={user.email} />
-            <SettingRow label="Role" value={user.role} />
+            <SettingRow label="Role" value={role ?? "—"} />
           </Card>
 
           <Card title="Security">

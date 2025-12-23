@@ -13,7 +13,11 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
+/* ----------------------------------
+   TYPES
+----------------------------------- */
 interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -25,18 +29,27 @@ interface Section {
   items: NavItem[];
 }
 
+/* ----------------------------------
+   COMPONENT
+----------------------------------- */
 export default function Sidebar() {
   const { user } = useAuth();
 
-  // Normalize role string to avoid casing mismatches
-  const role = user?.role?.toLowerCase();
+  // ✅ Roles array (safe default)
+  const roles = user?.roles ?? [];
 
-  // Base items
+  const hasRole = (role: "user" | "agent" | "admin") => roles.includes(role);
+
+  /* ----------------------------------
+     NAV ITEMS
+  ----------------------------------- */
+
+  // Base (everyone)
   const baseItems: NavItem[] = [
     { label: "Overview", icon: Home, href: "/dashboard" },
   ];
 
-  // User section
+  // User
   const userItems: NavItem[] = [
     { label: "Liked Properties", icon: Heart, href: "/dashboard/liked" },
     { label: "Suggestions", icon: Sparkles, href: "/dashboard/suggestions" },
@@ -44,7 +57,7 @@ export default function Sidebar() {
     { label: "Agents", icon: Users, href: "/dashboard/agents/suggested" },
   ];
 
-  // Agent section
+  // Agent
   const agentItems: NavItem[] = [
     { label: "Add Property", icon: Plus, href: "/dashboard/properties/add" },
     {
@@ -56,34 +69,43 @@ export default function Sidebar() {
     { label: "Performance", icon: BarChart, href: "/dashboard/performance" },
   ];
 
-  // Admin section
+  // Admin
   const adminItems: NavItem[] = [
     { label: "Agents", icon: Users, href: "/dashboard/agents" },
     { label: "Analytics", icon: BarChart, href: "/dashboard/analytics" },
     { label: "Admin Panel", icon: ShieldCheck, href: "/dashboard/admin" },
   ];
 
-  // Build nav grouped by role
+  /* ----------------------------------
+     BUILD SECTIONS
+  ----------------------------------- */
   const sections: Section[] = [{ title: "General", items: baseItems }];
 
-  if (role === "user") {
+  if (hasRole("user")) {
     sections.push({ title: "Your Space", items: userItems });
   }
-  if (role === "agent") {
+
+  if (hasRole("agent")) {
     sections.push({ title: "Agent Tools", items: agentItems });
   }
-  if (role === "admin") {
+
+  if (hasRole("admin")) {
     sections.push({ title: "Admin", items: adminItems });
   }
 
+  /* ----------------------------------
+     UI
+  ----------------------------------- */
   return (
     <aside className="w-64 bg-base-100 border-r border-base-300 p-4 hidden md:block">
       <h2 className="text-xl font-bold mb-6 text-primary">TreasurePal</h2>
+
       {sections.map((section) => (
         <div key={section.title} className="mb-6">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
             {section.title}
           </h3>
+
           <nav className="space-y-2">
             {section.items.map(({ label, icon: Icon, href }) => (
               <Link
