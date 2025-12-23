@@ -30,7 +30,6 @@ async function fetchProfileMe(jwt: string) {
     });
 
     if (!res.ok) throw new Error("Profile fetch failed");
-
     return await res.json();
   } catch {
     return null;
@@ -38,17 +37,16 @@ async function fetchProfileMe(jwt: string) {
 }
 
 /* ----------------------------------
-   TYPES (THIS IS THE CONTRACT)
+   TYPES (SOURCE OF TRUTH)
 ----------------------------------- */
 export type UserPayload = {
   userId: string;
-
   email: string;
 
   firstName: string;
   surname: string;
 
-  role: string;
+  roles: ("user" | "agent" | "admin")[];
   status: string;
 
   phone?: string;
@@ -135,21 +133,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         /* -----------------------------
-           NORMALIZED USER (IMPORTANT)
+           NORMALIZED USER (FIXED)
         ------------------------------ */
         const payload: UserPayload = {
           userId: appwriteUser.$id,
-
           email: appwriteUser.email,
 
           firstName: profile?.firstName ?? "",
           surname: profile?.surname ?? "",
 
-          role: (
-            profile?.role ??
-            appwriteUser.prefs?.role ??
-            "user"
-          ).toLowerCase(),
+          roles: Array.isArray(profile?.roles)
+            ? profile.roles
+            : Array.isArray(appwriteUser.prefs?.roles)
+            ? appwriteUser.prefs.roles
+            : ["user"],
 
           status:
             typeof profile?.status === "string" ? profile.status : "Active",

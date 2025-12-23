@@ -2,7 +2,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Activity = {
   id: string;
@@ -15,14 +15,25 @@ type Activity = {
 
 export default function RecentActivity() {
   const { user, loading: authLoading } = useAuth();
+
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
+  /* ----------------------------------
+     RESOLVE PRIMARY ROLE (FROM roles[])
+  ----------------------------------- */
+  const primaryRole = useMemo(() => {
+    if (!user?.roles?.length) return "user";
+    if (user.roles.includes("admin")) return "admin";
+    if (user.roles.includes("agent")) return "agent";
+    return "user";
+  }, [user?.roles]);
+
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !user) return;
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -34,18 +45,16 @@ export default function RecentActivity() {
       try {
         let endpoint = "/api/activity/recent";
 
-        if (user?.role === "admin") {
+        if (primaryRole === "admin") {
           endpoint = "/api/activity/recent?scope=all";
-        } else if (user?.role === "agent") {
+        } else if (primaryRole === "agent") {
           endpoint = `/api/activity/recent?scope=agent&agentId=${encodeURIComponent(
             user.userId
           )}`;
-        } else if (user?.role === "user") {
+        } else {
           endpoint = `/api/activity/recent?scope=user&userId=${encodeURIComponent(
             user.userId
           )}`;
-        } else {
-          endpoint = "/api/activity/recent?scope=public";
         }
 
         const token = localStorage.getItem("token");
@@ -55,7 +64,7 @@ export default function RecentActivity() {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // ✅ REQUIRED
+            Authorization: `Bearer ${token}`,
           },
           signal,
         });
@@ -79,7 +88,7 @@ export default function RecentActivity() {
     fetchActivity();
 
     return () => controller.abort();
-  }, [API_BASE, user?.role, user?.userId, authLoading]);
+  }, [API_BASE, user?.userId, primaryRole, authLoading]);
 
   return (
     <div className="card bg-base-100 shadow-sm border border-base-300">
