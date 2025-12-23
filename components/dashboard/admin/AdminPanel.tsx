@@ -70,7 +70,7 @@ export default function AdminPanel() {
             : u
         )
       );
-    } catch (_err) {
+    } catch {
       alert("❌ Failed to update role");
     } finally {
       setActionLoading(null);
