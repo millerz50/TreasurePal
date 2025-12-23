@@ -1,43 +1,50 @@
 "use client";
 
 import React from "react";
+import { SignupFormData } from "../SignupSchema";
+
+type Role = SignupFormData["roles"][number];
 
 interface RoleAndNationalIdFieldsProps {
-  form: { role: string; nationalId?: string };
+  form: {
+    roles: Role[];
+    nationalId?: string;
+  };
+  onRoleChange: (role: Role) => void;
   onChange: (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
   onBlur?: (
-    e: React.FocusEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
 }
 
 export default function RoleAndNationalIdFields({
   form,
+  onRoleChange,
   onChange,
   onBlur,
 }: RoleAndNationalIdFieldsProps) {
+  const selectedRole = form.roles?.[0] ?? "user";
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {/* ROLE */}
       <div>
         <label htmlFor="role" className="text-sm font-semibold text-slate-700">
           Role
         </label>
         <select
           id="role"
-          name="role"
-          value={form.role || ""}
-          onChange={onChange}
-          onBlur={onBlur}
+          value={selectedRole}
+          onChange={(e) => onRoleChange(e.target.value as Role)}
           className="input">
           <option value="user">User</option>
           <option value="agent">Agent</option>
         </select>
       </div>
+
+      {/* NATIONAL ID */}
       <div>
         <label
           htmlFor="nationalId"
@@ -48,7 +55,7 @@ export default function RoleAndNationalIdFields({
           type="text"
           id="nationalId"
           name="nationalId"
-          value={form.nationalId || ""}
+          value={form.nationalId ?? ""}
           onChange={onChange}
           onBlur={onBlur}
           className="input"

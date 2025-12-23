@@ -24,37 +24,26 @@ export default function SignupForm({
   const [loading, setLoading] = useState(false);
 
   /* ----------------------------------
-     FORM STATE (MATCHES ZOD SCHEMA)
+     FORM STATE (BACKEND-ALIGNED)
   ----------------------------------- */
   const [form, setForm] = useState<SignupFormData>({
-    accountId:
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random()}`,
-
-    email: "",
-    firstName: "",
-    surname: "",
-
-    phone: undefined,
-    country: "",
-    location: "",
-
-    role: "user",
-    status: "Pending",
-
-    nationalId: undefined,
-    bio: undefined,
-    metadata: [],
-
-    password: "",
-
-    dateOfBirth: undefined,
-
-    // 🪙 Coins system (important)
-    coins: 0,
-    lastLoginReward: undefined,
-  });
+  accountid: crypto.randomUUID(),
+  email: "",
+  firstName: "",
+  surname: "",
+  phone: undefined,
+  country: "",
+  location: "",
+  roles: ["user"], // ✅ REQUIRED
+  status: "Pending",
+  nationalId: undefined,
+  bio: undefined,
+  metadata: [],
+  password: "",
+  dateOfBirth: undefined,
+  credits: 0,
+  lastLoginReward: undefined,
+});
 
   /* ----------------------------------
      PHONE FORMATTER
@@ -93,7 +82,7 @@ export default function SignupForm({
   };
 
   /* ----------------------------------
-     CLEAN PAYLOAD (NO EMPTY STRINGS)
+     CLEAN PAYLOAD
   ----------------------------------- */
   const cleanForm = (obj: Record<string, any>) =>
     Object.fromEntries(
@@ -120,7 +109,7 @@ export default function SignupForm({
 
       payload.email = payload.email.toLowerCase();
 
-      // Convert phone → E.164
+      // 📞 Phone → E.164
       const e164 = getE164();
       payload.phone = e164 ?? undefined;
 
@@ -135,16 +124,12 @@ export default function SignupForm({
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        const message =
-          body?.message ||
-          body?.error ||
-          JSON.stringify(body) ||
-          "Signup failed";
-        throw new Error(message);
+        throw new Error(body?.message || body?.error || "Signup failed");
       }
 
-      const emailParam = encodeURIComponent(payload.email);
-      window.location.href = `${redirectTo}?email=${emailParam}`;
+      window.location.href = `${redirectTo}?email=${encodeURIComponent(
+        payload.email
+      )}`;
     } catch (err: any) {
       console.error("Signup error:", err);
       alert(err?.message ?? "Signup failed. Please try again.");
@@ -159,11 +144,14 @@ export default function SignupForm({
   return (
     <motion.form
       onSubmit={handleSubmit}
-      className="w-full max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
+      className="w-full max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl
+                 bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}>
-      <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
+      <div
+        className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md
+                      p-6 shadow-lg space-y-6 flex flex-col">
         <NameFields form={form} onChange={handleChange} onBlur={handleBlur} />
 
         <ContactFields
@@ -182,6 +170,9 @@ export default function SignupForm({
 
         <RoleAndNationalIdFields
           form={form}
+          onRoleChange={(role) =>
+            setForm((prev) => ({ ...prev, roles: [role] }))
+          }
           onChange={handleChange}
           onBlur={handleBlur}
         />

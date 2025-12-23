@@ -16,54 +16,49 @@ export default function SigninForm({
 }) {
   const router = useRouter();
 
-  // login fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // phone modal fields
   const [phoneModal, setPhoneModal] = useState(false);
   const { phone, setPhone, getE164 } = usePhoneFormatter("default");
 
   const [loading, setLoading] = useState(false);
 
-  /**
-   * 🔐 STEP 2 — SAVE PHONE TO APPWRITE AUTH & SEND OTP
-   */
+  /* -----------------------------
+     STEP 2: SAVE PHONE + OTP
+  ------------------------------ */
   async function updatePhoneAndVerify() {
     const e164 = getE164();
 
     if (!e164) {
-      toast.error("Invalid phone number formats.");
+      toast.error("Invalid phone number format");
       return;
     }
 
+    const tId = toast.loading("Updating phone number…");
+
     try {
-      toast.loading("Updating phone number…");
-
-      // Update phone (requires password)
-      await account.updatePhone({
-        phone: e164,
-        password: password,
-      });
-
-      toast.success("Phone number saved!");
+      // ✅ CORRECT SDK USAGE
+      await account.updatePhone(e164, password);
 
       // Send OTP
       await account.createPhoneVerification();
-      toast.success("Verification code sent to phone!");
 
-      // 🔥 FIX: PASS USER ID
+      toast.success("Verification code sent!");
+      toast.dismiss(tId);
+
       const user = await account.get();
       router.push(`/auth/verify?userId=${user.$id}`);
     } catch (err: any) {
       console.error("Phone update error:", err);
       toast.error(err?.message || "Failed to update phone");
+      toast.dismiss(tId);
     }
   }
 
-  /**
-   * 🔐 STEP 1 — LOGIN USER
-   */
+  /* -----------------------------
+     STEP 1: LOGIN
+  ------------------------------ */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -79,21 +74,22 @@ export default function SigninForm({
       // Create session
       await account.createEmailPasswordSession(email.toLowerCase(), password);
 
-      // Get user from Appwrite Auth
       const user = await account.get();
 
-      // If no phone in auth → force modal
+      // Force phone capture if missing
       if (!user.phone) {
         toast.dismiss(tId);
         setPhoneModal(true);
         return;
       }
 
-      // Create JWT for backend usage
+      // Create JWT for backend
       const jwt = await account.createJWT();
       localStorage.setItem("token", jwt.jwt);
 
       toast.success("Welcome back!");
+      toast.dismiss(tId);
+
       router.push(redirectTo);
     } catch (err: any) {
       console.error("Login error:", err);
@@ -106,10 +102,11 @@ export default function SigninForm({
 
   return (
     <>
-      {/* MAIN LOGIN FORM */}
+      {/* LOGIN FORM */}
       <motion.form
         onSubmit={handleSubmit}
-        className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
+        className="w-full sm:max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl
+                   bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}>
@@ -149,7 +146,7 @@ export default function SigninForm({
         </div>
       </motion.form>
 
-      {/* PHONE NUMBER REQUIRED MODAL */}
+      {/* PHONE MODAL */}
       {phoneModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md space-y-4">

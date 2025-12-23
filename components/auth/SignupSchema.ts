@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 export const SignupSchema = z.object({
-  accountId: z.string().min(1, "Account ID required"),
+  /* --------------------
+     CORE USER
+  -------------------- */
+
+  // ✅ Appwrite attribute name
+  accountid: z.string().min(1, "Account ID required"),
 
   email: z.string().email("Invalid email"),
 
@@ -22,11 +27,23 @@ export const SignupSchema = z.object({
 
   location: z.string().min(1, "Location required"),
 
-  role: z.enum(["user", "agent"]).default("user"),
+  /* --------------------
+     RBAC
+  -------------------- */
+
+  // ✅ roles ARRAY (not role)
+  roles: z
+    .array(z.enum(["user", "agent", "admin"]))
+    .min(1)
+    .default(["user"]),
 
   status: z
     .enum(["Not Verified", "Pending", "Active", "Suspended"])
     .default("Pending"),
+
+  /* --------------------
+     OPTIONAL PROFILE
+  -------------------- */
 
   nationalId: z.string().optional(),
 
@@ -36,10 +53,6 @@ export const SignupSchema = z.object({
 
   password: z.string().min(8, "Password must be at least 8 characters"),
 
-  /* --------------------
-     PROFILE
-  -------------------- */
-
   avatarUrl: z.string().url("Invalid URL").optional(),
 
   dateOfBirth: z
@@ -48,10 +61,11 @@ export const SignupSchema = z.object({
     .optional(),
 
   /* --------------------
-     COINS SYSTEM (NEW)
+     ECONOMY SYSTEM
   -------------------- */
 
-  coins: z.number().int().nonnegative().default(0),
+  // ✅ credits (not coins)
+  credits: z.number().int().nonnegative().default(0),
 
   lastLoginReward: z.string().optional(),
 });
