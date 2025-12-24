@@ -103,35 +103,35 @@ export default function Footer() {
                   <ul className="mt-2 ml-4 space-y-1 text-sm">
                     <li>
                       <Link
-                        href="/sale"
+                        href="/listings/sale"
                         className="text-slate-600 dark:text-slate-300 hover:underline">
                         For Sale
                       </Link>
                     </li>
                     <li>
                       <Link
-                        href="/rent"
+                        href="/listings/rent"
                         className="text-slate-600 dark:text-slate-300 hover:underline">
                         Rent
                       </Link>
                     </li>
                     <li>
                       <Link
-                        href="/students"
+                        href="/listings/students"
                         className="text-slate-600 dark:text-slate-300 hover:underline">
                         Student Housing
                       </Link>
                     </li>
                     <li>
                       <Link
-                        href="/lodges"
+                        href="/listings/lodges"
                         className="text-slate-600 dark:text-slate-300 hover:underline">
                         Lodges & Hotels
                       </Link>
                     </li>
                     <li>
                       <Link
-                        href="/industrial"
+                        href="/listings/industrial"
                         className="text-slate-600 dark:text-slate-300 hover:underline">
                         Industrial & Commercial
                       </Link>
@@ -147,7 +147,7 @@ export default function Footer() {
                 </li>
 
                 <li>
-                  <Link href="/sell" className="hover:underline">
+                  <Link href="/listings/sell" className="hover:underline">
                     Sell
                   </Link>
                 </li>

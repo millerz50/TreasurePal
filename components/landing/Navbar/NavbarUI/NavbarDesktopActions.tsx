@@ -6,7 +6,7 @@ import NavLinksDesktop from "./NavLinksDesktop";
 import NavbarUser from "./NavbarUser";
 
 export function NavbarDesktopActions() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth(); // ✅ removed unused `user`
 
   return (
     <div className="hidden lg:flex items-center gap-4">
