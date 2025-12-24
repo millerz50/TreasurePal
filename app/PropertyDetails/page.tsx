@@ -1,7 +1,7 @@
 "use client";
 
 import InsightsSection from "@/components/dashboard/InsightsSection";
-import Hero from "@/components/landing/Hero";
+import Hero from "@/components/landing/hero/Hero.server";
 import PropertyList from "@/components/property/PropertyList";
 import { Separator } from "@/components/ui/Separator";
 import AgentList from "@/components/user/AgentList";
