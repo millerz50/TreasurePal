@@ -1,64 +1,75 @@
+import type { Metadata } from "next";
+
 import BlogSection from "@/components/landing/Blog";
 import FaqFull from "@/components/landing/FaqFull";
-import Hero from "@/components/landing/Hero";
-import Navbar from "@/components/landing/Navbar/ssrWrapperNav/Navbar";
+import Hero from "@/components/landing/hero/Hero.server";
 import PropertyList from "@/components/property/PropertyList";
 import AgencySection from "@/components/user/AgencySection";
 import JoinHero from "@/components/user/JoinHero";
-import type { Metadata } from "next";
 
-// ✅ SEO metadata for the home page
+/* ---------------------------
+   SEO METADATA (HOME)
+---------------------------- */
+
 export const metadata: Metadata = {
-  title: "TreasurePal | Explore Zimbabwe’s Treasures for Everyone",
+  title: "TreasureProps | Explore Properties Across Zimbabwe",
   description:
-    "Discover, list, and access properties and opportunities across Zimbabwe — from affordable student housing to premium estates. TreasurePal makes treasures available to all income levels, empowering communities and learners worldwide.",
-  metadataBase: new URL("https://treasurepal.com"),
+    "Discover, list, and access properties across Zimbabwe — from affordable student housing to premium estates. TreasureProps makes property discovery simple, trusted, and inclusive.",
+
+  metadataBase: new URL("https://treasureprops.com"),
+
   alternates: {
-    canonical: "https://treasurepal.com",
+    canonical: "https://treasureprops.com",
     languages: {
-      en: "https://treasurepal.com/en",
-      "en-zw": "https://treasurepal.co.zw/en",
-      sn: "https://treasurepal.com/sn",
-      "sn-zw": "https://treasurepal.co.zw/sn",
-      nd: "https://treasurepal.com/nd",
-      "nd-zw": "https://treasurepal.co.zw/nd",
+      en: "https://treasureprops.com",
+      "en-ZW": "https://treasureprops.com",
+      sn: "https://treasureprops.com/sn",
+      nd: "https://treasureprops.com/nd",
     },
   },
+
   openGraph: {
-    title: "TreasurePal | Treasures for Every Income Level",
+    title: "TreasureProps | Zimbabwe’s Smart Property Marketplace",
     description:
-      "From student housing to premium estates, TreasurePal opens Zimbabwe’s treasures to everyone.",
-    url: "https://treasurepal.com",
-    siteName: "TreasurePal",
+      "From student housing to premium estates, TreasureProps helps you find properties across Zimbabwe with ease.",
+    url: "https://treasureprops.com",
+    siteName: "TreasureProps",
     images: [
       {
         url: "/logo/logo.png",
         width: 1200,
         height: 630,
-        alt: "TreasurePal properties for all income levels",
+        alt: "TreasureProps Zimbabwe property marketplace",
       },
     ],
     type: "website",
+    locale: "en_ZW",
   },
+
   twitter: {
     card: "summary_large_image",
-    title: "TreasurePal | Treasures for All",
+    title: "TreasureProps | Find Property in Zimbabwe",
     description:
-      "Affordable, student-friendly, and premium properties — TreasurePal makes treasures accessible to everyone.",
-    images: ["/og/treasurepal.jpg"],
+      "Affordable rentals, student housing, and premium estates — all in one Zimbabwean marketplace.",
+    images: ["/logo/logo.png"],
   },
 };
+
+/* ---------------------------
+   HOME PAGE
+---------------------------- */
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-base-200">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 py-8">
-        <Hero />
+      {/* HERO — full bleed */}
+      <Hero />
+
+      {/* CONTENT — constrained */}
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20 py-16">
         <PropertyList />
-        {/* ✅ BlogSection should internally guard against non-array data */}
         <BlogSection />
-        <FaqFull includeSchema={true} storageKey="faq.home.open" />
+        <FaqFull includeSchema storageKey="faq.home.open" />
         <AgencySection />
         <JoinHero />
       </main>

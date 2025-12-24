@@ -1,4 +1,3 @@
-// components/contact/ContactForm.client.tsx
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -15,11 +14,8 @@ export default function ContactForm() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
 
-  // Derive reduced motion preference synchronously to avoid setState inside an effect
   const [reducedMotion] = useState<boolean>(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
+    if (typeof window === "undefined") return false;
     try {
       return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     } catch {
@@ -28,9 +24,7 @@ export default function ContactForm() {
   });
 
   useEffect(() => {
-    if (statusRef.current) {
-      statusRef.current.focus();
-    }
+    statusRef.current?.focus();
   }, [status]);
 
   const resetForm = () => {
@@ -60,15 +54,15 @@ export default function ContactForm() {
       });
 
       const data = await res.json();
+
       if (res.ok && data.success) {
         setStatus("success");
         resetForm();
       } else {
-        setErrorMsg(data?.message || "Submission failed");
+        setErrorMsg(data?.message || "Submission failed.");
         setStatus("error");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setErrorMsg("Network or server error. Try again later.");
       setStatus("error");
     }
@@ -77,61 +71,116 @@ export default function ContactForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-lg p-6 shadow-sm"
       noValidate
-      aria-describedby="contact-form-status">
-      <div className="grid gap-3">
-        {/* Inputs omitted for brevity, unchanged */}
+      aria-describedby="contact-form-status"
+      className="space-y-5 text-base-content">
+      {/* Honeypot */}
+      <input
+        type="text"
+        tabIndex={-1}
+        autoComplete="off"
+        className="hidden"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+      />
 
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={status === "submitting"}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white px-4 py-2 rounded-full text-sm font-semibold shadow hover:scale-[1.01] transition-transform disabled:opacity-60">
-            {status === "submitting" ? (
-              <svg
-                className={`w-4 h-4 ${reducedMotion ? "" : "animate-spin"}`}
-                viewBox="0 0 24 24"
-                fill="none">
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="white"
-                  strokeWidth="3"
-                  opacity="0.25"
-                />
-                <path
-                  d="M22 12a10 10 0 00-10-10"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ) : null}
-            Send message
-          </button>
+      {/* Name */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Full name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          className="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
 
-          <div className="text-sm text-slate-600 dark:text-slate-300">
-            <span className="font-medium">Response</span> within 48 hours
-          </div>
-        </div>
+      {/* Email */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Email address</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
 
-        <div
-          id="contact-form-status"
-          ref={statusRef}
-          tabIndex={-1}
-          aria-live="polite"
-          className={`mt-2 text-sm ${
-            status === "success"
-              ? "text-green-600"
-              : status === "error"
-              ? "text-red-600"
-              : "text-slate-600"
-          }`}>
-          {status === "success" && "Thanks — we received your message."}
-          {status === "error" && (errorMsg || "Submission failed.")}
-        </div>
+      {/* Subject */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Subject</label>
+        <input
+          type="text"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          className="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
+
+      {/* Message */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Message</label>
+        <textarea
+          rows={5}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          required
+          className="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-4 pt-2">
+        <button
+          type="submit"
+          disabled={status === "submitting"}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-content shadow hover:scale-[1.01] transition disabled:opacity-60">
+          {status === "submitting" && (
+            <svg
+              className={`w-4 h-4 ${reducedMotion ? "" : "animate-spin"}`}
+              viewBox="0 0 24 24"
+              fill="none">
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="3"
+                opacity="0.25"
+              />
+              <path
+                d="M22 12a10 10 0 00-10-10"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+          )}
+          Send message
+        </button>
+
+        <span className="text-sm text-base-content/70">
+          Response within 48 hours
+        </span>
+      </div>
+
+      {/* Status */}
+      <div
+        id="contact-form-status"
+        ref={statusRef}
+        tabIndex={-1}
+        aria-live="polite"
+        className={`text-sm ${
+          status === "success"
+            ? "text-success"
+            : status === "error"
+            ? "text-error"
+            : "text-base-content/70"
+        }`}>
+        {status === "success" && "Thanks — we received your message."}
+        {status === "error" && errorMsg}
       </div>
     </form>
   );

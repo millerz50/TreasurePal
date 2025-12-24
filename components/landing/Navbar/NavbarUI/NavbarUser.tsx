@@ -14,20 +14,11 @@ export default function NavbarUser() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
-  // Debug log to observe auth values each render
   useEffect(() => {
-    console.warn("[NavbarUser] render", {
-      loading,
-      user: user ? { id: user.userId, email: user.email } : null,
-    });
-  }, [loading, user]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
       }
@@ -38,58 +29,42 @@ export default function NavbarUser() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="text-sm text-muted-foreground">
-        Loading…
-        <div className="text-xs text-muted-foreground/70">
-          [debug: auth loading true]
-        </div>
-      </div>
-    );
+    return <div className="text-sm text-muted-foreground">Loading…</div>;
   }
 
   if (!user) {
     return (
-      <div>
-        <Button
-          variant="ghost"
-          className="text-sm flex items-center gap-2"
-          onClick={() => router.push("/signin")}>
-          🔑 <span className="hidden sm:inline">Sign In</span>
-        </Button>
-        <div className="mt-1 text-xs text-muted-foreground/70">
-          [debug: no user]
-        </div>
-      </div>
+      <Button
+        variant="ghost"
+        className="text-sm flex items-center gap-2"
+        onClick={() => router.push("/signin")}>
+        🔑 <span className="hidden sm:inline">Sign In</span>
+      </Button>
     );
   }
 
   return (
     <div ref={dropdownRef} className="relative flex items-center gap-3">
-      <motion.div
-        role="button"
-        onClick={() => setOpen((prev) => !prev)}
+      <motion.button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="flex items-center gap-2 cursor-pointer focus:outline-none">
-        <span className="text-sm font-medium text-accent dark:text-accent">
+        className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-accent/10">
+        <span className="text-sm font-medium text-accent">
           {user.email ?? user.userId}
         </span>
+
         {user.avatarUrl && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}>
-            <Image
-              src={user.avatarUrl}
-              alt="User avatar"
-              width={40}
-              height={40}
-              className="rounded-full object-cover shadow-md"
-            />
-          </motion.div>
+          <Image
+            src={user.avatarUrl}
+            alt="User avatar"
+            width={36}
+            height={36}
+            className="rounded-full object-cover shadow"
+          />
         )}
-      </motion.div>
+      </motion.button>
 
       <AnimatePresence>
         {open && (
@@ -97,40 +72,51 @@ export default function NavbarUser() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 top-full mt-2 w-56 bg-base-100 dark:bg-neutral rounded-box shadow-lg border border-base-300 z-[999]">
-            <div className="flex flex-col p-3 space-y-2">
-              <Button
-                variant="ghost"
-                className="justify-start text-sm hover:bg-accent/10 flex items-center gap-2"
-                onClick={() => router.push("/dashboard")}>
-                📊 <span className="hidden sm:inline">Dashboard</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="justify-start text-sm hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center gap-2"
-                onClick={() => router.push("/profile/settings")}>
-                ⚙️ <span className="hidden sm:inline">Settings</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="justify-start text-sm hover:bg-green-100 dark:hover:bg-green-900 text-green-600 dark:text-green-400 flex items-center gap-2"
-                onClick={() => router.push("/profile")}>
-                👤 <span className="hidden sm:inline">Profile</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="justify-start text-sm hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 flex items-center gap-2"
-                onClick={signOut}>
-                🚪 <span className="hidden sm:inline">Sign Out</span>
-              </Button>
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-2 w-56 rounded-2xl border bg-background shadow-xl z-50">
+            <div className="flex flex-col p-2 space-y-1">
+              <NavItem
+                label="Dashboard"
+                onClick={() => router.push("/dashboard")}
+              />
+              <NavItem
+                label="Settings"
+                onClick={() => router.push("/profile/settings")}
+              />
+              <NavItem
+                label="Profile"
+                onClick={() => router.push("/profile")}
+              />
+              <NavItem label="Sign Out" danger onClick={signOut} />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/* ------------------ */
+
+function NavItem({
+  label,
+  onClick,
+  danger,
+}: {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      onClick={onClick}
+      className={`justify-start text-sm ${
+        danger
+          ? "text-red-600 hover:bg-red-100 dark:hover:bg-red-900"
+          : "hover:bg-accent/10"
+      }`}>
+      {label}
+    </Button>
   );
 }

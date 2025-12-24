@@ -1,31 +1,25 @@
 "use client";
 
-import { NavbarBrand } from "@/components/landing/Navbar/NavbarUI/NavbarBrand";
-import { NavbarDesktopActions } from "@/components/landing/Navbar/NavbarUI/NavbarDesktopActions";
-import { NavbarMobileMenu } from "@/components/landing/Navbar/NavbarUI/NavbarMobileMenu";
 import { useEffect, useState } from "react";
-import { domainConfig } from "./domains"; // import centralized config
+import { NavbarBrand } from "../NavbarUI/NavbarBrand";
+import { NavbarDesktopActions } from "../NavbarUI/NavbarDesktopActions";
+import { NavbarMobileMenu } from "../NavbarUI/NavbarMobileMenu";
+import { domainConfig } from "./domains";
 
 export default function Navbar() {
-  // Default brand (fallback)
-  const [brand, setBrand] = useState(domainConfig["default"]);
+  const [brand, setBrand] = useState(domainConfig.default);
 
   useEffect(() => {
-    const host = window.location.hostname;
-    setBrand(domainConfig[host] || domainConfig["default"]);
+    setBrand(domainConfig[window.location.hostname] || domainConfig.default);
   }, []);
 
   return (
-    <div className="navbar bg-base-100 border-b border-base-300 shadow-sm z-50 px-4 py-2">
-      <div className="flex-1">
+    <header className="sticky top-0 z-50 w-full backdrop-blur bg-background/80 border-b">
+      <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
         <NavbarBrand name={brand.name} description={brand.description} />
-      </div>
-      <div className="flex-none hidden sm:flex">
         <NavbarDesktopActions />
-      </div>
-      <div className="flex-none sm:hidden">
         <NavbarMobileMenu />
       </div>
-    </div>
+    </header>
   );
 }
