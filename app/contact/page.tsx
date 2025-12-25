@@ -40,7 +40,7 @@ export default function ContactPage() {
       contactPoint: [
         {
           "@type": "ContactPoint",
-          telephone: "+263770000000",
+          telephone: "+263777768431",
           contactType: "customer support",
           areaServed: "ZW",
           availableLanguage: ["English", "Shona", "Ndebele"],
@@ -88,9 +88,9 @@ export default function ContactPage() {
 
                   <p>
                     <a
-                      href="tel:+263770000000"
+                      href="tel:+263777768431"
                       className="text-primary hover:underline">
-                      +263 77 000 0000
+                      +263 777768431
                     </a>
                   </p>
 
@@ -98,7 +98,7 @@ export default function ContactPage() {
                     <a
                       href="mailto:hello@treasureprops.com"
                       className="text-primary hover:underline">
-                      hello@treasureprops.com
+                      johannes-developer@millerz.co.zw
                     </a>
                   </p>
                 </address>

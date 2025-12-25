@@ -206,7 +206,8 @@ function PricingCard({
       </ul>
 
       <Link
-        href="/checkout"
+        href="https://wa.me/263777768431?text=Hi%20TreasureProps%20team%2C%20I%20would%20like%20to%20purchase%20a%20plan."
+        target="_blank"
         className={`mt-8 block w-full rounded-full px-5 py-3 text-center font-medium ${
           highlight
             ? "bg-primary text-primary-foreground hover:opacity-90"
@@ -256,17 +257,18 @@ function CoinBox({ coins, price }: { coins: string; price: string }) {
 }
 
 /* ---------------------------
-   PAYMENTS
+   PAYMENTS → WHATSAPP
 ---------------------------- */
+
+const WHATSAPP_NUMBER = "263777768431";
 
 function PaymentMethods() {
   return (
-    
     <section className="border-t bg-muted/20">
       <div className="mx-auto max-w-6xl px-6 py-16 text-center">
         <h2 className="text-2xl font-bold">Payment Methods</h2>
         <p className="mt-3 text-muted-foreground">
-          Automatically shown based on your country.
+          Click a method to chat with us on WhatsApp.
         </p>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -281,10 +283,18 @@ function PaymentMethods() {
 }
 
 function Payment({ name, region }: { name: string; region: string }) {
+  const message = encodeURIComponent(
+    `Hi TreasureProps 👋\n\nI would like to purchase a plan using ${name}. Please guide me.`
+  );
+
   return (
-    <div className="rounded-xl border p-5">
+    <a
+      href={`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-xl border p-5 hover:bg-accent/10 transition block">
       <p className="font-medium">{name}</p>
       <p className="text-sm text-muted-foreground">{region}</p>
-    </div>
+    </a>
   );
 }

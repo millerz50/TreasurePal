@@ -37,7 +37,7 @@ export default function NavbarUser() {
       <Button
         variant="ghost"
         className="text-sm flex items-center gap-2"
-        onClick={() => router.push("/signin")}>
+        onClick={() => router.push("/auth/signin")}>
         🔑 <span className="hidden sm:inline">Sign In</span>
       </Button>
     );
