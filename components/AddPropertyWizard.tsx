@@ -11,6 +11,7 @@ import LocationStep from "./steps/LocationStep";
 import PropertyImagesStep from "./steps/PropertyImagesStep";
 import ReviewStep from "./steps/ReviewStep";
 
+import { account } from "@/lib/appwrite"; // Appwrite client
 import { hasRole } from "@/lib/auth/role";
 
 // ✅ Step type
@@ -56,7 +57,7 @@ export const PropertySchema = z.object({
 export type PropertyFormValues = z.infer<typeof PropertySchema>;
 
 export default function AddPropertyWizard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
@@ -98,25 +99,18 @@ export default function AddPropertyWizard() {
     setError(null);
 
     try {
-      if (!API_BASE) {
-        throw new Error("API base URL is not configured");
-      }
-
-      if (!user || !hasRole(user, "agent")) {
+      if (!API_BASE) throw new Error("API base URL is not configured");
+      if (!user || !hasRole(user, "agent"))
         throw new Error("Only agents can add properties.");
-      }
 
       // ✅ Validate data
       const parsed = PropertySchema.safeParse(formData);
-      if (!parsed.success) {
+      if (!parsed.success)
         throw new Error(parsed.error.errors[0]?.message || "Validation failed");
-      }
 
-      // ✅ Token
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("Not authenticated. Please sign in again.");
-      }
+      // ✅ Get fresh JWT from Appwrite (avoid expired token / missing token)
+      const jwtResponse = await account.createJWT();
+      const token = jwtResponse.jwt;
 
       // ✅ Build FormData
       const fd = new FormData();
@@ -133,9 +127,7 @@ export default function AddPropertyWizard() {
       });
 
       // Extra safety
-      if (!fd.get("agentId")) {
-        fd.append("agentId", user.userId);
-      }
+      if (!fd.get("agentId")) fd.append("agentId", user.userId);
 
       // ✅ Submit
       const res = await fetch(`${API_BASE}/api/properties/add`, {
@@ -148,7 +140,6 @@ export default function AddPropertyWizard() {
 
       if (!res.ok) {
         let message = `Failed to submit property (${res.status})`;
-
         try {
           const json = await res.json();
           message = json?.error || json?.message || message;
@@ -156,20 +147,14 @@ export default function AddPropertyWizard() {
           const text = await res.text();
           if (text) message = text;
         }
-
         throw new Error(message);
       }
 
       const result = await res.json();
       console.log("✅ Property submitted successfully:", result);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-        console.error(err.message);
-      } else {
-        setError("An unexpected error occurred");
-        console.error(err);
-      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -184,6 +169,24 @@ export default function AddPropertyWizard() {
       <li className={`step ${step >= 5 ? "step-primary" : ""}`}>Review</li>
     </ul>
   );
+
+  if (authLoading) {
+    // ✅ Wait until AuthContext is loaded
+    return (
+      <div className="flex justify-center items-center p-6 text-gray-500">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user) {
+    // ✅ If no user is authenticated
+    return (
+      <div className="p-6 text-center text-red-500">
+        You must be logged in to add a property.
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 bg-background rounded-xl shadow-md space-y-6">
@@ -207,7 +210,6 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
-
       {step === 3 && (
         <LocationStep
           formData={formData}
@@ -215,7 +217,6 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
-
       {step === 4 && (
         <PropertyImagesStep
           formData={formData}
@@ -223,7 +224,6 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
-
       {step === 5 && (
         <ReviewStep
           formData={formData}
