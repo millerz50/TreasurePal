@@ -43,12 +43,12 @@ export const PropertySchema = z.object({
   floorPlan: z.instanceof(File).nullable().optional(),
 
   // Marketing fields
-  website: z.string().url().optional(),
-  flyers: z.string().optional(),
-  hireDesigner: z.boolean().optional(),
-  subscriptionPlan: z.string().optional(),
-  whatsappGroup: z.string().optional(),
-  ads: z.string().optional(),
+  // website: z.string().url().optional(),
+  // flyers: z.string().optional(),
+  // hireDesigner: z.boolean().optional(),
+  // subscriptionPlan: z.string().optional(),
+  // whatsappGroup: z.string().optional(),
+  // ads: z.string().optional(),
 
   depositOption: z.enum(["none", "required"]).default("none"),
   depositPercentage: z.union([z.string(), z.number()]).optional(),

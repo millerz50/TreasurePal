@@ -19,9 +19,10 @@ export default function AmenitiesStep({
   const toggleAmenity = (amenity: string) => {
     setFormData((prev) => {
       const currentAmenities = prev.amenities ?? [];
+      const has = currentAmenities.includes(amenity);
       return {
         ...prev,
-        amenities: currentAmenities.includes(amenity)
+        amenities: has
           ? currentAmenities.filter((a) => a !== amenity)
           : [...currentAmenities, amenity],
       };
@@ -39,34 +40,42 @@ export default function AmenitiesStep({
 
       {AMENITIES[formData.type] ? (
         Object.entries(AMENITIES[formData.type]).map(([category, items]) => (
-          <div key={category}>
-            <h3 className="font-semibold text-primary mb-2">{category}</h3>
+          <section key={category} aria-labelledby={`amenity-${category}`}>
+            <h3
+              id={`amenity-${category}`}
+              className="font-semibold text-primary mb-2">
+              {category}
+            </h3>
+
             <div className="flex flex-wrap gap-3">
               {items.map(({ name, icon: Icon }) => {
                 const selected = (formData.amenities ?? []).includes(name);
+
                 return (
                   <button
-                    type="button"
                     key={name}
+                    type="button"
+                    aria-pressed={selected}
                     onClick={() => toggleAmenity(name)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                       selected
                         ? "bg-primary text-white border-primary"
                         : "bg-white hover:bg-muted border-gray-300"
                     }`}>
-                    {Icon && (
+                    {Icon ? (
                       <Icon
                         className={`w-5 h-5 ${
                           selected ? "text-white" : "text-primary"
                         }`}
+                        aria-hidden
                       />
-                    )}
+                    ) : null}
                     <span className="text-sm font-medium">{name}</span>
                   </button>
                 );
               })}
             </div>
-          </div>
+          </section>
         ))
       ) : (
         <p className="text-muted">No amenities defined for {formData.type}</p>
