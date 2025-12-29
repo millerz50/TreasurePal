@@ -5,20 +5,19 @@ import { AMENITIES } from "@/components/amenities/AmenityMap";
 import { Button } from "@/components/ui/button";
 import { HeartIcon as OutlineHeart } from "@heroicons/react/24/outline";
 import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
 type Property = {
-  id: string; // Appwrite IDs are strings
+  id: string;
   title: string;
   description: string;
-  imageUrl: string; // main/front elevation image URL
+  imageUrl: string; // Appwrite /view URL
   price: string | number;
   type: string;
   location: string;
   rooms: number;
-  amenities: string[]; // already parsed
+  amenities: string[];
 };
 
 export default function PropertyCard({ property }: { property: Property }) {
@@ -36,7 +35,7 @@ export default function PropertyCard({ property }: { property: Property }) {
     amenities,
   } = property;
 
-  // Flatten amenity icons into a lookup map for quick rendering
+  // Build amenity icon lookup
   const amenityIcons: Record<string, LucideIcon> = {};
   const categories = AMENITIES[type];
   if (categories) {
@@ -47,7 +46,6 @@ export default function PropertyCard({ property }: { property: Property }) {
     });
   }
 
-  // Only show up to 4 amenities on the card
   const visibleAmenities = Array.isArray(amenities)
     ? amenities.slice(0, 4)
     : [];
@@ -56,15 +54,13 @@ export default function PropertyCard({ property }: { property: Property }) {
     <div className="card bg-base-100 text-base-content rounded-xl shadow-sm border border-base-300 transition-all hover:shadow-lg animate-in fade-in duration-500">
       {/* Image + Like Button */}
       <figure className="relative aspect-video overflow-hidden rounded-t-xl">
-        <Image
+        <img
           src={imageUrl}
           alt={`Image of ${title}`}
-          width={800}
-          height={450}
+          loading="lazy"
           className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
-          priority
-          unoptimized // ✅ important for external Appwrite images
         />
+
         <button
           type="button"
           onClick={() => setLiked(!liked)}
@@ -87,6 +83,7 @@ export default function PropertyCard({ property }: { property: Property }) {
         <h2 className="card-title text-base font-semibold text-primary">
           {title}
         </h2>
+
         <p className="text-xs text-base-content/70 line-clamp-2">
           {description}
         </p>
@@ -106,7 +103,7 @@ export default function PropertyCard({ property }: { property: Property }) {
           </div>
         </div>
 
-        {/* Amenities Icons */}
+        {/* Amenities */}
         {visibleAmenities.length > 0 && (
           <div className="pt-2 flex flex-wrap gap-3 items-center">
             {visibleAmenities.map((item) => {
