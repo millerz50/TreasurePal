@@ -60,6 +60,11 @@ export default function PropertyCard({ property }: { property: Property }) {
     images.floorPlan ||
     null;
 
+  // Debug log (remove in production)
+  if (mainImageId) {
+    console.log("Resolved image URL:", getAppwriteFileUrl(mainImageId));
+  }
+
   // Build amenity icon lookup
   const amenityIcons: Record<string, LucideIcon> = {};
   const categories = AMENITIES[type];
