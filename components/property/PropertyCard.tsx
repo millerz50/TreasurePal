@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-// Helper to generate Appwrite public URL
+// Helper to generate Appwrite public URL from fileId
 function getAppwriteFileUrl(fileId: string | null) {
   if (!fileId) return "";
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
@@ -22,7 +22,7 @@ type Property = {
   id: string;
   title: string;
   description: string;
-  imageId: string; // Appwrite file ID
+  imageId: string | null; // Appwrite file ID
   price: string | number;
   type: string;
   location: string;
@@ -64,13 +64,19 @@ export default function PropertyCard({ property }: { property: Property }) {
     <div className="card bg-base-100 text-base-content rounded-xl shadow-sm border border-base-300 transition-all hover:shadow-lg animate-in fade-in duration-500">
       {/* Image + Like Button */}
       <figure className="relative aspect-video overflow-hidden rounded-t-xl">
-        <Image
-          loader={() => getAppwriteFileUrl(imageId)}
-          src={imageId}
-          alt={`Image of ${title}`}
-          fill
-          className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
-        />
+        {imageId ? (
+          <Image
+            loader={() => getAppwriteFileUrl(imageId)}
+            src={imageId} // next/image still needs a string, fileId works because loader returns full URL
+            alt={`Image of ${title}`}
+            fill
+            className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+          />
+        ) : (
+          <div className="bg-base-200 flex items-center justify-center w-full h-full">
+            <span className="text-sm text-base-content/50">No image</span>
+          </div>
+        )}
 
         <button
           type="button"
