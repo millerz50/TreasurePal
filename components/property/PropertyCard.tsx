@@ -17,7 +17,7 @@ function getAppwriteFileUrl(fileId: string | null) {
   return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
 
-// Updated Property type to include multiple images
+// Property type
 export type Property = {
   id: string;
   title: string;
@@ -29,10 +29,6 @@ export type Property = {
   amenities: string[];
   images: {
     frontElevation?: string | null;
-    southView?: string | null;
-    westView?: string | null;
-    eastView?: string | null;
-    floorPlan?: string | null;
   };
 };
 
@@ -51,14 +47,8 @@ export default function PropertyCard({ property }: { property: Property }) {
     images,
   } = property;
 
-  // Use frontElevation as main image, fallback to others
-  const mainImageId =
-    images.frontElevation ||
-    images.southView ||
-    images.westView ||
-    images.eastView ||
-    images.floorPlan ||
-    null;
+  // Only use frontElevation
+  const mainImageId = images.frontElevation || null;
 
   // Debug log (remove in production)
   if (mainImageId) {
@@ -87,7 +77,7 @@ export default function PropertyCard({ property }: { property: Property }) {
         {mainImageId ? (
           <img
             src={getAppwriteFileUrl(mainImageId)}
-            alt={`Image of ${title}`}
+            alt={`Front view of ${title}`}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           />
         ) : (
