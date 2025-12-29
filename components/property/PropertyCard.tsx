@@ -17,7 +17,7 @@ function getAppwriteFileUrl(fileId: string | null) {
   return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
 
-type Property = {
+export type Property = {
   id: string;
   title: string;
   description: string;
