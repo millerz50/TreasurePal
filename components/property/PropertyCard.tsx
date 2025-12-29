@@ -63,7 +63,7 @@ export default function PropertyCard({ property }: { property: Property }) {
           height={450}
           className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
           priority
-          unoptimized // important for external Appwrite images
+          unoptimized // ✅ important for external Appwrite images
         />
         <button
           type="button"
