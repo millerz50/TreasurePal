@@ -5,6 +5,7 @@ import { AMENITIES } from "@/components/amenities/AmenityMap";
 import { Button } from "@/components/ui/button";
 import { HeartIcon as OutlineHeart } from "@heroicons/react/24/outline";
 import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -12,7 +13,7 @@ type Property = {
   id: string;
   title: string;
   description: string;
-  imageUrl: string; // Appwrite /view URL
+  imageUrl: string; // Appwrite file ID
   price: string | number;
   type: string;
   location: string;
@@ -50,14 +51,22 @@ export default function PropertyCard({ property }: { property: Property }) {
     ? amenities.slice(0, 4)
     : [];
 
+  // Custom loader to fetch Appwrite images
+  const appwriteLoader = ({ src, width }: { src: string; width?: number }) => {
+    return `${src}?project=${
+      process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID
+    }&width=${width || 800}`;
+  };
+
   return (
     <div className="card bg-base-100 text-base-content rounded-xl shadow-sm border border-base-300 transition-all hover:shadow-lg animate-in fade-in duration-500">
       {/* Image + Like Button */}
       <figure className="relative aspect-video overflow-hidden rounded-t-xl">
-        <img
+        <Image
+          loader={() => appwriteLoader({ src: imageUrl })}
           src={imageUrl}
           alt={`Image of ${title}`}
-          loading="lazy"
+          fill
           className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
         />
 
