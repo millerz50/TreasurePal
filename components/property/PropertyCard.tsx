@@ -5,7 +5,6 @@ import { AMENITIES } from "@/components/amenities/AmenityMap";
 import { Button } from "@/components/ui/button";
 import { HeartIcon as OutlineHeart } from "@heroicons/react/24/outline";
 import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -65,12 +64,10 @@ export default function PropertyCard({ property }: { property: Property }) {
       {/* Image + Like Button */}
       <figure className="relative aspect-video overflow-hidden rounded-t-xl">
         {imageId ? (
-          <Image
+          <img
             src={getAppwriteFileUrl(imageId)}
             alt={`Image of ${title}`}
-            fill
-            unoptimized // important for external Appwrite URLs
-            className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           />
         ) : (
           <div className="bg-base-200 flex items-center justify-center w-full h-full">
