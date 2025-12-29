@@ -17,16 +17,23 @@ function getAppwriteFileUrl(fileId: string | null) {
   return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
 
+// Updated Property type to include multiple images
 export type Property = {
   id: string;
   title: string;
   description: string;
-  imageId: string | null; // Appwrite file ID
   price: string | number;
   type: string;
   location: string;
   rooms: number;
   amenities: string[];
+  images: {
+    frontElevation?: string | null;
+    southView?: string | null;
+    westView?: string | null;
+    eastView?: string | null;
+    floorPlan?: string | null;
+  };
 };
 
 export default function PropertyCard({ property }: { property: Property }) {
@@ -36,13 +43,22 @@ export default function PropertyCard({ property }: { property: Property }) {
     id,
     title,
     description,
-    imageId,
     price,
     type,
     location,
     rooms,
     amenities,
+    images,
   } = property;
+
+  // Use frontElevation as main image, fallback to others
+  const mainImageId =
+    images.frontElevation ||
+    images.southView ||
+    images.westView ||
+    images.eastView ||
+    images.floorPlan ||
+    null;
 
   // Build amenity icon lookup
   const amenityIcons: Record<string, LucideIcon> = {};
@@ -63,9 +79,9 @@ export default function PropertyCard({ property }: { property: Property }) {
     <div className="card bg-base-100 text-base-content rounded-xl shadow-sm border border-base-300 transition-all hover:shadow-lg animate-in fade-in duration-500">
       {/* Image + Like Button */}
       <figure className="relative aspect-video overflow-hidden rounded-t-xl">
-        {imageId ? (
+        {mainImageId ? (
           <img
-            src={getAppwriteFileUrl(imageId)}
+            src={getAppwriteFileUrl(mainImageId)}
             alt={`Image of ${title}`}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           />
