@@ -69,7 +69,7 @@ export default function PropertyCard({ property }: { property: Property }) {
             src={getAppwriteFileUrl(imageId)}
             alt={`Image of ${title}`}
             fill
-            unoptimized
+            unoptimized // important for external Appwrite URLs
             className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
           />
         ) : (
