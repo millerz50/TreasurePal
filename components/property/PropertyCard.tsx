@@ -10,15 +10,15 @@ import Link from "next/link";
 import { useState } from "react";
 
 type Property = {
-  id: number;
+  id: string; // Appwrite IDs are strings
   title: string;
   description: string;
   imageUrl: string;
-  price: string;
+  price: string | number;
   type: string;
   location: string;
   rooms: number;
-  amenities: string[]; // already parsed from comma string
+  amenities: string[]; // already parsed
 };
 
 export default function PropertyCard({ property }: { property: Property }) {
@@ -35,7 +35,7 @@ export default function PropertyCard({ property }: { property: Property }) {
     amenities,
   } = property;
 
-  // Flatten all amenities from AMENITIES[type] into a lookup map
+  // Flatten amenity icons for quick lookup
   const amenityIcons: Record<string, LucideIcon> = {};
   const categories = AMENITIES[type];
   if (categories) {
@@ -61,6 +61,7 @@ export default function PropertyCard({ property }: { property: Property }) {
           height={450}
           className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
           priority
+          unoptimized // use this if image is from external bucket
         />
         <button
           type="button"
