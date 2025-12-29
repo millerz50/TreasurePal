@@ -13,7 +13,7 @@ type Property = {
   id: string; // Appwrite IDs are strings
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl: string; // main/front elevation image URL
   price: string | number;
   type: string;
   location: string;
@@ -23,6 +23,7 @@ type Property = {
 
 export default function PropertyCard({ property }: { property: Property }) {
   const [liked, setLiked] = useState(false);
+
   const {
     id,
     title,
@@ -35,7 +36,7 @@ export default function PropertyCard({ property }: { property: Property }) {
     amenities,
   } = property;
 
-  // Flatten amenity icons for quick lookup
+  // Flatten amenity icons into a lookup map for quick rendering
   const amenityIcons: Record<string, LucideIcon> = {};
   const categories = AMENITIES[type];
   if (categories) {
@@ -46,6 +47,7 @@ export default function PropertyCard({ property }: { property: Property }) {
     });
   }
 
+  // Only show up to 4 amenities on the card
   const visibleAmenities = Array.isArray(amenities)
     ? amenities.slice(0, 4)
     : [];
@@ -61,7 +63,7 @@ export default function PropertyCard({ property }: { property: Property }) {
           height={450}
           className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
           priority
-          unoptimized // use this if image is from external bucket
+          unoptimized // important for external Appwrite images
         />
         <button
           type="button"
