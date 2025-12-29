@@ -7,7 +7,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   outputFileTracingRoot: __dirname,
   images: {
-    // ✅ Remote patterns for stricter matching
     remotePatterns: [
       {
         protocol: "https",
@@ -21,7 +20,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "images.unsplash.com", // 👈 added Unsplash
+        hostname: "images.unsplash.com",
         pathname: "/**",
       },
       {
@@ -29,7 +28,6 @@ const nextConfig = {
         hostname: "www.treasureprops.com",
         pathname: "/**",
       },
-
       {
         protocol: "https",
         hostname: "www.treasurepal.co.zw",
@@ -37,7 +35,12 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "treasurepal-backened.onrender.com", // 👈 your backend domain
+        hostname: "treasurepal-backened.onrender.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "nyc.cloud.appwrite.io", // 👈 Appwrite domain for storage
         pathname: "/**",
       },
     ],
