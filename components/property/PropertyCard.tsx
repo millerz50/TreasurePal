@@ -9,11 +9,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+// Helper to generate Appwrite public URL
+function getAppwriteFileUrl(fileId: string | null) {
+  if (!fileId) return "";
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
+  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
+  return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+}
+
 type Property = {
   id: string;
   title: string;
   description: string;
-  imageUrl: string; // Appwrite file ID
+  imageId: string; // Appwrite file ID
   price: string | number;
   type: string;
   location: string;
@@ -28,7 +37,7 @@ export default function PropertyCard({ property }: { property: Property }) {
     id,
     title,
     description,
-    imageUrl,
+    imageId,
     price,
     type,
     location,
@@ -51,20 +60,13 @@ export default function PropertyCard({ property }: { property: Property }) {
     ? amenities.slice(0, 4)
     : [];
 
-  // Custom loader to fetch Appwrite images
-  const appwriteLoader = ({ src, width }: { src: string; width?: number }) => {
-    return `${src}?project=${
-      process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID
-    }&width=${width || 800}`;
-  };
-
   return (
     <div className="card bg-base-100 text-base-content rounded-xl shadow-sm border border-base-300 transition-all hover:shadow-lg animate-in fade-in duration-500">
       {/* Image + Like Button */}
       <figure className="relative aspect-video overflow-hidden rounded-t-xl">
         <Image
-          loader={() => appwriteLoader({ src: imageUrl })}
-          src={imageUrl}
+          loader={() => getAppwriteFileUrl(imageId)}
+          src={imageId}
           alt={`Image of ${title}`}
           fill
           className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
