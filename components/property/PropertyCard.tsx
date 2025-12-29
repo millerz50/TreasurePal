@@ -66,10 +66,10 @@ export default function PropertyCard({ property }: { property: Property }) {
       <figure className="relative aspect-video overflow-hidden rounded-t-xl">
         {imageId ? (
           <Image
-            loader={() => getAppwriteFileUrl(imageId)}
-            src={imageId} // next/image still needs a string, fileId works because loader returns full URL
+            src={getAppwriteFileUrl(imageId)}
             alt={`Image of ${title}`}
             fill
+            unoptimized
             className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
           />
         ) : (
