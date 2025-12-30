@@ -21,7 +21,7 @@ function resolveFileId(
 // Helper to generate Appwrite public URL from fileId
 function getAppwriteFileUrl(fileId: string | null) {
   if (!fileId) return "";
-  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!; // should be https://nyc.cloud.appwrite.io
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!; // e.g. https://nyc.cloud.appwrite.io
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
   return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
