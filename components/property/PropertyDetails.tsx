@@ -95,20 +95,15 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
   const [swiperModules, setSwiperModules] = useState<any[]>([]);
   useEffect(() => {
     let mounted = true;
-    // dynamic import from top-level 'swiper' package
     import("swiper")
       .then((mod) => {
         if (!mounted) return;
-        // Some Swiper builds export Navigation/Thumbs as named exports on the top-level package
-        // We guard access and push only what exists
         const modules: any[] = [];
         if (mod.Navigation) modules.push(mod.Navigation);
         if (mod.Thumbs) modules.push(mod.Thumbs);
-        // fallback: some builds expose default or other shapes; this is defensive
         setSwiperModules(modules);
       })
       .catch(() => {
-        // ignore; if modules can't be loaded, Swiper will still work without them (no nav/thumbs)
         setSwiperModules([]);
       });
     return () => {
@@ -180,13 +175,10 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
     };
   }, [mapVisible, coordinates]);
 
-  const frontImageUrl =
-    images.frontElevation && getAppwriteFileUrl(images.frontElevation);
-
   // Swiper options (pass dynamically loaded modules)
   const mainOptions = {
     modules: swiperModules,
-    navigation: swiperModules.length > 0, // enable navigation only if module loaded
+    navigation: swiperModules.length > 0,
     spaceBetween: 10,
   };
 
