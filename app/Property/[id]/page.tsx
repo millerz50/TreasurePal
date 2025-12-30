@@ -16,7 +16,7 @@ export default async function PropertyPage(props: any) {
 
   // Call your Express API (adjust base URL to match your backend)
   const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-  const url = `${base}/property/${encodeURIComponent(id)}`;
+  const url = `${base}/api/properties/${encodeURIComponent(id)}`;
 
   const res = await fetch(url, {
     cache: "no-store", // always fetch fresh data
