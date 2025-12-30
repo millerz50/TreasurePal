@@ -1,8 +1,12 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/thumbs";
+
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -12,6 +16,10 @@ import type Map from "leaflet";
 import { BedDouble, MapPin, ShieldCheck, Sparkles, Wifi } from "lucide-react";
 import type { ComponentType } from "react";
 import { MdOutlineHome } from "react-icons/md";
+
+import { Navigation } from "swiper/modules/navigation";
+import { Thumbs } from "swiper/modules/thumbs";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 /* ------------------- helpers ------------------- */
 
@@ -73,10 +81,43 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
     images,
   } = property;
 
-  const mapContainer = useRef<HTMLDivElement>(null);
+  // Build images array (primary first)
+  const imagesArr = [
+    images.frontElevation && getAppwriteFileUrl(images.frontElevation),
+    images.southView && getAppwriteFileUrl(images.southView),
+    images.westView && getAppwriteFileUrl(images.westView),
+    images.eastView && getAppwriteFileUrl(images.eastView),
+    images.floorPlan && getAppwriteFileUrl(images.floorPlan),
+  ].filter(Boolean) as string[];
+
+  // Swiper thumbs state (use any to avoid missing Swiper types)
+  const [thumbsSwiper, setThumbsSwiper] = useState<any | null>(null);
+
+  // Map refs and lazy init
+  const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<Map | null>(null);
+  const mapWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [mapVisible, setMapVisible] = useState(false);
 
   useEffect(() => {
+    if (!mapWrapperRef.current) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setMapVisible(true);
+            obs.disconnect();
+          }
+        });
+      },
+      { root: null, threshold: 0.15 }
+    );
+    obs.observe(mapWrapperRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!mapVisible) return;
     const initMap = async () => {
       if (
         typeof window === "undefined" ||
@@ -87,10 +128,10 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
         return;
       }
       const L: typeof import("leaflet") = await import("leaflet");
-      mapInstance.current = L.map(mapContainer.current).setView(
-        [coordinates[1], coordinates[0]], // [lat, lng]
-        13
-      );
+      mapInstance.current = L.map(mapContainer.current, {
+        scrollWheelZoom: false,
+        zoomControl: true,
+      }).setView([coordinates[1], coordinates[0]], 13);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(mapInstance.current);
@@ -114,55 +155,134 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
         mapInstance.current = null;
       }
     };
-  }, [coordinates]);
+  }, [mapVisible, coordinates]);
 
   const frontImageUrl =
     images.frontElevation && getAppwriteFileUrl(images.frontElevation);
 
+  // Swiper options (no explicit SwiperOptions type to avoid TS issues)
+  const mainOptions = {
+    modules: [Navigation, Thumbs],
+    navigation: true,
+    spaceBetween: 10,
+  };
+
   return (
-    <section className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-      {/* Hero image */}
+    <section className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      {/* Hero slider */}
       <div className="rounded-xl overflow-hidden shadow-lg">
-        <Image
-          src={frontImageUrl || "/default-property.jpg"}
-          alt={`Front elevation of ${title}`}
-          width={1200}
-          height={600}
-          className="w-full h-96 object-cover transition-transform duration-500 hover:scale-105"
-          priority
-        />
+        <Swiper
+          {...mainOptions}
+          thumbs={{ swiper: thumbsSwiper }}
+          className="relative h-96 bg-gray-50">
+          {imagesArr.length > 0 ? (
+            imagesArr.map((src, i) => (
+              <SwiperSlide key={i}>
+                <div className="relative h-96 w-full">
+                  <Image
+                    src={src}
+                    alt={`${title} image ${i + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={i === 0}
+                    sizes="(max-width: 768px) 100vw, 1200px"
+                  />
+                  {/* subtle overlay for text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+                  {/* title + price */}
+                  <div className="absolute left-6 bottom-6 text-white">
+                    <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500">
+                      {title}
+                    </h1>
+                    <p className="mt-1 text-lg font-semibold">
+                      ${price.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))
+          ) : (
+            <SwiperSlide>
+              <div className="relative h-96 w-full bg-gray-100 flex items-center justify-center">
+                <Image
+                  src="/default-property.jpg"
+                  alt={`Default property image for ${title}`}
+                  width={1200}
+                  height={600}
+                  className="object-cover"
+                />
+              </div>
+            </SwiperSlide>
+          )}
+        </Swiper>
+
+        {/* Thumbnails */}
+        {imagesArr.length > 1 && (
+          <div className="flex gap-3 p-3 bg-base-100 justify-center">
+            <Swiper
+              onSwiper={(s: any) => setThumbsSwiper(s)}
+              spaceBetween={8}
+              slidesPerView={Math.min(imagesArr.length, 6)}
+              watchSlidesProgress
+              className="w-full max-w-4xl">
+              {imagesArr.map((src, i) => (
+                <SwiperSlide
+                  key={i}
+                  className="h-20 rounded-md overflow-hidden">
+                  <button
+                    aria-label={`View image ${i + 1}`}
+                    className="w-full h-20 block rounded-md overflow-hidden ring-1 ring-base-300 hover:scale-105 transition-transform">
+                    <Image
+                      src={src}
+                      alt={`thumbnail ${i + 1}`}
+                      width={240}
+                      height={140}
+                      className="object-cover w-full h-full"
+                      priority={false}
+                    />
+                  </button>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        )}
       </div>
 
-      {/* Details card */}
-      <Card className="bg-base-100 shadow-md border border-base-300">
-        <CardHeader>
-          <h2 className="text-3xl font-bold text-primary">{title}</h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </CardHeader>
-        <Separator />
-        <CardContent className="space-y-6">
-          {/* Meta info */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-base-content/80">
+      {/* Details card: split layout */}
+      <Card className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white shadow-md border border-gray-200">
+        {/* Left column: meta + amenities + map */}
+        <CardContent className="md:col-span-2 space-y-6 p-6">
+          <div className="flex items-start justify-between">
             <div>
-              <span className="font-medium">Price:</span> ${price}
+              <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+              <p className="text-sm text-gray-500 mt-1">{description}</p>
             </div>
+            <div className="text-right">
+              <div className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500">
+                ${price.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-500 mt-1">{status}</div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Meta grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-700">
             <div>
               <span className="font-medium">Type:</span> {type}
-            </div>
-            <div>
-              <span className="font-medium">Status:</span> {status}
-            </div>
-            <div>
-              <span className="font-medium">Location:</span> {location}
-            </div>
-            <div>
-              <span className="font-medium">Address:</span> {address}
             </div>
             <div>
               <span className="font-medium">Rooms:</span> {rooms}
             </div>
             <div>
+              <span className="font-medium">Location:</span> {location}
+            </div>
+            <div>
               <span className="font-medium">Country:</span> {country}
+            </div>
+            <div>
+              <span className="font-medium">Address:</span> {address}
             </div>
             <div>
               <span className="font-medium">Agent ID:</span> {agentId || "N/A"}
@@ -171,52 +291,92 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
 
           {/* Amenities */}
           {amenities.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-primary mb-2">
-                Amenities
-              </h3>
+            <>
+              <h3 className="text-sm font-semibold text-gray-900">Amenities</h3>
               <div className="flex flex-wrap gap-3">
                 {amenities.map((item) => {
                   const Icon = iconMap[item];
                   return (
                     <div
                       key={item}
-                      className="tooltip tooltip-bottom"
-                      data-tip={item}>
-                      <div className="bg-base-200 rounded-full p-2 text-primary hover:bg-base-300 transition">
+                      className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-full px-3 py-1 text-sm text-gray-700"
+                      title={item}>
+                      <div className="text-green-500">
                         {Icon ? (
-                          <Icon className="h-5 w-5" aria-hidden="true" />
+                          <Icon className="h-4 w-4" />
                         ) : (
-                          <span className="text-xs font-medium">{item}</span>
+                          <span className="text-xs">{item}</span>
                         )}
                       </div>
+                      <span className="hidden sm:inline">{item}</span>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </>
           )}
 
-          {/* Map */}
+          {/* Map (deferred) */}
           {coordinates && (
-            <div>
-              <h3 className="text-sm font-semibold text-primary mb-2">
-                Location Map
-              </h3>
+            <>
+              <h3 className="text-sm font-semibold text-gray-900">Location</h3>
               <div
-                ref={mapContainer}
-                className="rounded-lg border border-base-300 h-64 w-full"
-              />
-            </div>
+                ref={mapWrapperRef}
+                className="rounded-lg overflow-hidden border border-gray-200">
+                <div
+                  ref={mapContainer}
+                  className="h-64 w-full bg-gray-100"
+                  aria-hidden={!mapVisible}>
+                  {!mapVisible && (
+                    <div className="h-64 w-full flex items-center justify-center text-gray-500">
+                      Map preview will load when visible
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
+        </CardContent>
 
-          {/* Contact */}
-          <div className="flex justify-end">
-            <Button type="button" variant="primary" className="text-sm">
+        {/* Right column: actions */}
+        <CardHeader className="p-6 flex flex-col gap-4 items-stretch">
+          <div className="w-full">
+            <div className="text-sm text-gray-500">Listed by</div>
+            <div className="mt-2 flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold">
+                {agentId ? agentId.slice(0, 2).toUpperCase() : "TP"}
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">
+                  Treasure Pal Agent
+                </div>
+                <div className="text-xs text-gray-500">
+                  Agent ID: {agentId || "N/A"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <Button
+              type="button"
+              className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white hover:from-green-500 hover:to-blue-600">
               Contact Agent
             </Button>
           </div>
-        </CardContent>
+
+          <div className="mt-auto text-sm text-gray-500">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Status</span>
+              <span className="text-gray-700">{status}</span>
+            </div>
+            <div className="mt-3">
+              <Button variant="ghost" className="w-full text-sm">
+                Save Listing
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
       </Card>
     </section>
   );
