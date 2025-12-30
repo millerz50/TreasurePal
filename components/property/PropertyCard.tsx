@@ -21,10 +21,10 @@ function resolveFileId(
 // Helper to generate Appwrite public URL from fileId
 function getAppwriteFileUrl(fileId: string | null) {
   if (!fileId) return "";
-  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!; // e.g. https://nyc.cloud.appwrite.io
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!; // e.g. https://nyc.cloud.appwrite.io/v1
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
-  return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+  return `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
 
 // Property type
@@ -57,13 +57,17 @@ export default function PropertyCard({ property }: { property: Property }) {
     images,
   } = property;
 
-  // Only use frontElevation
+  // Resolve frontElevation
   const mainImageId = resolveFileId(images.frontElevation);
 
+  // Always produce a usable image URL
+  const imageUrl =
+    mainImageId && getAppwriteFileUrl(mainImageId)
+      ? getAppwriteFileUrl(mainImageId)
+      : "/default-property.jpg"; // <-- fallback image in public/ folder
+
   // Debug log (remove in production)
-  if (mainImageId) {
-    console.log("Resolved image URL:", getAppwriteFileUrl(mainImageId));
-  }
+  console.debug("[PropertyCard] Image URL:", imageUrl);
 
   // Build amenity icon lookup
   const amenityIcons: Record<string, LucideIcon> = {};
@@ -84,17 +88,11 @@ export default function PropertyCard({ property }: { property: Property }) {
     <div className="card bg-base-100 text-base-content rounded-xl shadow-sm border border-base-300 transition-all hover:shadow-lg animate-in fade-in duration-500">
       {/* Image + Like Button */}
       <figure className="relative aspect-video overflow-hidden rounded-t-xl">
-        {mainImageId ? (
-          <img
-            src={getAppwriteFileUrl(mainImageId)}
-            alt={`Front view of ${title}`}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-          />
-        ) : (
-          <div className="bg-base-200 flex items-center justify-center w-full h-full">
-            <span className="text-sm text-base-content/50">No image</span>
-          </div>
-        )}
+        <img
+          src={imageUrl}
+          alt={`Front view of ${title}`}
+          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+        />
 
         <button
           type="button"
