@@ -1,4 +1,4 @@
-// components/JoinHero.tsx
+// components/user/JoinHero.tsx
 "use client";
 
 import Link from "next/link";
@@ -62,9 +62,8 @@ export default function JoinHero() {
         cancelable: true,
       });
       window.dispatchEvent(ev);
-    } catch (err) {
+    } catch {
       // ignore if CustomEvent isn't supported (very old browsers)
-      // console.debug("openAgentJoin event dispatch failed", err);
     }
 
     // Navigate to canonical join page so direct visits work
