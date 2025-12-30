@@ -21,7 +21,7 @@ function resolveFileId(
 // Helper to generate Appwrite public URL from fileId
 function getAppwriteFileUrl(fileId: string | null) {
   if (!fileId) return "";
-  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!; // e.g. https://nyc.cloud.appwrite.io/v1
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!; // must include /v1
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
   return `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
@@ -29,7 +29,7 @@ function getAppwriteFileUrl(fileId: string | null) {
 
 // Property type
 export type Property = {
-  id: string;
+  id: string; // mapped from $id
   title: string;
   description: string;
   price: string | number;
@@ -64,9 +64,9 @@ export default function PropertyCard({ property }: { property: Property }) {
   const imageUrl =
     mainImageId && getAppwriteFileUrl(mainImageId)
       ? getAppwriteFileUrl(mainImageId)
-      : "/default-property.jpg"; // <-- fallback image in public/ folder
+      : "/default-property.jpg"; // fallback in public/
 
-  // Debug log (remove in production)
+  // Debug log
   console.debug("[PropertyCard] Image URL:", imageUrl);
 
   // Build amenity icon lookup

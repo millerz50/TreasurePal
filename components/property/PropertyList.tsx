@@ -24,7 +24,25 @@ export default function PropertyList() {
           throw new Error(`Failed to fetch properties (${res.status})`);
 
         const data = await res.json();
-        setProperties(Array.isArray(data) ? data : []);
+
+        // Map raw API data into Property type
+        const mapped: Property[] = Array.isArray(data)
+          ? data.map((doc: any) => ({
+              id: doc.$id, // map $id to id
+              title: doc.title,
+              description: doc.description,
+              price: doc.price,
+              type: doc.type,
+              location: doc.location,
+              rooms: doc.rooms,
+              amenities: Array.isArray(doc.amenities) ? doc.amenities : [],
+              images: {
+                frontElevation: doc.frontElevation, // wrap into images
+              },
+            }))
+          : [];
+
+        setProperties(mapped);
       } catch (err) {
         console.error("Failed to fetch properties:", err);
         setProperties([]);
