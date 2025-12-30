@@ -16,7 +16,9 @@ export default async function PropertyPage({
   if (!res.ok) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-        <h2 className="text-2xl font-bold text-red-500">Property not found</h2>
+        <h2 className="text-2xl font-bold text-red-500">
+          Property not found in database
+        </h2>
         <p className="text-muted-foreground mt-2">
           The property you are looking for does not exist or has been removed in
           our database.
