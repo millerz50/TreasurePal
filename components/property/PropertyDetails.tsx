@@ -1,9 +1,6 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/thumbs";
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -16,8 +13,6 @@ import type Map from "leaflet";
 import { BedDouble, MapPin, ShieldCheck, Sparkles, Wifi } from "lucide-react";
 import type { ComponentType } from "react";
 import { MdOutlineHome } from "react-icons/md";
-
-import { Swiper, SwiperSlide } from "swiper/react";
 
 /* ------------------- helpers ------------------- */
 
@@ -88,30 +83,103 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
     images.floorPlan && getAppwriteFileUrl(images.floorPlan),
   ].filter(Boolean) as string[];
 
-  // Swiper thumbs state (use any to avoid brittle type resolution)
-  const [thumbsSwiper, setThumbsSwiper] = useState<any | null>(null);
+  /* ------------------- slider state & handlers (pure React) ------------------- */
+  const [index, setIndex] = useState<number>(0);
+  const slidesCount = imagesArr.length || 1;
 
-  // Dynamically load Swiper modules at runtime to avoid package export issues
-  const [swiperModules, setSwiperModules] = useState<any[]>([]);
+  // refs for pointer/touch handling
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+  const pointerStartX = useRef<number | null>(null);
+  const pointerDeltaX = useRef<number>(0);
+  const isPointerDown = useRef<boolean>(false);
+
+  // keyboard navigation
   useEffect(() => {
-    let mounted = true;
-    import("swiper")
-      .then((mod) => {
-        if (!mounted) return;
-        const modules: any[] = [];
-        if (mod.Navigation) modules.push(mod.Navigation);
-        if (mod.Thumbs) modules.push(mod.Thumbs);
-        setSwiperModules(modules);
-      })
-      .catch(() => {
-        setSwiperModules([]);
-      });
-    return () => {
-      mounted = false;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
     };
-  }, []);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [index, slidesCount]);
 
-  // Map refs and lazy init
+  const prev = () => setIndex((i) => (i - 1 + slidesCount) % slidesCount);
+  const next = () => setIndex((i) => (i + 1) % slidesCount);
+  const goTo = (i: number) =>
+    setIndex(Math.max(0, Math.min(i, slidesCount - 1)));
+
+  // pointer/touch handlers for swipe
+  useEffect(() => {
+    const el = sliderRef.current;
+    if (!el) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      isPointerDown.current = true;
+      pointerStartX.current = e.clientX;
+      pointerDeltaX.current = 0;
+      (e.target as Element).setPointerCapture?.((e as any).pointerId);
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isPointerDown.current || pointerStartX.current === null) return;
+      pointerDeltaX.current = e.clientX - pointerStartX.current;
+      // optional: apply a small transform for visual feedback
+      el.style.setProperty("--drag-x", `${pointerDeltaX.current}px`);
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (!isPointerDown.current || pointerStartX.current === null) return;
+      const delta = pointerDeltaX.current;
+      const threshold = 60; // px
+      el.style.removeProperty("--drag-x");
+      if (delta > threshold) {
+        prev();
+      } else if (delta < -threshold) {
+        next();
+      }
+      isPointerDown.current = false;
+      pointerStartX.current = null;
+      pointerDeltaX.current = 0;
+    };
+
+    el.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+
+    // touch fallback for older browsers
+    let touchStartX: number | null = null;
+    const onTouchStart = (t: TouchEvent) => {
+      touchStartX = t.touches[0].clientX;
+    };
+    const onTouchMove = (t: TouchEvent) => {
+      if (touchStartX === null) return;
+      pointerDeltaX.current = t.touches[0].clientX - touchStartX;
+      el.style.setProperty("--drag-x", `${pointerDeltaX.current}px`);
+    };
+    const onTouchEnd = () => {
+      const delta = pointerDeltaX.current;
+      const threshold = 60;
+      el.style.removeProperty("--drag-x");
+      if (delta > threshold) prev();
+      else if (delta < -threshold) next();
+      touchStartX = null;
+      pointerDeltaX.current = 0;
+    };
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+    el.addEventListener("touchend", onTouchEnd);
+
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [slidesCount]);
+
+  /* ------------------- Map lazy init ------------------- */
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<Map | null>(null);
   const mapWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -175,25 +243,51 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
     };
   }, [mapVisible, coordinates]);
 
-  // Swiper options (pass dynamically loaded modules)
-  const mainOptions = {
-    modules: swiperModules,
-    navigation: swiperModules.length > 0,
-    spaceBetween: 10,
-  };
-
+  /* ------------------- render ------------------- */
   return (
     <section className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Hero slider */}
-      <div className="rounded-xl overflow-hidden shadow-lg">
-        <Swiper
-          {...mainOptions}
-          thumbs={{ swiper: thumbsSwiper }}
-          className="relative h-96 bg-gray-50">
-          {imagesArr.length > 0 ? (
-            imagesArr.map((src, i) => (
-              <SwiperSlide key={i}>
-                <div className="relative h-96 w-full">
+      <div className="rounded-xl overflow-hidden shadow-lg relative">
+        {/* Prev / Next custom buttons */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
+          <button
+            aria-label="Previous"
+            onClick={prev}
+            className="bg-white/90 hover:bg-white rounded-full p-2 shadow ring-1 ring-gray-200">
+            ‹
+          </button>
+        </div>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+          <button
+            aria-label="Next"
+            onClick={next}
+            className="bg-white/90 hover:bg-white rounded-full p-2 shadow ring-1 ring-gray-200">
+            ›
+          </button>
+        </div>
+
+        <div
+          ref={sliderRef}
+          className="relative h-96 w-full overflow-hidden"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label={`${title} images`}
+          style={{
+            touchAction: "pan-y",
+            // CSS variable used for drag visual feedback
+            transform: "translateZ(0)",
+          }}>
+          <div
+            className="flex h-full transition-transform duration-300 ease-out"
+            style={{
+              width: `${slidesCount * 100}%`,
+              transform: `translateX(calc(${
+                (-index * 100) / slidesCount
+              }% + var(--drag-x, 0px)))`,
+            }}>
+            {imagesArr.length > 0 ? (
+              imagesArr.map((src, i) => (
+                <div key={i} className="relative w-full flex-shrink-0 h-96">
                   <Image
                     src={src}
                     alt={`${title} image ${i + 1}`}
@@ -212,11 +306,9 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
                     </p>
                   </div>
                 </div>
-              </SwiperSlide>
-            ))
-          ) : (
-            <SwiperSlide>
-              <div className="relative h-96 w-full bg-gray-100 flex items-center justify-center">
+              ))
+            ) : (
+              <div className="relative w-full flex-shrink-0 h-96 bg-gray-100 flex items-center justify-center">
                 <Image
                   src="/default-property.jpg"
                   alt={`Default property image for ${title}`}
@@ -225,38 +317,32 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
                   className="object-cover"
                 />
               </div>
-            </SwiperSlide>
-          )}
-        </Swiper>
+            )}
+          </div>
+        </div>
 
         {/* Thumbnails */}
         {imagesArr.length > 1 && (
           <div className="flex gap-3 p-3 bg-base-100 justify-center">
-            <Swiper
-              onSwiper={(s: any) => setThumbsSwiper(s)}
-              spaceBetween={8}
-              slidesPerView={Math.min(imagesArr.length, 6)}
-              watchSlidesProgress
-              className="w-full max-w-4xl">
-              {imagesArr.map((src, i) => (
-                <SwiperSlide
-                  key={i}
-                  className="h-20 rounded-md overflow-hidden">
-                  <button
-                    aria-label={`View image ${i + 1}`}
-                    className="w-full h-20 block rounded-md overflow-hidden ring-1 ring-base-300 hover:scale-105 transition-transform">
-                    <Image
-                      src={src}
-                      alt={`thumbnail ${i + 1}`}
-                      width={240}
-                      height={140}
-                      className="object-cover w-full h-full"
-                      priority={false}
-                    />
-                  </button>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            {imagesArr.map((src, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                aria-label={`View image ${i + 1}`}
+                className={`w-20 h-12 overflow-hidden rounded-md ring-1 transition-transform ${
+                  index === i
+                    ? "ring-green-400 scale-105"
+                    : "ring-base-300 hover:scale-105"
+                }`}>
+                <Image
+                  src={src}
+                  alt={`thumb ${i + 1}`}
+                  width={240}
+                  height={140}
+                  className="object-cover w-full h-full"
+                />
+              </button>
+            ))}
           </div>
         )}
       </div>
