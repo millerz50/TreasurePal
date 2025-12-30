@@ -16,7 +16,7 @@ function getAppwriteFileUrl(fileId: string | null) {
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
   return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
-
+//
 // Property type
 export type Property = {
   id: string;
