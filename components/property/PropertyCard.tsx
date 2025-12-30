@@ -24,7 +24,7 @@ function getAppwriteFileUrl(fileId: string | null) {
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!; // e.g. https://nyc.cloud.appwrite.io
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
-  return `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+  return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
 
 // Property type
