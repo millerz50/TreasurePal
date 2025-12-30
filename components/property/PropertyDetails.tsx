@@ -3,7 +3,7 @@
 import "leaflet/dist/leaflet.css";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -93,6 +93,22 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
   const pointerDeltaX = useRef<number>(0);
   const isPointerDown = useRef<boolean>(false);
 
+  // stable callbacks for navigation (useCallback so effects can depend on them)
+  const prev = useCallback(() => {
+    setIndex((i) => (i - 1 + slidesCount) % slidesCount);
+  }, [slidesCount]);
+
+  const next = useCallback(() => {
+    setIndex((i) => (i + 1) % slidesCount);
+  }, [slidesCount]);
+
+  const goTo = useCallback(
+    (i: number) => {
+      setIndex(Math.max(0, Math.min(i, slidesCount - 1)));
+    },
+    [slidesCount]
+  );
+
   // keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -101,33 +117,32 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [index, slidesCount]);
-
-  const prev = () => setIndex((i) => (i - 1 + slidesCount) % slidesCount);
-  const next = () => setIndex((i) => (i + 1) % slidesCount);
-  const goTo = (i: number) =>
-    setIndex(Math.max(0, Math.min(i, slidesCount - 1)));
+  }, [prev, next]);
 
   // pointer/touch handlers for swipe
   useEffect(() => {
     const el = sliderRef.current;
     if (!el) return;
 
-    const onPointerDown = (e: PointerEvent) => {
+    const onPointerDown = (ev: PointerEvent) => {
       isPointerDown.current = true;
-      pointerStartX.current = e.clientX;
+      pointerStartX.current = ev.clientX;
       pointerDeltaX.current = 0;
-      (e.target as Element).setPointerCapture?.((e as any).pointerId);
+      try {
+        // capture pointer if available
+        (ev.target as Element).setPointerCapture?.((ev as any).pointerId);
+      } catch {
+        // ignore capture errors
+      }
     };
 
-    const onPointerMove = (e: PointerEvent) => {
+    const onPointerMove = (ev: PointerEvent) => {
       if (!isPointerDown.current || pointerStartX.current === null) return;
-      pointerDeltaX.current = e.clientX - pointerStartX.current;
-      // optional: apply a small transform for visual feedback
+      pointerDeltaX.current = ev.clientX - pointerStartX.current;
       el.style.setProperty("--drag-x", `${pointerDeltaX.current}px`);
     };
 
-    const onPointerUp = (e: PointerEvent) => {
+    const onPointerUp = () => {
       if (!isPointerDown.current || pointerStartX.current === null) return;
       const delta = pointerDeltaX.current;
       const threshold = 60; // px
@@ -177,7 +192,7 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [slidesCount]);
+  }, [prev, next]);
 
   /* ------------------- Map lazy init ------------------- */
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -274,7 +289,6 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
           aria-label={`${title} images`}
           style={{
             touchAction: "pan-y",
-            // CSS variable used for drag visual feedback
             transform: "translateZ(0)",
           }}>
           <div
