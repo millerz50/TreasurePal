@@ -1,14 +1,25 @@
-// components/Footer.client.tsx
+// components/landing/footer/Footer.client.tsx
 "use client";
 
 import { useEffect } from "react";
 
+/**
+ * FooterClient
+ *
+ * - Adds entrance animation when footer enters viewport
+ * - Pulses CTA periodically until user interacts
+ * - Adds subtle hover/focus effects to social icons
+ * - Enhances newsletter form with AJAX submit and accessible status updates
+ *
+ * This file fixes an ESLint issue where a destructured `removeEventListener`
+ * variable was declared but never used. The cleanup now correctly removes
+ * the exact handlers that were attached.
+ */
+
 export default function FooterClient() {
   useEffect(() => {
     const footer = document.getElementById("treasurepal-footer");
-    if (!footer) {
-      return;
-    }
+    if (!footer) return;
 
     // Entrance animation
     const io = new IntersectionObserver(
@@ -38,6 +49,7 @@ export default function FooterClient() {
       const stopPulse = () => {
         if (pulseTimer) {
           window.clearInterval(pulseTimer);
+          pulseTimer = undefined;
         }
       };
       cta.addEventListener("pointerdown", stopPulse, { once: true });
@@ -89,17 +101,18 @@ export default function FooterClient() {
 
       submitHandler = async (e: Event) => {
         e.preventDefault();
-        if (!input || !status) {
-          return;
-        }
+        if (!input || !status) return;
+
         if (!input.checkValidity()) {
           input.focus();
           status.textContent = "Please enter a valid email address.";
           status.classList.add("tp-error");
           return;
         }
+
         status.textContent = "Subscribing...";
         status.classList.remove("tp-error", "tp-success");
+
         try {
           const action = form.action || "/api/newsletter";
           const res = await fetch(action, {
@@ -136,8 +149,8 @@ export default function FooterClient() {
           }
         } catch (err) {
           console.error("[FooterClient] Newsletter submit error:", err);
-          status!.textContent = "Subscription failed. Try again later.";
-          status!.classList.add("tp-error");
+          status.textContent = "Subscription failed. Try again later.";
+          status.classList.add("tp-error");
         }
       };
 
@@ -151,14 +164,15 @@ export default function FooterClient() {
       }
       io.disconnect();
 
-      socials.forEach(({ removeEventListener }, idx) => {
-        const { el, enter, leave } = socialHandlers[idx];
+      // Remove social handlers
+      socialHandlers.forEach(({ el, enter, leave }) => {
         el.removeEventListener("pointerenter", enter);
         el.removeEventListener("pointerleave", leave);
         el.removeEventListener("focus", enter);
         el.removeEventListener("blur", leave);
       });
 
+      // Remove newsletter submit handler
       if (form && submitHandler) {
         form.removeEventListener("submit", submitHandler);
       }
