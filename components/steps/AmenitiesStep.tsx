@@ -1,5 +1,10 @@
+// components/steps/AmenitiesStep.tsx
 "use client";
 
+import {
+  ICON_MAP,
+  type IconComponent,
+} from "@/components/amenities/AmenityIcons";
 import { AMENITIES } from "@/components/amenities/AmenityMap";
 import { Button } from "@/components/ui/button";
 import type { Dispatch, SetStateAction } from "react";
@@ -48,8 +53,11 @@ export default function AmenitiesStep({
             </h3>
 
             <div className="flex flex-wrap gap-3">
-              {items.map(({ name, icon: Icon }) => {
+              {items.map(({ name, icon }) => {
                 const selected = (formData.amenities ?? []).includes(name);
+                const Icon = ICON_MAP[icon as keyof typeof ICON_MAP] as
+                  | IconComponent
+                  | undefined;
 
                 return (
                   <button
@@ -67,7 +75,7 @@ export default function AmenitiesStep({
                         className={`w-5 h-5 ${
                           selected ? "text-white" : "text-primary"
                         }`}
-                        aria-hidden
+                        aria-hidden={true}
                       />
                     ) : null}
                     <span className="text-sm font-medium">{name}</span>

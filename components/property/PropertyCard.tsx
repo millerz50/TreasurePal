@@ -1,12 +1,20 @@
+// components/property/PropertyCard.tsx
 "use client";
 
-import type { LucideIcon } from "@/components/amenities/AmenityIcons";
+import {
+  ICON_MAP,
+  type IconComponent,
+} from "@/components/amenities/AmenityIcons";
 import { AMENITIES } from "@/components/amenities/AmenityMap";
 import { Button } from "@/components/ui/button";
 import { HeartIcon as OutlineHeart } from "@heroicons/react/24/outline";
 import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+
+/* ------------------------------------------------------------------
+  Helpers
+-------------------------------------------------------------------*/
 
 // Safe resolver for fileId (handles string or { $id })
 function resolveFileId(
@@ -63,7 +71,10 @@ function getAppwriteFileUrl(fileId: string | null, fieldName: string) {
   return url;
 }
 
-// Property type
+/* ------------------------------------------------------------------
+  Types
+------------------------------------------------------------------- */
+
 export type Property = {
   id: string; // mapped from $id
   title: string;
@@ -72,7 +83,7 @@ export type Property = {
   type: string;
   location: string;
   rooms: number;
-  amenities: string[];
+  amenities: string[]; // array of amenity names (strings)
   images: {
     frontElevation?: string | { $id: string } | null;
     southView?: string | { $id: string } | null;
@@ -81,6 +92,10 @@ export type Property = {
     floorPlan?: string | { $id: string } | null;
   };
 };
+
+/* ------------------------------------------------------------------
+  Component
+------------------------------------------------------------------- */
 
 export default function PropertyCard({ property }: { property: Property }) {
   const [liked, setLiked] = useState(false);
@@ -112,20 +127,25 @@ export default function PropertyCard({ property }: { property: Property }) {
 
   console.debug("[PropertyCard] Final imageUrl:", imageUrl);
 
-  // Amenity icons
-  const amenityIcons: Record<string, LucideIcon> = useMemo(() => {
-    const out: Record<string, LucideIcon> = {};
-    const categories = AMENITIES[type];
-    if (categories) {
-      Object.values(categories).forEach((items) => {
-        items.forEach(({ name, icon }) => {
-          out[name] = icon;
+  // Build amenityIcons map: amenity name -> Icon component (or undefined)
+  const amenityIcons: Record<string, IconComponent | undefined> =
+    useMemo(() => {
+      const out: Record<string, IconComponent | undefined> = {};
+      const categories = AMENITIES[type];
+      if (categories) {
+        Object.values(categories).forEach((items) => {
+          items.forEach(({ name, icon }) => {
+            // `icon` in AMENITIES is a key into ICON_MAP (string)
+            const Icon = ICON_MAP[icon as keyof typeof ICON_MAP] as
+              | IconComponent
+              | undefined;
+            out[name] = Icon;
+          });
         });
-      });
-    }
-    console.debug("[PropertyCard] Amenity icons built:", out);
-    return out;
-  }, [type]);
+      }
+      console.debug("[PropertyCard] Amenity icons built:", out);
+      return out;
+    }, [type]);
 
   const visibleAmenities = Array.isArray(amenities)
     ? amenities.slice(0, 4)
@@ -203,7 +223,7 @@ export default function PropertyCard({ property }: { property: Property }) {
                   data-tip={item}>
                   <div className="bg-base-200 rounded-full p-2 text-primary hover:bg-base-300 transition">
                     {Icon ? (
-                      <Icon className="h-4 w-4" aria-hidden="true" />
+                      <Icon className="h-4 w-4" aria-hidden={true} />
                     ) : (
                       <span className="text-xs font-medium">{item}</span>
                     )}

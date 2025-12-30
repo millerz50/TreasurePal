@@ -42,7 +42,8 @@ export function NavbarMobileMenu() {
                         openDropdown === item.label ? null : item.label
                       )
                     }
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent/10">
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent/10"
+                    type="button">
                     <span className="flex items-center gap-3">
                       <Icon className="h-4 w-4" />
                       {item.label}
@@ -90,7 +91,9 @@ export function NavbarMobileMenu() {
               {user ? (
                 <NavbarUser />
               ) : (
-                <Button className="w-full rounded-full">Join Us</Button>
+                <Link href="/auth/signup" className="block">
+                  <Button className="w-full rounded-full">Join</Button>
+                </Link>
               )}
               <ThemeSwitcher />
             </div>

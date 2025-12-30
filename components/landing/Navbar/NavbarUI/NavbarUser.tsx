@@ -1,3 +1,4 @@
+// components/NavbarUser.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 
 export default function NavbarUser() {
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
@@ -32,13 +33,14 @@ export default function NavbarUser() {
     return <div className="text-sm text-muted-foreground">Loading…</div>;
   }
 
+  // When not authenticated, show only "Join" (no Sign In)
   if (!user) {
     return (
       <Button
         variant="ghost"
-        className="text-sm flex items-center gap-2"
-        onClick={() => router.push("/auth/signin")}>
-        🔑 <span className="hidden sm:inline">Sign In</span>
+        className="text-sm flex items-center gap-2 rounded-full px-4 py-2 font-semibold"
+        onClick={() => router.push("/auth/signup")}>
+        Join
       </Button>
     );
   }

@@ -1,5 +1,29 @@
+// components/navigation/navConfig.ts
+import { AMENITIES } from "@/components/amenities/AmenityMap";
 import { Briefcase, Building2, Home, Info, Phone, Store } from "lucide-react";
 import React from "react";
+
+/* ----------------------------------
+   Route → Property Type map
+----------------------------------- */
+
+export const ROUTE_TO_PROPERTY_TYPE: Record<string, keyof typeof AMENITIES> = {
+  "/listings/students": "StudentHousing",
+  "/listings/lodges": "Lodge",
+  "/listings/houses": "FullHouseRent",
+  "/listings/apartments": "OneRoom",
+  "/listings/industrial": "Industrial",
+  "/listings/hotels": "Hotel",
+  "/listings/event-venues": "EventBuilding",
+  "/listings/booking-houses": "BookingHouse",
+  "/listings/retail": "Retail",
+  "/listings/business": "BusinessBuilding",
+  "/listings/mixed-use": "MixedUse",
+};
+
+/* ----------------------------------
+   Navigation types and links
+----------------------------------- */
 
 export type NavDropdownItem = {
   label: string;

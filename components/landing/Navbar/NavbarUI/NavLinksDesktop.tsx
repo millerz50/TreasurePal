@@ -1,3 +1,4 @@
+// components/NavLinksDesktop.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -70,12 +71,14 @@ export default function NavLinksDesktop() {
         );
       })}
 
-      {/* Auth action (same as mobile) */}
+      {/* Auth action (show only Join when not authenticated) */}
       <div className="ml-2">
         {user ? (
           <NavbarUser />
         ) : (
-          <Button className="rounded-full px-6 font-semibold">Join Us</Button>
+          <Link href="/auth/signup" className="inline-block">
+            <Button className="rounded-full px-6 font-semibold">Join</Button>
+          </Link>
         )}
       </div>
     </nav>
