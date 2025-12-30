@@ -2,7 +2,8 @@
 "use client";
 
 import { submitAgentApplication, type AgentPayload } from "@/lib/api/agents";
-import React, { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
 
 export type AgentFormValues = {
   accountid?: string;
@@ -19,14 +20,16 @@ export type AgentFormValues = {
 };
 
 export default function AgentForm({
-  accountid,
+  accountid: initialAccountId,
   onSuccess,
 }: {
   accountid?: string;
   onSuccess?: () => void;
 }) {
+  const router = useRouter();
+
   const [values, setValues] = useState<AgentFormValues>({
-    accountid: accountid ?? "",
+    accountid: initialAccountId ?? "",
     userId: undefined,
     fullName: "",
     email: "",
@@ -39,6 +42,7 @@ export default function AgentForm({
     message: "",
   });
 
+  const [loadingUser, setLoadingUser] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{
     type: "idle" | "error" | "success";
@@ -49,6 +53,76 @@ export default function AgentForm({
     (patch: Partial<AgentFormValues>) => setValues((v) => ({ ...v, ...patch })),
     []
   );
+
+  /**
+   * On mount: check authentication by calling /api/users/me.
+   * - If not authenticated (401), redirect to /login immediately.
+   * - If authenticated, prefill form with user data.
+   *
+   * If initialAccountId is provided we still attempt to fetch the server profile
+   * to get the latest user details. The fetch uses credentials so cookies/sessions
+   * are forwarded.
+   */
+  useEffect(() => {
+    let mounted = true;
+    const controller = new AbortController();
+
+    async function fetchMe() {
+      setLoadingUser(true);
+      try {
+        const res = await fetch("/api/users/me", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        if (res.status === 401) {
+          // Not authenticated — redirect to login
+          // Preserve current path so user can return after login
+          const returnTo =
+            typeof window !== "undefined"
+              ? window.location.pathname
+              : "/agents/join";
+          router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+          return;
+        }
+
+        if (!res.ok) {
+          // Other non-auth error — stop loading and allow manual entry
+          if (mounted) setLoadingUser(false);
+          return;
+        }
+
+        const json = await res.json();
+        if (!mounted) return;
+
+        if (json?.success && json?.data) {
+          const u = json.data;
+          update({
+            accountid: u.accountid ?? u.$id ?? u.id ?? values.accountid,
+            userId: u.$id ?? u.id ?? u.userId ?? values.userId,
+            fullName: u.fullName ?? u.name ?? values.fullName,
+            email: u.email ?? values.email,
+            phone: u.phone ?? values.phone,
+            city: u.city ?? values.city,
+          });
+        }
+      } catch (error) {
+        // Network or abort — do nothing (user can still fill form)
+      } finally {
+        if (mounted) setLoadingUser(false);
+      }
+    }
+
+    fetchMe();
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAccountId, update, router]);
 
   const validate = (v: AgentFormValues) => {
     if (!v.accountid || typeof v.accountid !== "string")
@@ -90,9 +164,11 @@ export default function AgentForm({
         type: "success",
         message: "Application submitted. We'll be in touch.",
       });
-      setValues({
-        accountid: values.accountid,
-        userId: undefined,
+
+      // keep accountid and userId but clear other fields
+      setValues((prev) => ({
+        accountid: prev.accountid,
+        userId: prev.userId,
         fullName: "",
         email: "",
         phone: "",
@@ -102,7 +178,8 @@ export default function AgentForm({
         rating: "",
         verified: false,
         message: "",
-      });
+      }));
+
       onSuccess?.();
       return result;
     } catch (err: any) {
@@ -118,7 +195,13 @@ export default function AgentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      <input type="hidden" value={values.accountid} />
+      {/* Hidden account id (prefilled from server) */}
+      <input type="hidden" name="accountid" value={values.accountid} />
+
+      {loadingUser && (
+        <div className="text-sm text-slate-500">Loading your profile…</div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label className="block">
           <span className="text-sm font-medium">Full name</span>
@@ -236,8 +319,8 @@ export default function AgentForm({
       <div className="flex items-center justify-between gap-4">
         <button
           type="submit"
-          disabled={submitting}
-          className="px-4 py-2 rounded-md bg-emerald-500 text-white">
+          disabled={submitting || loadingUser}
+          className="px-4 py-2 rounded-md bg-emerald-500 text-white disabled:opacity-60">
           {submitting ? "Submitting…" : "Submit application"}
         </button>
 
