@@ -1,6 +1,26 @@
 // components/Footer.tsx
+"use client";
+
+import {
+  Building2,
+  Facebook,
+  Globe,
+  Instagram,
+  Linkedin,
+  Mail,
+  MapPin,
+  Phone,
+  Twitter,
+} from "lucide-react";
 import Link from "next/link";
+import React from "react";
 import FooterClient from "./Footer.client";
+
+/**
+ * Footer component
+ * - Improved visuality: stronger gradients, icon badges, hover states
+ * - Accessible labels and aria attributes
+ */
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -8,31 +28,38 @@ export default function Footer() {
   return (
     <footer
       id="treasurepal-footer"
-      className="bg-gradient-to-b from-white/90 to-gray-50 dark:from-slate-900 dark:to-slate-800 text-slate-900 dark:text-slate-100 border-t border-gray-200 dark:border-slate-700"
+      className="bg-gradient-to-b from-white/95 to-gray-50 dark:from-slate-900 dark:to-slate-800 text-slate-900 dark:text-slate-100 border-t border-gray-200 dark:border-slate-700"
       role="contentinfo"
       aria-label="TreasurePal footer">
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid gap-8 md:grid-cols-12 md:items-start">
+        <div className="grid gap-10 md:grid-cols-12 md:items-start">
           {/* Brand + CTA */}
-          <div className="md:col-span-4 space-y-4">
+          <div className="md:col-span-4 space-y-5">
             <Link
               href="/"
-              className="flex items-center gap-3"
+              className="flex items-center gap-4"
               aria-label="TreasurePal home">
-              <svg
-                width="48"
-                height="36"
-                viewBox="0 0 48 36"
-                aria-hidden="true"
-                className="rounded-md flex-shrink-0">
-                <defs>
-                  <linearGradient id="tp-grad" x1="0" x2="1">
-                    <stop offset="0" stopColor="#2ECC71" />
-                    <stop offset="1" stopColor="#1E90FF" />
-                  </linearGradient>
-                </defs>
-                <rect width="48" height="36" rx="6" fill="url(#tp-grad)"></rect>
-              </svg>
+              <div className="rounded-md flex-shrink-0 bg-gradient-to-r from-emerald-400 to-sky-500 p-1 shadow-md">
+                <svg
+                  width="48"
+                  height="36"
+                  viewBox="0 0 48 36"
+                  aria-hidden="true"
+                  className="rounded-sm block">
+                  <defs>
+                    <linearGradient id="tp-grad" x1="0" x2="1">
+                      <stop offset="0" stopColor="#2ECC71" />
+                      <stop offset="1" stopColor="#1E90FF" />
+                    </linearGradient>
+                  </defs>
+                  <rect
+                    width="48"
+                    height="36"
+                    rx="6"
+                    fill="url(#tp-grad)"></rect>
+                </svg>
+              </div>
+
               <div className="min-w-0">
                 <div
                   className="text-lg font-extrabold leading-tight bg-clip-text text-transparent"
@@ -47,19 +74,20 @@ export default function Footer() {
               </div>
             </Link>
 
-            <p className="text-sm text-slate-600 dark:text-slate-300 max-w-[20rem]">
+            <p className="text-sm text-slate-600 dark:text-slate-300 max-w-[22rem]">
               List with TreasurePal or discover curated properties — fast,
-              transparent, local.easly
+              transparent, local. Easily connect with owners and agents.
             </p>
 
             <div className="flex gap-3">
               <Link
                 href="/list-with-us"
                 data-cta="primary"
-                className="inline-flex items-center gap-3 px-4 py-2 rounded-full text-white font-semibold shadow-lg transform transition hover:scale-[1.02]"
+                className="inline-flex items-center gap-3 px-4 py-2 rounded-full text-white font-semibold shadow-lg transform transition hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-300"
                 style={{
                   background: "linear-gradient(90deg,#2ECC71,#1E90FF)",
-                }}>
+                }}
+                aria-label="List with TreasurePal">
                 <svg
                   width="16"
                   height="16"
@@ -79,7 +107,8 @@ export default function Footer() {
 
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 dark:border-slate-700 text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition">
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 dark:border-slate-700 text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-sky-200"
+                aria-label="Contact TreasurePal">
                 Contact
               </Link>
             </div>
@@ -90,56 +119,77 @@ export default function Footer() {
             aria-label="Footer navigation"
             className="md:col-span-5 grid grid-cols-2 gap-6">
             <div>
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                 Explore
               </h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/listings" className="hover:underline">
+                  <Link
+                    href="/listings"
+                    className="hover:underline flex items-center gap-2">
+                    <Globe
+                      className="w-4 h-4 text-slate-500"
+                      aria-hidden={true}
+                    />
                     Listings
                   </Link>
 
                   {/* Sub-links under Listings */}
-                  <ul className="mt-2 ml-4 space-y-1 text-sm">
+                  <ul className="mt-2 ml-6 space-y-1 text-sm">
                     <li>
                       <Link
                         href="/listings/sale"
-                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        className="text-slate-600 dark:text-slate-300 hover:underline flex items-center gap-2">
+                        <BriefcaseIconSmall />
                         For Sale
                       </Link>
                     </li>
                     <li>
                       <Link
                         href="/listings/rent"
-                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        className="text-slate-600 dark:text-slate-300 hover:underline flex items-center gap-2">
+                        <BriefcaseIconSmall />
                         Rent
                       </Link>
                     </li>
                     <li>
                       <Link
                         href="/listings/students"
-                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        className="text-slate-600 dark:text-slate-300 hover:underline flex items-center gap-2">
+                        <MapPin
+                          className="w-4 h-4 text-slate-500"
+                          aria-hidden={true}
+                        />
                         Student Housing
                       </Link>
                     </li>
                     <li>
                       <Link
                         href="/listings/lodges"
-                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        className="text-slate-600 dark:text-slate-300 hover:underline flex items-center gap-2">
+                        <HomeIconSmall />
                         Lodges & Hotels
                       </Link>
                     </li>
                     <li>
                       <Link
                         href="/listings/industrial"
-                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        className="text-slate-600 dark:text-slate-300 hover:underline flex items-center gap-2">
+                        <Building2
+                          className="w-4 h-4 text-slate-500"
+                          aria-hidden={true}
+                        />
                         Industrial & Commercial
                       </Link>
                     </li>
                     <li>
                       <Link
                         href="/careers"
-                        className="text-slate-600 dark:text-slate-300 hover:underline">
+                        className="text-slate-600 dark:text-slate-300 hover:underline flex items-center gap-2">
+                        <Linkedin
+                          className="w-4 h-4 text-slate-500"
+                          aria-hidden={true}
+                        />
                         Careers
                       </Link>
                     </li>
@@ -147,17 +197,26 @@ export default function Footer() {
                 </li>
 
                 <li>
-                  <Link href="/listings/sell" className="hover:underline">
+                  <Link
+                    href="/listings/sell"
+                    className="hover:underline flex items-center gap-2">
+                    <BriefcaseIconSmall />
                     Sell
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="hover:underline">
+                  <Link
+                    href="/about"
+                    className="hover:underline flex items-center gap-2">
+                    <InfoIconSmall />
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="/faq" className="hover:underline">
+                  <Link
+                    href="/faq"
+                    className="hover:underline flex items-center gap-2">
+                    <InfoIconSmall />
                     FAQ
                   </Link>
                 </li>
@@ -165,27 +224,45 @@ export default function Footer() {
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                 Company
               </h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/careers" className="hover:underline">
+                  <Link
+                    href="/careers"
+                    className="hover:underline flex items-center gap-2">
+                    <Linkedin
+                      className="w-4 h-4 text-slate-500"
+                      aria-hidden={true}
+                    />
                     Careers
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="hover:underline">
+                  <Link
+                    href="/terms"
+                    className="hover:underline flex items-center gap-2">
+                    <InfoIconSmall />
                     Terms
                   </Link>
                 </li>
                 <li>
-                  <Link href="/privacy" className="hover:underline">
+                  <Link
+                    href="/privacy"
+                    className="hover:underline flex items-center gap-2">
+                    <InfoIconSmall />
                     Privacy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="hover:underline">
+                  <Link
+                    href="/contact"
+                    className="hover:underline flex items-center gap-2">
+                    <Phone
+                      className="w-4 h-4 text-slate-500"
+                      aria-hidden={true}
+                    />
                     Support
                   </Link>
                 </li>
@@ -215,10 +292,12 @@ export default function Footer() {
                 required
                 placeholder="you@domain.com"
                 className="flex-1 rounded-full px-4 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-500"
+                aria-label="Email address for property alerts"
               />
               <button
                 type="submit"
-                className="rounded-full px-4 py-2 bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold text-sm shadow">
+                className="rounded-full px-4 py-2 bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold text-sm shadow hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-emerald-300"
+                aria-label="Subscribe to property alerts">
                 Subscribe
               </button>
             </form>
@@ -228,50 +307,59 @@ export default function Footer() {
               aria-live="polite"></p>
 
             <div className="flex items-center gap-3 mt-2">
-              {/* FACEBOOK ICON */}
-              <a
-                className="w-10 h-10 rounded-full border flex items-center justify-center tp-social-hoverable"
+              <SocialIcon
                 href="#"
-                aria-label="Facebook">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true">
-                  <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 5 3.66 9.13 8.44 9.88v-6.99H8.08V12h2.36V9.8c0-2.33 1.39-3.62 3.52-3.62 1.02 0 2.09.18 2.09.18v2.3h-1.18c-1.16 0-1.52.72-1.52 1.46V12h2.58l-.41 2.89h-2.17v6.99C18.34 21.13 22 17 22 12z" />
-                </svg>
-              </a>
+                label="Facebook"
+                Icon={Facebook}
+                bg="bg-white"
+                hover="hover:bg-[#1877F2]/10"
+                color="text-[#1877F2]"
+              />
+              <SocialIcon
+                href="#"
+                label="Twitter"
+                Icon={Twitter}
+                bg="bg-white"
+                hover="hover:bg-[#1DA1F2]/10"
+                color="text-[#1DA1F2]"
+              />
+              <SocialIcon
+                href="#"
+                label="Instagram"
+                Icon={Instagram}
+                bg="bg-white"
+                hover="hover:bg-gradient-to-br hover:from-[#F58529] hover:via-[#DD2A7B] hover:to-[#8134AF]"
+                color="text-current"
+              />
+              <SocialIcon
+                href="#"
+                label="LinkedIn"
+                Icon={Linkedin}
+                bg="bg-white"
+                hover="hover:bg-[#0A66C2]/10"
+                color="text-[#0A66C2]"
+              />
+            </div>
 
-              {/* TWITTER / X ICON */}
-              <a
-                className="w-10 h-10 rounded-full border flex items-center justify-center tp-social-hoverable"
-                href="#"
-                aria-label="Twitter">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true">
-                  <path d="M22.46 6c-.77.35-1.6.58-2.46.69a4.29 4.29 0 00 1.88-2.37 8.59 8.59 0 01-2.72 1.04 4.27 4.27 0 00-7.3 3.89A12.1 12.1 0 013 4.8a4.27 4.27 0 001.32 5.7 4.22 4.22 0 01-1.93-.54v.05a4.28 4.28 0 003.42 4.19 4.28 4.28 0 01-1.92.07 4.28 4.28 0 003.99 2.97A8.58 8.58 0 012 19.54 12.1 12.1 0 008.29 21c7.55 0 11.68-6.26 11.68-11.68 0-.18-.01-.35-.02-.53A8.35 8.35 0 0022.46 6z" />
-                </svg>
-              </a>
-
-              {/* INSTAGRAM ICON */}
-              <a
-                className="w-10 h-10 rounded-full border flex items-center justify-center tp-social-hoverable"
-                href="#"
-                aria-label="Instagram">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true">
-                  <path d="M7 2C4.24 2 2 4.24 2 7v10c0 2.76 2.24 5 5 5h10c2.76 0 5-2.24 5-5V7c0-2.76-2.24-5-5-5H7zm10 2a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7a3 3 0 013-3h10zm-5 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm4.5-.25a1.25 1.25 0 11-2.5 0 1.25 1.25 0 012.5 0z" />
-                </svg>
-              </a>
+            <div className="mt-4 text-sm text-slate-600 dark:text-slate-400 space-y-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-slate-500" aria-hidden={true} />
+                <span>Harare, Zimbabwe</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-slate-500" aria-hidden={true} />
+                <a href="tel:+263000000000" className="hover:underline">
+                  +263 7777 68431
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-slate-500" aria-hidden={true} />
+                <a
+                  href="mailto:hello@treasurepal.example"
+                  className="hover:underline">
+                  hello@millerz.co.zw
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -291,5 +379,122 @@ export default function Footer() {
 
       <FooterClient />
     </footer>
+  );
+}
+
+/* ------------------------------------------------------------------
+   Small presentational helpers
+------------------------------------------------------------------- */
+
+function SocialIcon({
+  href,
+  label,
+  Icon,
+  bg = "bg-white",
+  hover = "hover:bg-gray-50",
+  color = "text-current",
+}: {
+  href: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  bg?: string;
+  hover?: string;
+  color?: string;
+}) {
+  return (
+    <a
+      href={href}
+      aria-label={label}
+      className={`w-10 h-10 rounded-full border flex items-center justify-center tp-social-hoverable transition ${bg} ${hover}`}
+      title={label}>
+      <Icon className={`w-5 h-5 ${color}`} aria-hidden={true} />
+    </a>
+  );
+}
+
+function BriefcaseIconSmall() {
+  return (
+    <svg
+      className="w-4 h-4 text-slate-500"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true">
+      <path
+        d="M3 7h18"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 7v-1a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect
+        x="3"
+        y="7"
+        width="18"
+        height="13"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function HomeIconSmall() {
+  return (
+    <svg
+      className="w-4 h-4 text-slate-500"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true">
+      <path
+        d="M3 11.5L12 4l9 7.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 21V12h6v9"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function InfoIconSmall() {
+  return (
+    <svg
+      className="w-4 h-4 text-slate-500"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M12 8v.01"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M11 12h1v4h1"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

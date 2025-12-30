@@ -1,6 +1,8 @@
+// components/JoinHero.tsx
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { domainConfig } from "../landing/Navbar/ssrWrapperNav/domains"; // import domain config
 
@@ -16,23 +18,66 @@ function prefersReducedMotionSync(): boolean {
   }
 }
 
+/**
+ * JoinHero
+ *
+ * - Uses domainConfig to show brand-specific copy.
+ * - When the CTA is clicked it:
+ *   1. Dispatches a `openAgentJoin` CustomEvent (so an Agent component/modal can listen and open immediately).
+ *   2. Navigates to the canonical join route `/agents/join` so users who land there directly still see the join flow.
+ *
+ * If your agent component listens for the event, it can open a modal instantly; otherwise the route `/agents/join`
+ * should render the join/request-to-be-agent UI.
+ */
 export default function JoinHero() {
   // Derive initial visible state from reduced-motion preference
   const initialVisible = prefersReducedMotionSync();
   const [visible, setVisible] = useState<boolean>(initialVisible);
 
-  // 🔑 Domain-based branding
+  // Domain-based branding
   const [brand, setBrand] = useState(domainConfig["default"]);
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const host = window.location.hostname;
     setBrand(domainConfig[host] || domainConfig["default"]);
   }, []);
 
+  // entrance animation (respect reduced motion)
   useEffect(() => {
     if (initialVisible) return;
     const timeout = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(timeout);
   }, [initialVisible]);
+
+  const router = useRouter();
+
+  // CTA handler: dispatch event for in-page agent component, then navigate to canonical join route
+  const handleJoinClick = (e?: React.MouseEvent) => {
+    // allow any parent handlers to run first
+    try {
+      // Dispatch a DOM event so an Agent component (if mounted) can open a modal immediately
+      const ev = new CustomEvent("openAgentJoin", {
+        detail: { source: "JoinHero", timestamp: Date.now() },
+        bubbles: true,
+        cancelable: true,
+      });
+      window.dispatchEvent(ev);
+    } catch (err) {
+      // ignore if CustomEvent isn't supported (very old browsers)
+      // console.debug("openAgentJoin event dispatch failed", err);
+    }
+
+    // Navigate to canonical join page so direct visits work
+    // Use router.push to ensure client-side navigation
+    try {
+      router.push("/agents/join");
+    } catch {
+      // fallback: Link will handle navigation if router.push fails
+    }
+
+    // Prevent default Link behavior if this handler is attached to a Link onClick
+    if (e) e.preventDefault();
+  };
 
   return (
     <section
@@ -52,8 +97,10 @@ export default function JoinHero() {
           {brand.description} — Earn commissions, gain skills, and grow with us.
         </p>
 
+        {/* CTA: dispatch event + navigate to canonical join route */}
         <Link
-          href="/signup"
+          href="/agents/join"
+          onClick={handleJoinClick}
           className="inline-block focus-visible:ring-4 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:outline-none rounded-full shadow-md transition-transform duration-200 transform hover:-translate-y-0.5 active:translate-y-0"
           aria-label={`Join ${brand.name}`}>
           <span className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-medium px-8 py-3 rounded-full text-base md:text-lg">

@@ -1,5 +1,6 @@
 // components/Footer.client.tsx
 "use client";
+
 import { useEffect } from "react";
 
 export default function FooterClient() {
@@ -15,7 +16,7 @@ export default function FooterClient() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             footer.classList.add("tp-animate-in");
-            io.unobserve(footer);
+            io.unobserve(entry.target);
           }
         });
       },
@@ -34,43 +35,50 @@ export default function FooterClient() {
         window.setTimeout(() => cta.classList.remove("tp-cta-pulse"), 900);
       };
       pulseTimer = window.setInterval(startPulse, 7000);
-      cta.addEventListener(
-        "pointerdown",
-        () => {
-          if (pulseTimer) {
-            window.clearInterval(pulseTimer);
-          }
-        },
-        { once: true }
-      );
+      const stopPulse = () => {
+        if (pulseTimer) {
+          window.clearInterval(pulseTimer);
+        }
+      };
+      cta.addEventListener("pointerdown", stopPulse, { once: true });
     }
 
     // Social hover: subtle gradient + lift, works in dark & light
-    const socials = footer.querySelectorAll(".tp-social-hoverable");
+    const socials = Array.from(
+      footer.querySelectorAll<HTMLElement>(".tp-social-hoverable")
+    );
+    const socialHandlers: Array<{
+      el: HTMLElement;
+      enter: () => void;
+      leave: () => void;
+    }> = [];
+
     socials.forEach((el) => {
       const enter = () => {
-        (el as HTMLElement).style.background =
-          "linear-gradient(90deg,#2ECC71,#1E90FF)";
-        (el as HTMLElement).style.color = "#fff";
-        (el as HTMLElement).style.transform = "translateY(-4px) scale(1.02)";
-        (el as HTMLElement).style.transition =
-          "transform 180ms ease, background 180ms ease";
+        el.style.background = "linear-gradient(90deg,#2ECC71,#1E90FF)";
+        el.style.color = "#fff";
+        el.style.transform = "translateY(-4px) scale(1.02)";
+        el.style.transition = "transform 180ms ease, background 180ms ease";
       };
       const leave = () => {
-        (el as HTMLElement).style.background = "";
-        (el as HTMLElement).style.color = "";
-        (el as HTMLElement).style.transform = "";
+        el.style.background = "";
+        el.style.color = "";
+        el.style.transform = "";
       };
       el.addEventListener("pointerenter", enter);
       el.addEventListener("pointerleave", leave);
       el.addEventListener("focus", enter);
       el.addEventListener("blur", leave);
+
+      socialHandlers.push({ el, enter, leave });
     });
 
     // Newsletter AJAX with defensive parsing + accessible feedback
     const form = document.getElementById(
       "tp-newsletter-form"
     ) as HTMLFormElement | null;
+    let submitHandler: ((e: Event) => Promise<void>) | undefined;
+
     if (form) {
       const input = form.querySelector<HTMLInputElement>(
         "#tp-newsletter-email"
@@ -78,7 +86,8 @@ export default function FooterClient() {
       const status = document.querySelector<HTMLElement>(
         ".tp-newsletter-status"
       );
-      const submitHandler = async (e: Event) => {
+
+      submitHandler = async (e: Event) => {
         e.preventDefault();
         if (!input || !status) {
           return;
@@ -92,8 +101,9 @@ export default function FooterClient() {
         status.textContent = "Subscribing...";
         status.classList.remove("tp-error", "tp-success");
         try {
-          const res = await fetch(form.action, {
-            method: "POST",
+          const action = form.action || "/api/newsletter";
+          const res = await fetch(action, {
+            method: form.method || "POST",
             headers: {
               "Content-Type": "application/json",
               Accept: "application/json",
@@ -101,11 +111,13 @@ export default function FooterClient() {
             body: JSON.stringify({ email: input.value }),
             credentials: "include",
           });
+
           const ct = res.headers.get("content-type") || "";
           const data = ct.includes("application/json")
             ? await res.json()
             : { success: res.ok, message: await res.text() };
-          if (res.ok && data.success) {
+
+          if (res.ok && (data.success ?? true)) {
             status.textContent = "Subscribed — check your inbox.";
             status.classList.add("tp-success");
             input.value = "";
@@ -122,27 +134,34 @@ export default function FooterClient() {
               data.message || "Subscription failed. Try again later.";
             status.classList.add("tp-error");
           }
-        } catch {
-          status.textContent = "Subscription failed. Try again later.";
-          status.classList.add("tp-error");
+        } catch (err) {
+          console.error("[FooterClient] Newsletter submit error:", err);
+          status!.textContent = "Subscription failed. Try again later.";
+          status!.classList.add("tp-error");
         }
       };
-      form.addEventListener("submit", submitHandler);
 
-      return () => {
-        if (pulseTimer) {
-          window.clearInterval(pulseTimer);
-        }
-        io.disconnect();
-        form.removeEventListener("submit", submitHandler);
-      };
+      form.addEventListener("submit", submitHandler);
     }
 
+    // Cleanup on unmount
     return () => {
       if (pulseTimer) {
         window.clearInterval(pulseTimer);
       }
       io.disconnect();
+
+      socials.forEach(({ removeEventListener }, idx) => {
+        const { el, enter, leave } = socialHandlers[idx];
+        el.removeEventListener("pointerenter", enter);
+        el.removeEventListener("pointerleave", leave);
+        el.removeEventListener("focus", enter);
+        el.removeEventListener("blur", leave);
+      });
+
+      if (form && submitHandler) {
+        form.removeEventListener("submit", submitHandler);
+      }
     };
   }, []);
 
