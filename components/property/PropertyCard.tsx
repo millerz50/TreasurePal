@@ -8,15 +8,25 @@ import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useState } from "react";
 
+// Safe resolver for fileId (handles string or { $id })
+function resolveFileId(
+  file: string | { $id: string } | null | undefined
+): string | null {
+  if (!file) return null;
+  if (typeof file === "string") return file;
+  if (typeof file === "object" && "$id" in file) return file.$id;
+  return null;
+}
+
 // Helper to generate Appwrite public URL from fileId
 function getAppwriteFileUrl(fileId: string | null) {
   if (!fileId) return "";
-  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!; // should be https://nyc.cloud.appwrite.io
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
   return `${endpoint}/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
-//
+
 // Property type
 export type Property = {
   id: string;
@@ -28,7 +38,7 @@ export type Property = {
   rooms: number;
   amenities: string[];
   images: {
-    frontElevation?: string | null;
+    frontElevation?: string | { $id: string } | null;
   };
 };
 
@@ -48,7 +58,7 @@ export default function PropertyCard({ property }: { property: Property }) {
   } = property;
 
   // Only use frontElevation
-  const mainImageId = images.frontElevation || null;
+  const mainImageId = resolveFileId(images.frontElevation);
 
   // Debug log (remove in production)
   if (mainImageId) {
