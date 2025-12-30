@@ -17,8 +17,6 @@ import { BedDouble, MapPin, ShieldCheck, Sparkles, Wifi } from "lucide-react";
 import type { ComponentType } from "react";
 import { MdOutlineHome } from "react-icons/md";
 
-import { Navigation } from "swiper/modules/navigation";
-import { Thumbs } from "swiper/modules/thumbs";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 /* ------------------- helpers ------------------- */
@@ -90,8 +88,33 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
     images.floorPlan && getAppwriteFileUrl(images.floorPlan),
   ].filter(Boolean) as string[];
 
-  // Swiper thumbs state (use any to avoid missing Swiper types)
+  // Swiper thumbs state (use any to avoid brittle type resolution)
   const [thumbsSwiper, setThumbsSwiper] = useState<any | null>(null);
+
+  // Dynamically load Swiper modules at runtime to avoid package export issues
+  const [swiperModules, setSwiperModules] = useState<any[]>([]);
+  useEffect(() => {
+    let mounted = true;
+    // dynamic import from top-level 'swiper' package
+    import("swiper")
+      .then((mod) => {
+        if (!mounted) return;
+        // Some Swiper builds export Navigation/Thumbs as named exports on the top-level package
+        // We guard access and push only what exists
+        const modules: any[] = [];
+        if (mod.Navigation) modules.push(mod.Navigation);
+        if (mod.Thumbs) modules.push(mod.Thumbs);
+        // fallback: some builds expose default or other shapes; this is defensive
+        setSwiperModules(modules);
+      })
+      .catch(() => {
+        // ignore; if modules can't be loaded, Swiper will still work without them (no nav/thumbs)
+        setSwiperModules([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Map refs and lazy init
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -160,10 +183,10 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
   const frontImageUrl =
     images.frontElevation && getAppwriteFileUrl(images.frontElevation);
 
-  // Swiper options (no explicit SwiperOptions type to avoid TS issues)
+  // Swiper options (pass dynamically loaded modules)
   const mainOptions = {
-    modules: [Navigation, Thumbs],
-    navigation: true,
+    modules: swiperModules,
+    navigation: swiperModules.length > 0, // enable navigation only if module loaded
     spaceBetween: 10,
   };
 
@@ -187,9 +210,7 @@ export default function PropertyDetails({ property }: PropertyDetailsProps) {
                     priority={i === 0}
                     sizes="(max-width: 768px) 100vw, 1200px"
                   />
-                  {/* subtle overlay for text readability */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-                  {/* title + price */}
                   <div className="absolute left-6 bottom-6 text-white">
                     <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500">
                       {title}
