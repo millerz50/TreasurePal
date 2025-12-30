@@ -6,7 +6,7 @@ export default async function PropertyPage({
 }: {
   params: { id: string };
 }) {
-  const { id } = params;
+  const id = params.id;
 
   // Call your Express API (adjust base URL to match your backend)
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/property/${id}`, {
@@ -27,7 +27,7 @@ export default async function PropertyPage({
   const property = await res.json();
 
   // Safely map coordinates into a tuple [lng, lat]
-  let coords: [number, number] | undefined = undefined;
+  let coords: [number, number] | undefined;
   if (
     property.coordinates &&
     typeof property.coordinates.lng === "number" &&
