@@ -42,7 +42,7 @@ export default function AgentForm({
     message: "",
   });
 
-  const [loadingUser, setLoadingUser] = useState<boolean>(false);
+  const [loadingUser, setLoadingUser] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{
     type: "idle" | "error" | "success";
@@ -54,15 +54,6 @@ export default function AgentForm({
     []
   );
 
-  /**
-   * On mount: check authentication by calling /api/users/me.
-   * - If not authenticated (401), redirect to /login immediately.
-   * - If authenticated, prefill form with user data.
-   *
-   * If initialAccountId is provided we still attempt to fetch the server profile
-   * to get the latest user details. The fetch uses credentials so cookies/sessions
-   * are forwarded.
-   */
   useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
@@ -78,8 +69,6 @@ export default function AgentForm({
         });
 
         if (res.status === 401) {
-          // Not authenticated — redirect to login
-          // Preserve current path so user can return after login
           const returnTo =
             typeof window !== "undefined"
               ? window.location.pathname
@@ -89,7 +78,6 @@ export default function AgentForm({
         }
 
         if (!res.ok) {
-          // Other non-auth error — stop loading and allow manual entry
           if (mounted) setLoadingUser(false);
           return;
         }
@@ -108,8 +96,8 @@ export default function AgentForm({
             city: u.city ?? values.city,
           });
         }
-      } catch (error) {
-        // Network or abort — do nothing (user can still fill form)
+      } catch {
+        // intentionally ignored
       } finally {
         if (mounted) setLoadingUser(false);
       }
@@ -121,8 +109,7 @@ export default function AgentForm({
       mounted = false;
       controller.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialAccountId, update, router]);
+  }, [initialAccountId, update, router, values]);
 
   const validate = (v: AgentFormValues) => {
     if (!v.accountid || typeof v.accountid !== "string")
@@ -159,13 +146,13 @@ export default function AgentForm({
         message: values.message || null,
       };
 
-      const result = await submitAgentApplication(payload);
+      await submitAgentApplication(payload);
+
       setStatus({
         type: "success",
         message: "Application submitted. We'll be in touch.",
       });
 
-      // keep accountid and userId but clear other fields
       setValues((prev) => ({
         accountid: prev.accountid,
         userId: prev.userId,
@@ -181,13 +168,11 @@ export default function AgentForm({
       }));
 
       onSuccess?.();
-      return result;
     } catch (err: any) {
       setStatus({
         type: "error",
         message: err?.message || "Submission failed",
       });
-      return null;
     } finally {
       setSubmitting(false);
     }
@@ -195,7 +180,6 @@ export default function AgentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      {/* Hidden account id (prefilled from server) */}
       <input type="hidden" name="accountid" value={values.accountid} />
 
       {loadingUser && (
@@ -276,7 +260,6 @@ export default function AgentForm({
             value={values.licenseNumber}
             onChange={(e) => update({ licenseNumber: e.target.value })}
             className="mt-1 block w-full rounded-md border px-3 py-2"
-            placeholder="License #"
           />
         </label>
 
@@ -287,7 +270,6 @@ export default function AgentForm({
             value={values.agencyId}
             onChange={(e) => update({ agencyId: e.target.value })}
             className="mt-1 block w-full rounded-md border px-3 py-2"
-            placeholder="Agency ID"
           />
         </label>
       </div>
@@ -301,7 +283,6 @@ export default function AgentForm({
           onChange={(e) => update({ message: e.target.value })}
           rows={4}
           className="mt-1 block w-full rounded-md border px-3 py-2"
-          placeholder="Briefly describe your background"
         />
       </label>
 
