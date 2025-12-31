@@ -7,10 +7,9 @@ import AgentForm from "./AgentForm";
 type Props = {
   open: boolean;
   onClose: () => void;
-  accountid?: string;
 };
 
-export default function AgentJoinModal({ open, onClose, accountid }: Props) {
+export default function AgentJoinModal({ open, onClose }: Props) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // Focus management and escape handling
