@@ -65,7 +65,7 @@ export default function AgentForm({
         const API_BASE = process.env.NEXT_PUBLIC_API_URL;
         if (!API_BASE) throw new Error("API base URL is not configured");
 
-        const res = await fetch(`${API_BASE}/users/me`, {
+        const res = await fetch(`${API_BASE}/api/users/me`, {
           method: "GET",
           headers: { Accept: "application/json" },
           credentials: "include",
