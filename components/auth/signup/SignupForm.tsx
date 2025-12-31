@@ -22,7 +22,7 @@ import PasswordField from "./PasswordField";
 /* ----------------------------------
    DEBUG UTILITIES
 ----------------------------------- */
-const DEBUG = true;
+const DEBUG = false; // set to true to enable debug logs
 function logGroup(label: string, data?: unknown) {
   if (!DEBUG) return;
   console.groupCollapsed(`🔎 ${label}`);
@@ -201,7 +201,6 @@ export default function SignupForm({
         );
 
         if (!uploadRes.ok) {
-          const uploadBody = await safeJson(uploadRes);
           toast.error("Avatar upload failed", {
             icon: <AlertTriangle className="w-5 h-5" />,
           });
@@ -211,11 +210,12 @@ export default function SignupForm({
       toast.success("Account created!", {
         icon: <CheckCircle className="w-5 h-5" />,
       });
+
       window.location.href = `${redirectTo}?email=${encodeURIComponent(
         parsed.email
       )}`;
     } catch (err: any) {
-      console.error("Signup error:", err);
+      if (DEBUG) console.error("Signup error:", err);
       toast.error(err?.message || "Signup failed", {
         icon: <AlertTriangle className="w-5 h-5" />,
       });
@@ -242,13 +242,11 @@ export default function SignupForm({
         <AvatarField
           avatar={avatar}
           onChange={(file: File | null) => {
+            setAvatar(file);
             if (file) {
-              setAvatar(file);
               toast.success("Avatar selected", {
                 icon: <Camera className="w-5 h-5" />,
               });
-            } else {
-              setAvatar(null);
             }
           }}
         />
