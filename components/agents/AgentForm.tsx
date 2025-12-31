@@ -64,10 +64,17 @@ export default function AgentForm({
         const controller = new AbortController();
         const API_BASE = process.env.NEXT_PUBLIC_API_URL;
         if (!API_BASE) throw new Error("API base URL is not configured");
-
+        const jwt = localStorage.getItem("token"); // adjust key name as needed
+        if (!jwt) {
+    console.log('no jwt');
+          return;
+        }
         const res = await fetch(`${API_BASE}/api/users/me`, {
           method: "GET",
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${jwt}`, // ✅ include your auth token here
+          },
           credentials: "include",
           signal: controller.signal,
         });
