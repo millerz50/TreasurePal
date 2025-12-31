@@ -14,28 +14,15 @@ import DOBField from "./DOBField";
 import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
 
-/* ----------------------------------
-   PROPS
------------------------------------ */
-
 interface SignupFormProps {
   redirectTo?: string;
 }
-
-/* ----------------------------------
-   COMPONENT
------------------------------------ */
 
 export default function SignupForm({
   redirectTo = "/auth/signin",
 }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
-
-  /* ----------------------------------
-     FORM STATE (SERVER-ALIGNED)
-     🔒 USER ALWAYS STARTS AS "user"
-  ----------------------------------- */
 
   const [form, setForm] = useState<SignupFormData>({
     accountid: crypto.randomUUID(),
@@ -52,10 +39,6 @@ export default function SignupForm({
     dateOfBirth: undefined,
   });
 
-  /* ----------------------------------
-     PHONE FORMATTER
-  ----------------------------------- */
-
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
 
   const updateField = (name: string, value: any) =>
@@ -67,13 +50,11 @@ export default function SignupForm({
     >
   ) => {
     const { name, value } = e.target;
-
     if (name === "phone") {
       setPhone(value);
       updateField("phone", value);
       return;
     }
-
     updateField(name, value);
   };
 
@@ -85,29 +66,18 @@ export default function SignupForm({
     const { name, value } = e.target;
     const trimmed = value.trim();
     updateField(name, trimmed === "" ? undefined : trimmed);
-
     if (name === "phone") setPhone(trimmed);
   };
-
-  /* ----------------------------------
-     IMAGE UPLOAD
-  ----------------------------------- */
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       alert("Please upload a valid image");
       return;
     }
-
     setAvatar(file);
   };
-
-  /* ----------------------------------
-     CLEAN PAYLOAD
-  ----------------------------------- */
 
   const cleanForm = (obj: Record<string, any>) =>
     Object.fromEntries(
@@ -122,22 +92,14 @@ export default function SignupForm({
         .filter(([, v]) => v !== undefined)
     );
 
-  /* ----------------------------------
-     SUBMIT
-  ----------------------------------- */
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const payload = cleanForm(form);
       payload.email = payload.email.toLowerCase();
-
-      // 📞 Phone → E.164
       payload.phone = getE164() ?? undefined;
 
-      // Send JSON payload for signup
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
         {
@@ -152,11 +114,10 @@ export default function SignupForm({
         throw new Error(body?.message || "Signup failed");
       }
 
-      // Upload avatar separately if provided
       if (avatar) {
         const avatarForm = new FormData();
         avatarForm.append("file", avatar);
-        avatarForm.append("accountid", payload.accountid); // link file to user if needed
+        avatarForm.append("accountid", payload.accountid);
 
         const uploadRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/storage/upload`,
@@ -165,13 +126,11 @@ export default function SignupForm({
             body: avatarForm,
           }
         );
-
         if (!uploadRes.ok) {
           console.warn("Avatar upload failed");
         }
       }
 
-      // Redirect after success
       window.location.href = `${redirectTo}?email=${encodeURIComponent(
         payload.email
       )}`;
@@ -183,13 +142,11 @@ export default function SignupForm({
     }
   };
 
-  /* ----------------------------------
-     UI
-  ----------------------------------- */
-
   return (
     <motion.form
       onSubmit={handleSubmit}
+      noValidate
+      autoComplete="off"
       className="w-full max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl
                  bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
       initial={{ opacity: 0, y: 20 }}
@@ -198,7 +155,6 @@ export default function SignupForm({
       <div
         className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md
                       p-6 shadow-lg space-y-6 flex flex-col">
-        {/* IMAGE */}
         <div className="flex flex-col items-center gap-3">
           <label className="font-medium text-sm">Profile Photo</label>
           <input
@@ -210,13 +166,11 @@ export default function SignupForm({
         </div>
 
         <NameFields form={form} onChange={handleChange} onBlur={handleBlur} />
-
         <ContactFields
           form={{ ...form, phone }}
           onChange={handleChange}
           onBlur={handleBlur}
         />
-
         <CountryLocationFields
           form={form}
           onChange={handleChange}
@@ -224,11 +178,8 @@ export default function SignupForm({
             setForm((prev) => ({ ...prev, location: loc.name.trim() }))
           }
         />
-
         <BioField form={form} onChange={handleChange} />
-
         <DOBField form={form} onChange={handleChange} onBlur={handleBlur} />
-
         <PasswordField
           form={form}
           onChange={handleChange}
