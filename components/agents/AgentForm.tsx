@@ -2,7 +2,9 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { submitAgentApplication, type AgentPayload } from "@/lib/api/agents";
+import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export type AgentFormValues = {
   userId?: string;
@@ -24,6 +26,7 @@ export default function AgentForm({
   onSuccess?: () => void;
   userAccountId?: string;
 }) {
+  const router = useRouter();
   const { user, loading } = useAuth();
 
   const [values, setValues] = useState<AgentFormValues>({
@@ -40,29 +43,34 @@ export default function AgentForm({
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState<{
-    type: "idle" | "error" | "success";
-    message?: string;
-  }>({ type: "idle" });
 
   /* ----------------------------------
-     PREFILL FROM AUTH CONTEXT OR PROP
+     AUTH GUARD + PREFILL
   ----------------------------------- */
   useEffect(() => {
-    if (!user && !userAccountId) return;
+    if (loading) return;
 
-    setValues((v) => ({
-      ...v,
-      userId: user?.userId || userAccountId,
-      fullName:
-        user?.firstName && user?.surname
-          ? `${user.firstName} ${user.surname}`
-          : v.fullName,
-      email: user?.email || v.email,
-      phone: user?.phone || v.phone,
-      city: user?.country || v.city,
-    }));
-  }, [user, userAccountId]);
+    // ❌ Not logged in
+    if (!user && !userAccountId) {
+      toast.error("You need an account to apply for an agency.");
+      router.push("/auth/signup");
+      return;
+    }
+
+    if (user) {
+      setValues((v) => ({
+        ...v,
+        userId: user.userId,
+        fullName:
+          user.firstName && user.surname
+            ? `${user.firstName} ${user.surname}`
+            : v.fullName,
+        email: user.email,
+        phone: user.phone || v.phone,
+        city: user.country || v.city,
+      }));
+    }
+  }, [user, userAccountId, loading, router]);
 
   const update = useCallback(
     (patch: Partial<AgentFormValues>) => setValues((v) => ({ ...v, ...patch })),
@@ -70,7 +78,7 @@ export default function AgentForm({
   );
 
   const validate = (v: AgentFormValues) => {
-    if (!v.userId) return "User ID is required.";
+    if (!v.userId) return "You must be logged in.";
     if (!v.fullName.trim()) return "Full name is required.";
     if (!/^\S+@\S+\.\S+$/.test(v.email)) return "Invalid email address.";
     return null;
@@ -78,11 +86,10 @@ export default function AgentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus({ type: "idle" });
 
     const err = validate(values);
     if (err) {
-      setStatus({ type: "error", message: err });
+      toast.error(err);
       return;
     }
 
@@ -105,10 +112,7 @@ export default function AgentForm({
 
       await submitAgentApplication(payload);
 
-      setStatus({
-        type: "success",
-        message: "Application submitted successfully.",
-      });
+      toast.success("Application submitted successfully!");
 
       setValues((v) => ({
         ...v,
@@ -121,21 +125,18 @@ export default function AgentForm({
 
       onSuccess?.();
     } catch (err: any) {
-      setStatus({
-        type: "error",
-        message: err?.message || "Submission failed",
-      });
+      toast.error(err?.message || "Submission failed");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading && !userAccountId) {
+  if (loading) {
     return <p className="text-sm text-slate-500">Loading your profile…</p>;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <input
           value={values.fullName}
@@ -213,21 +214,12 @@ export default function AgentForm({
         I confirm the information is accurate
       </label>
 
-      <div className="flex items-center gap-4">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="px-4 py-2 bg-emerald-600 text-white rounded disabled:opacity-60">
-          {submitting ? "Submitting…" : "Submit application"}
-        </button>
-
-        {status.type === "error" && (
-          <span className="text-red-600">{status.message}</span>
-        )}
-        {status.type === "success" && (
-          <span className="text-emerald-600">{status.message}</span>
-        )}
-      </div>
+      <button
+        type="submit"
+        disabled={submitting}
+        className="px-4 py-2 bg-emerald-600 text-white rounded disabled:opacity-60">
+        {submitting ? "Submitting…" : "Submit application"}
+      </button>
     </form>
   );
 }
