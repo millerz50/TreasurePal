@@ -12,13 +12,18 @@ export type AgentPayload = {
   verified?: boolean | null;
   message?: string | null;
 };
-
 export async function submitAgentApplication(payload: AgentPayload) {
-  const res = await fetch("/api/agents/apply", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const res = await fetch(
+    "https://treasurepalapi.onrender.com/api/agents/apply",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
 
   if (!res.ok) {
     const json = await res.json().catch(() => null);
