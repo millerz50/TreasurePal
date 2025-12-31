@@ -61,7 +61,11 @@ export default function AgentForm({
     async function fetchMe() {
       setLoadingUser(true);
       try {
-        const res = await fetch("/api/users/me", {
+        const controller = new AbortController();
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+        if (!API_BASE) throw new Error("API base URL is not configured");
+
+        const res = await fetch(`${API_BASE}/users/me`, {
           method: "GET",
           headers: { Accept: "application/json" },
           credentials: "include",
@@ -76,12 +80,6 @@ export default function AgentForm({
           router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
           return;
         }
-
-        if (!res.ok) {
-          if (mounted) setLoadingUser(false);
-          return;
-        }
-
         const json = await res.json();
         if (!mounted) return;
 
