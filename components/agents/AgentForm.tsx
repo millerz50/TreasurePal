@@ -2,7 +2,6 @@
 "use client";
 
 import { submitAgentApplication, type AgentPayload } from "@/lib/api/agents";
-import { useRouter } from "next/navigation";
 import { Account, Client } from "node-appwrite";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -20,8 +19,6 @@ export type AgentFormValues = {
 };
 
 export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
-  const router = useRouter();
-
   const [values, setValues] = useState<AgentFormValues>({
     userId: undefined,
     fullName: "",
