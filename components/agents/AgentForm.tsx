@@ -3,15 +3,15 @@
 
 import { submitAgentApplication, type AgentPayload } from "@/lib/api/agents";
 import { useRouter } from "next/navigation";
+import { Account, Client } from "node-appwrite";
 import React, { useCallback, useEffect, useState } from "react";
 
 export type AgentFormValues = {
-  accountid?: string;
   userId?: string;
   fullName: string;
   email: string;
   phone?: string;
-  city?: string;
+  city?: string; // maps to Appwrite custom attribute or location
   licenseNumber?: string;
   agencyId?: string;
   rating?: number | "";
@@ -19,17 +19,10 @@ export type AgentFormValues = {
   message?: string;
 };
 
-export default function AgentForm({
-  accountid: initialAccountId,
-  onSuccess,
-}: {
-  accountid?: string;
-  onSuccess?: () => void;
-}) {
+export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
   const router = useRouter();
 
   const [values, setValues] = useState<AgentFormValues>({
-    accountid: initialAccountId ?? "",
     userId: undefined,
     fullName: "",
     email: "",
@@ -56,53 +49,41 @@ export default function AgentForm({
 
   useEffect(() => {
     let mounted = true;
-    const controller = new AbortController();
 
     async function fetchMe() {
       setLoadingUser(true);
       try {
-        const controller = new AbortController();
         const API_BASE = process.env.NEXT_PUBLIC_API_URL;
         if (!API_BASE) throw new Error("API base URL is not configured");
-        const jwt = localStorage.getItem("token"); // adjust key name as needed
-        if (!jwt) {
-    console.log('no jwt');
-          return;
-        }
-        const res = await fetch(`${API_BASE}/api/users/me`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${jwt}`, // ✅ include your auth token here
-          },
-          credentials: "include",
-          signal: controller.signal,
-        });
 
-        if (res.status === 401) {
-          const returnTo =
-            typeof window !== "undefined"
-              ? window.location.pathname
-              : "/agents/join";
-          router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
-          return;
-        }
-        const json = await res.json();
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const client = new Client()
+          .setEndpoint(API_BASE)
+          .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "")
+          .setJWT(token);
+
+        const account = new Account(client);
+        const user = await account.get();
+
         if (!mounted) return;
 
-        if (json?.success && json?.data) {
-          const u = json.data;
-          update({
-            accountid: u.accountid ?? u.$id ?? u.id ?? values.accountid,
-            userId: u.$id ?? u.id ?? u.userId ?? values.userId,
-            fullName: u.fullName ?? u.name ?? values.fullName,
-            email: u.email ?? values.email,
-            phone: u.phone ?? values.phone,
-            city: u.city ?? values.city,
-          });
-        }
-      } catch {
-        // intentionally ignored
+        // Combine firstName + surname if available, or fallback to name
+        const fullName =
+          user.prefs?.firstName && user.prefs?.surname
+            ? `${user.prefs.firstName} ${user.prefs.surname}`
+            : user.name || "";
+
+        update({
+          userId: user.$id,
+          fullName: fullName.trim(),
+          email: user.email,
+          phone: user.phone || "",
+          city: (user.prefs?.location as string) || "",
+        });
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
       } finally {
         if (mounted) setLoadingUser(false);
       }
@@ -112,13 +93,12 @@ export default function AgentForm({
 
     return () => {
       mounted = false;
-      controller.abort();
     };
-  }, [initialAccountId, update, router, values]);
+  }, [update]);
 
   const validate = (v: AgentFormValues) => {
-    if (!v.accountid || typeof v.accountid !== "string")
-      return "Account id is required (login required).";
+    if (!v.userId || typeof v.userId !== "string")
+      return "User ID is required (login required).";
     if (!v.fullName.trim()) return "Please enter your full name.";
     if (!/^\S+@\S+\.\S+$/.test(v.email || ""))
       return "Please enter a valid email.";
@@ -138,8 +118,8 @@ export default function AgentForm({
     setSubmitting(true);
     try {
       const payload: AgentPayload = {
-        accountid: values.accountid!,
-        userId: values.userId ?? null,
+        accountid: values.userId!, // required for Appwrite
+        userId: values.userId!,
         fullName: values.fullName || null,
         email: values.email || null,
         phone: values.phone || null,
@@ -158,9 +138,9 @@ export default function AgentForm({
         message: "Application submitted. We'll be in touch.",
       });
 
-      setValues((prev) => ({
-        accountid: prev.accountid,
-        userId: prev.userId,
+      // reset form but keep userId
+      setValues({
+        userId: values.userId,
         fullName: "",
         email: "",
         phone: "",
@@ -170,7 +150,7 @@ export default function AgentForm({
         rating: "",
         verified: false,
         message: "",
-      }));
+      });
 
       onSuccess?.();
     } catch (err: any) {
@@ -185,8 +165,6 @@ export default function AgentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      <input type="hidden" name="accountid" value={values.accountid} />
-
       {loadingUser && (
         <div className="text-sm text-slate-500">Loading your profile…</div>
       )}
@@ -200,7 +178,7 @@ export default function AgentForm({
             onChange={(e) => update({ fullName: e.target.value })}
             required
             className="mt-1 block w-full rounded-md border px-3 py-2"
-            placeholder="Jane Doe"
+            placeholder="John Doe"
           />
         </label>
 
