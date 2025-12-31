@@ -137,7 +137,7 @@ export default function SignupForm({
       // 📞 Phone → E.164
       payload.phone = getE164() ?? undefined;
 
-      // Send JSON payload
+      // Send JSON payload for signup
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
         {
@@ -152,16 +152,26 @@ export default function SignupForm({
         throw new Error(body?.message || "Signup failed");
       }
 
-      // Upload avatar separately if needed
+      // Upload avatar separately if provided
       if (avatar) {
         const avatarForm = new FormData();
         avatarForm.append("file", avatar);
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/storage/upload`, {
-          method: "POST",
-          body: avatarForm,
-        });
+        avatarForm.append("accountid", payload.accountid); // link file to user if needed
+
+        const uploadRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/storage/upload`,
+          {
+            method: "POST",
+            body: avatarForm,
+          }
+        );
+
+        if (!uploadRes.ok) {
+          console.warn("Avatar upload failed");
+        }
       }
 
+      // Redirect after success
       window.location.href = `${redirectTo}?email=${encodeURIComponent(
         payload.email
       )}`;
