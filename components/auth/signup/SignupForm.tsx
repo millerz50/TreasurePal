@@ -1,10 +1,11 @@
+// src/features/auth/components/SignupForm.tsx
 "use client";
 
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Button } from "../../../components/ui/button";
 import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
-import { SignupFormData } from "../SignupSchema";
+import { SignupFormData, SignupSchema } from "../SignupSchema";
 import SocialSignup from "../SocialSignup";
 
 import BioField from "./BioField";
@@ -32,7 +33,7 @@ export default function SignupForm({
     phone: undefined,
     country: "",
     location: "",
-    roles: ["user"], // 🔒 FIXED
+    roles: ["user"],
     status: "Pending",
     bio: undefined,
     password: "",
@@ -95,17 +96,21 @@ export default function SignupForm({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const payload = cleanForm(form);
       payload.email = payload.email.toLowerCase();
       payload.phone = getE164() ?? undefined;
+
+      // ✅ Run Zod validation before sending
+      const parsed = SignupSchema.parse(payload);
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(parsed),
         }
       );
 
@@ -117,7 +122,7 @@ export default function SignupForm({
       if (avatar) {
         const avatarForm = new FormData();
         avatarForm.append("file", avatar);
-        avatarForm.append("accountid", payload.accountid);
+        avatarForm.append("accountid", parsed.accountid);
 
         const uploadRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/storage/upload`,
@@ -132,7 +137,7 @@ export default function SignupForm({
       }
 
       window.location.href = `${redirectTo}?email=${encodeURIComponent(
-        payload.email
+        parsed.email
       )}`;
     } catch (err: any) {
       console.error("Signup error:", err);
