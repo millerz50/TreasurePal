@@ -137,25 +137,29 @@ export default function SignupForm({
       // 📞 Phone → E.164
       payload.phone = getE164() ?? undefined;
 
-      // 📦 Multipart (image + json)
-      const formData = new FormData();
-      formData.append("data", JSON.stringify(payload));
-
-      if (avatar) {
-        formData.append("avatar", avatar);
-      }
-
+      // Send JSON payload
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
         {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         }
       );
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.message || "Signup failed");
+      }
+
+      // Upload avatar separately if needed
+      if (avatar) {
+        const avatarForm = new FormData();
+        avatarForm.append("file", avatar);
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/storage/upload`, {
+          method: "POST",
+          body: avatarForm,
+        });
       }
 
       window.location.href = `${redirectTo}?email=${encodeURIComponent(
