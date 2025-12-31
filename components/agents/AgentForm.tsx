@@ -39,9 +39,7 @@ async function submitAgentApplication(payload: AgentPayload) {
 
   const res = await fetch(`${API_BASE_URL}/api/agents/apply`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
@@ -78,7 +76,7 @@ export default function AgentForm({
 
   const [submitting, setSubmitting] = useState(false);
 
-  // Pre-fill user info if logged in
+  // Prefill user info if logged in
   useEffect(() => {
     if (loading) return;
 
