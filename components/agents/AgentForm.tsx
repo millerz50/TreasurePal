@@ -1,4 +1,3 @@
-// components/agents/AgentForm.tsx
 "use client";
 
 import { submitAgentApplication, type AgentPayload } from "@/lib/api/agents";
@@ -66,7 +65,6 @@ export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
 
         if (!mounted) return;
 
-        // Combine firstName + surname if available, or fallback to name
         const fullName =
           user.prefs?.firstName && user.prefs?.surname
             ? `${user.prefs.firstName} ${user.prefs.surname}`
@@ -94,8 +92,7 @@ export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
   }, [update]);
 
   const validate = (v: AgentFormValues) => {
-    if (!v.userId || typeof v.userId !== "string")
-      return "User ID is required (login required).";
+    if (!v.userId) return "User ID is required (login required).";
     if (!v.fullName.trim()) return "Please enter your full name.";
     if (!/^\S+@\S+\.\S+$/.test(v.email || ""))
       return "Please enter a valid email.";
@@ -115,7 +112,7 @@ export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
     setSubmitting(true);
     try {
       const payload: AgentPayload = {
-        accountid: values.userId!, // required for Appwrite
+        accountid: values.userId!,
         userId: values.userId!,
         fullName: values.fullName || null,
         email: values.email || null,

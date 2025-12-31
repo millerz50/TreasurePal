@@ -1,4 +1,3 @@
-// components/agents/AgentJoinModal.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -60,7 +59,7 @@ export default function AgentJoinModal({ open, onClose }: Props) {
         </div>
 
         <div className="p-6">
-          <AgentForm onSuccess={() => onClose()} />
+          <AgentForm onSuccess={onClose} />
         </div>
       </div>
     </div>
