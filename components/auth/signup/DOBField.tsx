@@ -18,12 +18,13 @@ interface DOBFieldProps {
 
 export default function DOBField({ form, onChange, onBlur }: DOBFieldProps) {
   return (
-    <div>
+    <div className="flex flex-col space-y-2 w-full">
       <label
         htmlFor="dateOfBirth"
         className="text-sm font-semibold text-slate-700">
         Date of Birth
       </label>
+
       <input
         id="dateOfBirth"
         name="dateOfBirth"
@@ -31,7 +32,13 @@ export default function DOBField({ form, onChange, onBlur }: DOBFieldProps) {
         value={form.dateOfBirth || ""}
         onChange={onChange}
         onBlur={onBlur}
-        className="input w-full"
+        className="
+          w-full rounded-xl border border-slate-300 
+          bg-white p-3 text-slate-800 
+          shadow-sm placeholder-slate-400
+          focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
+          transition-all duration-300 ease-in-out
+        "
         required
       />
     </div>

@@ -34,7 +34,6 @@ export default function CountryLocationFields({
           Country
         </label>
 
-        {/* apply styling to a wrapper instead of passing className to CountrySelect */}
         <div
           className="
             w-full rounded-xl border border-slate-300 
@@ -56,7 +55,6 @@ export default function CountryLocationFields({
           Location
         </label>
 
-        {/* apply styling to a wrapper instead of passing className to LocationSearch */}
         <div
           className="
             w-full rounded-xl border border-slate-300 

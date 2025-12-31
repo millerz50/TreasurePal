@@ -1,33 +1,39 @@
 import React from "react";
 
 interface AvatarFieldProps {
-  form: { avatarUrl?: string };
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  avatar?: File | null;
+  onChange: (file: File | null) => void;
 }
 
-export default function AvatarField({ form, onChange }: AvatarFieldProps) {
+export default function AvatarField({ avatar, onChange }: AvatarFieldProps) {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    onChange(file);
+  };
+
   return (
-    <div>
-      <label
-        htmlFor="avatarUrl"
-        className="text-sm font-semibold text-slate-700">
+    <div className="flex flex-col gap-2">
+      <label htmlFor="avatar" className="text-sm font-semibold text-slate-700">
         Avatar
       </label>
+
       <input
-        id="avatarUrl"
-        name="avatarUrl"
-        type="file" // ✅ use file input
-        accept="image/*" // restrict to images
-        onChange={onChange} // handle file selection
+        id="avatar"
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
         className="input"
       />
 
-      {/* Optional preview if avatarUrl is set */}
-      {form.avatarUrl && (
+      {avatar && (
         <img
-          src={form.avatarUrl}
+          src={URL.createObjectURL(avatar)}
           alt="Avatar preview"
-          className="mt-2 h-16 w-16 rounded-full object-cover"
+          className="mt-2 h-16 w-16 rounded-full object-cover border"
+          onLoad={(e) => {
+            // cleanup memory
+            URL.revokeObjectURL((e.target as HTMLImageElement).src);
+          }}
         />
       )}
     </div>

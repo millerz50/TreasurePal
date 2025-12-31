@@ -1,12 +1,17 @@
+// src/features/auth/components/SignupForm.tsx
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { AlertTriangle, Camera, CheckCircle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "../../../components/ui/button";
+
 import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
-import { SignupFormData } from "../SignupSchema";
+import { SignupFormData, SignupSchema } from "../SignupSchema";
 import SocialSignup from "../SocialSignup";
 
+import AvatarField from "./AvatarField";
 import BioField from "./BioField";
 import ContactFields from "./ContactFields";
 import CountryLocationFields from "./CountryLocationFields";
@@ -15,9 +20,37 @@ import NameFields from "./NameFields";
 import PasswordField from "./PasswordField";
 
 /* ----------------------------------
+   DEBUG UTILITIES
+----------------------------------- */
+const DEBUG = true;
+function logGroup(label: string, data?: unknown) {
+  if (!DEBUG) return;
+  console.groupCollapsed(`🔎 ${label}`);
+  if (data !== undefined) console.log(data);
+  console.groupEnd();
+}
+
+function formatZodError(err: unknown) {
+  if (!err || typeof err !== "object") return String(err);
+  const anyErr = err as any;
+  if (Array.isArray(anyErr?.issues)) {
+    return anyErr.issues
+      .map((i: any) => `• ${i.path?.join(".") || "(root)"}: ${i.message}`)
+      .join("\n");
+  }
+  return String(err);
+}
+
+function safeJson(res: Response) {
+  return res
+    .clone()
+    .json()
+    .catch(() => null);
+}
+
+/* ----------------------------------
    PROPS
 ----------------------------------- */
-
 interface SignupFormProps {
   redirectTo?: string;
 }
@@ -25,27 +58,23 @@ interface SignupFormProps {
 /* ----------------------------------
    COMPONENT
 ----------------------------------- */
-
 export default function SignupForm({
   redirectTo = "/auth/signin",
 }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
 
-  /* ----------------------------------
-     FORM STATE (SERVER-ALIGNED)
-     🔒 USER ALWAYS STARTS AS "user"
-  ----------------------------------- */
+  const initialAccountIdRef = useRef<string>(crypto.randomUUID());
 
   const [form, setForm] = useState<SignupFormData>({
-    accountid: crypto.randomUUID(),
+    accountid: initialAccountIdRef.current,
     email: "",
     firstName: "",
     surname: "",
     phone: undefined,
     country: "",
     location: "",
-    roles: ["user"], // 🔒 FIXED
+    roles: ["user"],
     status: "Pending",
     bio: undefined,
     password: "",
@@ -55,9 +84,29 @@ export default function SignupForm({
   /* ----------------------------------
      PHONE FORMATTER
   ----------------------------------- */
-
   const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
+  const formWithDerivedPhone = useMemo(
+    () => ({ ...form, phone }),
+    [form, phone]
+  );
 
+  /* ----------------------------------
+     DEBUG: State changes
+  ----------------------------------- */
+  useEffect(() => {
+    logGroup("Form state changed", form);
+  }, [form]);
+
+  useEffect(() => {
+    logGroup("Display phone changed", {
+      displayPhone: phone,
+      country: form.country,
+    });
+  }, [phone, form.country]);
+
+  /* ----------------------------------
+     HANDLERS
+  ----------------------------------- */
   const updateField = (name: string, value: any) =>
     setForm((prev) => ({ ...prev, [name]: value }));
 
@@ -67,13 +116,11 @@ export default function SignupForm({
     >
   ) => {
     const { name, value } = e.target;
-
     if (name === "phone") {
       setPhone(value);
       updateField("phone", value);
       return;
     }
-
     updateField(name, value);
   };
 
@@ -85,86 +132,95 @@ export default function SignupForm({
     const { name, value } = e.target;
     const trimmed = value.trim();
     updateField(name, trimmed === "" ? undefined : trimmed);
-
     if (name === "phone") setPhone(trimmed);
   };
 
-  /* ----------------------------------
-     IMAGE UPLOAD
-  ----------------------------------- */
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image");
-      return;
-    }
-
-    setAvatar(file);
-  };
-
-  /* ----------------------------------
-     CLEAN PAYLOAD
-  ----------------------------------- */
-
-  const cleanForm = (obj: Record<string, any>) =>
-    Object.fromEntries(
+  const cleanForm = (obj: Record<string, any>) => {
+    const cleaned = Object.fromEntries(
       Object.entries(obj)
-        .map(([k, v]) => {
-          if (typeof v === "string") {
-            const trimmed = v.trim();
-            return [k, trimmed === "" ? undefined : trimmed];
-          }
-          return [k, v];
-        })
+        .map(([k, v]) =>
+          typeof v === "string"
+            ? [k, v.trim() === "" ? undefined : v.trim()]
+            : [k, v]
+        )
         .filter(([, v]) => v !== undefined)
     );
+    return cleaned;
+  };
 
   /* ----------------------------------
      SUBMIT
   ----------------------------------- */
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    const tId = toast.loading("Creating your account...");
 
     try {
       const payload = cleanForm(form);
-      payload.email = payload.email.toLowerCase();
-
-      // 📞 Phone → E.164
+      payload.email = String(payload.email).toLowerCase();
       payload.phone = getE164() ?? undefined;
 
-      // 📦 Multipart (image + json)
-      const formData = new FormData();
-      formData.append("data", JSON.stringify(payload));
-
-      if (avatar) {
-        formData.append("avatar", avatar);
+      const parsedResult = SignupSchema.safeParse(payload);
+      if (!parsedResult.success) {
+        const formatted = formatZodError(parsedResult.error);
+        toast.error(formatted, { icon: <AlertTriangle className="w-5 h-5" /> });
+        throw new Error("Client validation failed");
       }
+
+      const parsed = parsedResult.data;
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
         {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsed),
         }
       );
 
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.message || "Signup failed");
+        const body = await safeJson(res);
+        throw new Error(
+          body?.message || body?.error || `Signup failed (${res.status})`
+        );
       }
 
+      // Avatar upload
+      if (avatar) {
+        const avatarForm = new FormData();
+        avatarForm.append("file", avatar);
+        avatarForm.append("accountid", parsed.accountid);
+
+        const uploadRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/storage/upload`,
+          {
+            method: "POST",
+            body: avatarForm,
+          }
+        );
+
+        if (!uploadRes.ok) {
+          const uploadBody = await safeJson(uploadRes);
+          toast.error("Avatar upload failed", {
+            icon: <AlertTriangle className="w-5 h-5" />,
+          });
+        }
+      }
+
+      toast.success("Account created!", {
+        icon: <CheckCircle className="w-5 h-5" />,
+      });
       window.location.href = `${redirectTo}?email=${encodeURIComponent(
-        payload.email
+        parsed.email
       )}`;
     } catch (err: any) {
       console.error("Signup error:", err);
-      alert(err?.message ?? "Signup failed. Please try again.");
+      toast.error(err?.message || "Signup failed", {
+        icon: <AlertTriangle className="w-5 h-5" />,
+      });
     } finally {
+      toast.dismiss(tId);
       setLoading(false);
     }
   };
@@ -172,49 +228,47 @@ export default function SignupForm({
   /* ----------------------------------
      UI
   ----------------------------------- */
-
   return (
     <motion.form
       onSubmit={handleSubmit}
+      noValidate
+      autoComplete="off"
       className="w-full max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl
                  bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}>
-      <div
-        className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md
-                      p-6 shadow-lg space-y-6 flex flex-col">
-        {/* IMAGE */}
-        <div className="flex flex-col items-center gap-3">
-          <label className="font-medium text-sm">Profile Photo</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-            className="text-sm"
-          />
-        </div>
+      <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
+        <AvatarField
+          avatar={avatar}
+          onChange={(file: File | null) => {
+            if (file) {
+              setAvatar(file);
+              toast.success("Avatar selected", {
+                icon: <Camera className="w-5 h-5" />,
+              });
+            } else {
+              setAvatar(null);
+            }
+          }}
+        />
 
         <NameFields form={form} onChange={handleChange} onBlur={handleBlur} />
-
         <ContactFields
-          form={{ ...form, phone }}
+          form={formWithDerivedPhone}
           onChange={handleChange}
           onBlur={handleBlur}
         />
-
         <CountryLocationFields
           form={form}
           onChange={handleChange}
-          onLocationSelect={(loc) =>
-            setForm((prev) => ({ ...prev, location: loc.name.trim() }))
-          }
+          onLocationSelect={(loc) => {
+            const name = loc?.name?.trim() ?? "";
+            setForm((prev) => ({ ...prev, location: name || undefined }));
+          }}
         />
-
         <BioField form={form} onChange={handleChange} />
-
         <DOBField form={form} onChange={handleChange} onBlur={handleBlur} />
-
         <PasswordField
           form={form}
           onChange={handleChange}
@@ -228,7 +282,6 @@ export default function SignupForm({
             className="btn-primary w-full sm:w-auto">
             {loading ? "Creating..." : "Create Account"}
           </Button>
-
           <a
             href="/auth/signin"
             className="btn-outline w-full sm:w-auto text-center">

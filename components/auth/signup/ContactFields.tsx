@@ -6,7 +6,6 @@ interface ContactFieldsProps {
   form: {
     email?: string;
     phone: string | null;
-
     [key: string]: any;
   };
   onChange: (
@@ -14,10 +13,6 @@ interface ContactFieldsProps {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => void;
-  /**
-   * Optional onBlur handler forwarded from parent.
-   * Accepts focus events from inputs/selects/textarea.
-   */
   onBlur?: (
     e: React.FocusEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -44,7 +39,8 @@ export default function ContactFields({
           value={form.email ?? ""}
           onChange={onChange}
           onBlur={onBlur}
-          className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 placeholder-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300 ease-in-out"
+          className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 placeholder-slate-400 shadow-sm 
+                     focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300 ease-in-out"
           placeholder="you@example.com"
         />
       </div>
@@ -61,7 +57,8 @@ export default function ContactFields({
           value={form.phone ?? ""}
           onChange={onChange}
           onBlur={onBlur}
-          className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 placeholder-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300 ease-in-out"
+          className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 placeholder-slate-400 shadow-sm 
+                     focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300 ease-in-out"
           placeholder="+1 555 555 5555"
         />
       </div>

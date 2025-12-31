@@ -22,7 +22,7 @@ export default function PasswordField({
   onBlur,
 }: PasswordFieldProps) {
   return (
-    <div>
+    <div className="flex flex-col space-y-2 w-full">
       <label
         htmlFor="password"
         className="text-sm font-semibold text-slate-700">
@@ -35,8 +35,14 @@ export default function PasswordField({
         value={form.password || ""}
         onChange={onChange}
         onBlur={onBlur}
-        className="input w-full"
         placeholder="Enter your password"
+        className="
+          w-full rounded-xl border border-slate-300 
+          bg-white p-3 text-slate-800 
+          shadow-sm placeholder-slate-400
+          focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
+          transition-all duration-300 ease-in-out
+        "
         required
       />
     </div>

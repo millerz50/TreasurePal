@@ -7,7 +7,7 @@ interface BioFieldProps {
   form: { bio?: string };
   onChange: (
     e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement
     >
   ) => void;
 }
@@ -31,8 +31,7 @@ export default function BioField({ form, onChange }: BioFieldProps) {
         rows={5}
         className="
           w-full rounded-xl border border-slate-300 
-          bg-white p-4 
-          text-slate-800 placeholder-slate-400 
+          bg-white p-4 text-slate-800 placeholder-slate-400 
           shadow-md resize-y
           focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
           transition-all duration-300 ease-in-out
