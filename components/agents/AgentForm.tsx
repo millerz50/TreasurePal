@@ -1,15 +1,13 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { submitAgentApplication, type AgentPayload } from "@/lib/api/agents";
-import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export type AgentFormValues = {
-  userId?: string;
+  userId?: string; // logged-in user's ID
   fullName: string;
-  email: string;
+  email?: string;
   phone?: string;
   city?: string;
   licenseNumber?: string;
@@ -19,6 +17,44 @@ export type AgentFormValues = {
   message?: string;
 };
 
+// Payload type for API
+export type AgentPayload = {
+  accountid: string; // maps to userId
+  userId: string;
+  fullName: string;
+  email?: string;
+  phone?: string | null;
+  city?: string | null;
+  licenseNumber?: string | null;
+  agencyId?: string | null;
+  rating?: number | null;
+  verified?: boolean;
+  message?: string | null;
+};
+
+// Submit to API function
+async function submitAgentApplication(payload: AgentPayload) {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  if (!API_BASE_URL) throw new Error("NEXT_PUBLIC_API_URL is not set");
+
+  const res = await fetch(`${API_BASE_URL}/api/agents/apply`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(
+      error?.message || `Failed to submit application: ${res.status}`
+    );
+  }
+
+  return res.json();
+}
+
 export default function AgentForm({
   onSuccess,
   userAccountId,
@@ -26,9 +62,7 @@ export default function AgentForm({
   onSuccess?: () => void;
   userAccountId?: string;
 }) {
-  const router = useRouter();
   const { user, loading } = useAuth();
-
   const [values, setValues] = useState<AgentFormValues>({
     userId: userAccountId,
     fullName: "",
@@ -44,16 +78,12 @@ export default function AgentForm({
 
   const [submitting, setSubmitting] = useState(false);
 
-  /* ----------------------------------
-     AUTH GUARD + PREFILL
-  ----------------------------------- */
+  // Pre-fill user info if logged in
   useEffect(() => {
     if (loading) return;
 
-    // ❌ Not logged in
     if (!user && !userAccountId) {
       toast.error("You need an account to apply for an agency.");
-      router.push("/auth/signup");
       return;
     }
 
@@ -70,7 +100,7 @@ export default function AgentForm({
         city: user.country || v.city,
       }));
     }
-  }, [user, userAccountId, loading, router]);
+  }, [user, userAccountId, loading]);
 
   const update = useCallback(
     (patch: Partial<AgentFormValues>) => setValues((v) => ({ ...v, ...patch })),
@@ -80,7 +110,8 @@ export default function AgentForm({
   const validate = (v: AgentFormValues) => {
     if (!v.userId) return "You must be logged in.";
     if (!v.fullName.trim()) return "Full name is required.";
-    if (!/^\S+@\S+\.\S+$/.test(v.email)) return "Invalid email address.";
+    if (v.email && !/^\S+@\S+\.\S+$/.test(v.email))
+      return "Invalid email address.";
     return null;
   };
 
@@ -144,7 +175,6 @@ export default function AgentForm({
           placeholder="Full name"
           className="input"
         />
-
         <input
           value={values.email}
           onChange={(e) => update({ email: e.target.value })}
@@ -160,14 +190,12 @@ export default function AgentForm({
           placeholder="Phone"
           className="input"
         />
-
         <input
           value={values.city}
           onChange={(e) => update({ city: e.target.value })}
           placeholder="City"
           className="input"
         />
-
         <input
           type="number"
           value={values.rating}
@@ -188,7 +216,6 @@ export default function AgentForm({
           placeholder="License number"
           className="input"
         />
-
         <input
           value={values.agencyId}
           onChange={(e) => update({ agencyId: e.target.value })}
