@@ -9,7 +9,7 @@ export type AgentFormValues = {
   fullName: string;
   email: string;
   phone?: string;
-  city?: string; // maps to Appwrite custom attribute or location
+  city?: string; // maps to Appwrite location
   licenseNumber?: string;
   agencyId?: string;
   rating?: number | "";
@@ -17,9 +17,15 @@ export type AgentFormValues = {
   message?: string;
 };
 
-export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
+export default function AgentForm({
+  onSuccess,
+  userAccountId,
+}: {
+  onSuccess?: () => void;
+  userAccountId?: string;
+}) {
   const [values, setValues] = useState<AgentFormValues>({
-    userId: undefined,
+    userId: userAccountId, // prefill if passed
     fullName: "",
     email: "",
     phone: "",
@@ -71,7 +77,7 @@ export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
             : user.name || "";
 
         update({
-          userId: user.$id,
+          userId: user.$id || userAccountId, // fallback to userAccountId
           fullName: fullName.trim(),
           email: user.email,
           phone: user.phone || "",
@@ -85,11 +91,10 @@ export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
     }
 
     fetchMe();
-
     return () => {
       mounted = false;
     };
-  }, [update]);
+  }, [update, userAccountId]);
 
   const validate = (v: AgentFormValues) => {
     if (!v.userId) return "User ID is required (login required).";
@@ -132,7 +137,6 @@ export default function AgentForm({ onSuccess }: { onSuccess?: () => void }) {
         message: "Application submitted. We'll be in touch.",
       });
 
-      // reset form but keep userId
       setValues({
         userId: values.userId,
         fullName: "",

@@ -1,19 +1,8 @@
-// components/agents/AgentJoinShell.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import AgentJoinModal from "./AgentJoinModal";
 
-/**
- * AgentJoinShell
- *
- * - Opens modal on page load (route /agents/join)
- * - Listens for `openAgentJoin` CustomEvent so other parts of the app can open the modal
- * - Accepts optional `accountid` prop (prefill from auth)
- *
- * Usage:
- * <AgentJoinShell accountid={currentAccountId} />
- */
 export default function AgentJoinShell({ accountid }: { accountid?: string }) {
   const [open, setOpen] = useState<boolean>(true);
 
@@ -71,6 +60,7 @@ export default function AgentJoinShell({ accountid }: { accountid?: string }) {
         </div>
       </div>
 
+      {/* Pass accountid to modal */}
       <AgentJoinModal
         open={open}
         onClose={() => setOpen(false)}

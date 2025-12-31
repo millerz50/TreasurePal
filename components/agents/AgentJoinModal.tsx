@@ -6,12 +6,12 @@ import AgentForm from "./AgentForm";
 type Props = {
   open: boolean;
   onClose: () => void;
+  accountid?: string; // optional
 };
 
-export default function AgentJoinModal({ open, onClose }: Props) {
+export default function AgentJoinModal({ open, onClose, accountid }: Props) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  // Focus management and escape handling
   useEffect(() => {
     if (!open) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -59,7 +59,8 @@ export default function AgentJoinModal({ open, onClose }: Props) {
         </div>
 
         <div className="p-6">
-          <AgentForm onSuccess={onClose} />
+          {/* Pass accountid to AgentForm if needed */}
+          <AgentForm onSuccess={onClose} userAccountId={accountid} />
         </div>
       </div>
     </div>
