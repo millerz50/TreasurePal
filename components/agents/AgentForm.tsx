@@ -17,27 +17,25 @@ export type AgentFormValues = {
   message?: string;
 };
 
-// Payload type for API
+// API payload type
 export type AgentPayload = {
-  accountid: string; // maps to userId
   userId: string;
   fullName: string;
   email?: string;
-  phone?: string | null;
-  city?: string | null;
-  licenseNumber?: string | null;
-  agencyId?: string | null;
-  rating?: number | null;
+  phone?: string;
+  city?: string;
+  licenseNumber?: string;
+  agencyId?: string;
+  rating?: number;
   verified?: boolean;
-  message?: string | null;
+  message?: string;
 };
 
-// Submit to API function
+// Submit to your API
 async function submitAgentApplication(payload: AgentPayload) {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-  if (!API_BASE_URL) throw new Error("NEXT_PUBLIC_API_URL is not set");
+  const API_URL = "https://treasurepalapi.onrender.com/api/agents/apply";
 
-  const res = await fetch(`${API_BASE_URL}/api/agents/apply`, {
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -45,9 +43,7 @@ async function submitAgentApplication(payload: AgentPayload) {
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
-    throw new Error(
-      error?.message || `Failed to submit application: ${res.status}`
-    );
+    throw new Error(error?.message || `Failed to submit: ${res.status}`);
   }
 
   return res.json();
@@ -61,6 +57,7 @@ export default function AgentForm({
   userAccountId?: string;
 }) {
   const { user, loading } = useAuth();
+
   const [values, setValues] = useState<AgentFormValues>({
     userId: userAccountId,
     fullName: "",
@@ -126,30 +123,30 @@ export default function AgentForm({
 
     try {
       const payload: AgentPayload = {
-        accountid: values.userId!,
         userId: values.userId!,
         fullName: values.fullName,
-        email: values.email,
-        phone: values.phone || null,
-        city: values.city || null,
-        licenseNumber: values.licenseNumber || null,
-        agencyId: values.agencyId || null,
-        rating: typeof values.rating === "number" ? values.rating : null,
-        verified: !!values.verified,
-        message: values.message || null,
+        email: values.email || undefined, // Use undefined instead of null
+        phone: values.phone || undefined,
+        city: values.city || undefined,
+        licenseNumber: values.licenseNumber || undefined,
+        agencyId: values.agencyId || undefined,
+        rating: typeof values.rating === "number" ? values.rating : undefined,
+        verified: values.verified || false,
+        message: values.message || undefined,
       };
 
       await submitAgentApplication(payload);
 
       toast.success("Application submitted successfully!");
 
+      // Reset optional fields
       setValues((v) => ({
         ...v,
         licenseNumber: "",
         agencyId: "",
         rating: "",
-        message: "",
         verified: false,
+        message: "",
       }));
 
       onSuccess?.();
@@ -160,9 +157,8 @@ export default function AgentForm({
     }
   };
 
-  if (loading) {
+  if (loading)
     return <p className="text-sm text-slate-500">Loading your profile…</p>;
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -174,7 +170,7 @@ export default function AgentForm({
           className="input"
         />
         <input
-          value={values.email}
+          value={values.email || ""}
           onChange={(e) => update({ email: e.target.value })}
           placeholder="Email"
           className="input"
@@ -183,20 +179,20 @@ export default function AgentForm({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <input
-          value={values.phone}
+          value={values.phone || ""}
           onChange={(e) => update({ phone: e.target.value })}
           placeholder="Phone"
           className="input"
         />
         <input
-          value={values.city}
+          value={values.city || ""}
           onChange={(e) => update({ city: e.target.value })}
           placeholder="City"
           className="input"
         />
         <input
           type="number"
-          value={values.rating}
+          value={values.rating || ""}
           onChange={(e) =>
             update({
               rating: e.target.value === "" ? "" : Number(e.target.value),
@@ -209,13 +205,13 @@ export default function AgentForm({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <input
-          value={values.licenseNumber}
+          value={values.licenseNumber || ""}
           onChange={(e) => update({ licenseNumber: e.target.value })}
           placeholder="License number"
           className="input"
         />
         <input
-          value={values.agencyId}
+          value={values.agencyId || ""}
           onChange={(e) => update({ agencyId: e.target.value })}
           placeholder="Agency ID"
           className="input"
@@ -223,7 +219,7 @@ export default function AgentForm({
       </div>
 
       <textarea
-        value={values.message}
+        value={values.message || ""}
         onChange={(e) => update({ message: e.target.value })}
         rows={4}
         placeholder="Tell us about your experience"
