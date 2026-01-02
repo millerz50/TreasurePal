@@ -17,7 +17,7 @@ export function NavbarMobileMenu() {
       <button
         onClick={() => setOpen((p) => !p)}
         aria-label="Toggle menu"
-        className="rounded-full p-2 hover:bg-accent/10 transition">
+        className="rounded-full p-2 hover:bg-accent/10">
         {open ? <X /> : <Menu />}
       </button>
 
@@ -51,25 +51,16 @@ export function NavbarMobileMenu() {
                     />
                   </button>
 
-                  <AnimatePresence>
-                    {openDropdown === item.label && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="ml-8 space-y-1">
-                        {item.dropdown.map((sub) => (
-                          <Link
-                            key={sub.href}
-                            href={sub.href}
-                            onClick={() => setOpen(false)}
-                            className="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/10">
-                            {sub.label}
-                          </Link>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {openDropdown === item.label &&
+                    item.dropdown.map((sub) => (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        onClick={() => setOpen(false)}
+                        className="ml-8 block rounded-lg px-3 py-2 text-sm hover:bg-accent/10">
+                        {sub.label}
+                      </Link>
+                    ))}
                 </div>
               ) : (
                 <Link
@@ -83,7 +74,7 @@ export function NavbarMobileMenu() {
               );
             })}
 
-            <div className="my-4 border-t pt-4 space-y-3">
+            <div className="border-t mt-4 pt-4 space-y-3">
               <NavbarUser />
               <ThemeSwitcher />
             </div>

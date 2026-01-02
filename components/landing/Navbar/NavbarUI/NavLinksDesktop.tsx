@@ -4,14 +4,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import NavbarUser from "./NavbarUser";
 import { NAV_LINKS } from "./nav.config";
 
 export default function NavLinksDesktop() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
-    <nav className="hidden lg:flex items-center gap-2">
+    <nav className="flex items-center gap-2">
       {NAV_LINKS.map((item) => {
         const Icon = item.icon;
 
@@ -64,8 +63,6 @@ export default function NavLinksDesktop() {
           </Link>
         );
       })}
-
-      <NavbarUser />
     </nav>
   );
 }
