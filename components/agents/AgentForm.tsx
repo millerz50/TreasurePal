@@ -5,47 +5,43 @@ import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 /* ============================
-   FORM TYPES (UI ONLY)
+   APPWRITE FORM VALUES
 ============================ */
-export type AgentFormValues = {
+type AgentFormValues = {
   userId?: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-  city?: string;
-  licenseNumber?: string;
-  agencyId?: string;
-  rating?: number | "";
-  verified?: boolean;
-  message?: string;
+  licenseNumber: string;
+  agencyId: string;
+  rating: number | "";
+  verified: boolean;
 };
 
 /* ============================
-   API PAYLOAD (MATCHES APPWRITE)
+   APPWRITE PAYLOAD (EXACT)
 ============================ */
-export type AgentPayload = {
+type AgentPayload = {
   userId: string;
-  licenseNumber?: string | null;
-  agencyId?: string | null;
-  rating?: number | null;
-  verified?: boolean | null;
+  licenseNumber: string | null;
+  agencyId: string | null;
+  rating: number | null;
+  verified: boolean | null;
 };
 
 /* ============================
    API CALL
 ============================ */
 async function submitAgentApplication(payload: AgentPayload) {
-  const API_URL = "https://treasurepalapi.onrender.com/api/agents/apply";
-
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const res = await fetch(
+    "https://treasurepalapi.onrender.com/api/agents/apply",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }
+  );
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error?.message || `Failed to submit: ${res.status}`);
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message || "Submission failed");
   }
 
   return res.json();
@@ -54,55 +50,32 @@ async function submitAgentApplication(payload: AgentPayload) {
 /* ============================
    COMPONENT
 ============================ */
-export default function AgentForm({
-  onSuccess,
-  userAccountId,
-}: {
-  onSuccess?: () => void;
-  userAccountId?: string;
-}) {
+export default function AgentForm() {
   const { user, loading } = useAuth();
 
   const [values, setValues] = useState<AgentFormValues>({
-    userId: userAccountId,
-    fullName: "",
-    email: "",
-    phone: "",
-    city: "",
+    userId: undefined,
     licenseNumber: "",
     agencyId: "",
     rating: "",
     verified: false,
-    message: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
 
   /* --------------------------
-     Prefill user info
+     Inject userId ONLY
   -------------------------- */
   useEffect(() => {
     if (loading) return;
 
-    if (!user && !userAccountId) {
-      toast.error("You need an account to apply.");
+    if (!user?.userId) {
+      toast.error("You must be logged in.");
       return;
     }
 
-    if (user) {
-      setValues((v) => ({
-        ...v,
-        userId: user.userId,
-        fullName:
-          user.firstName && user.surname
-            ? `${user.firstName} ${user.surname}`
-            : v.fullName,
-        email: user.email,
-        phone: user.phone || v.phone,
-        city: user.country || v.city,
-      }));
-    }
-  }, [user, userAccountId, loading]);
+    setValues((v) => ({ ...v, userId: user.userId }));
+  }, [user, loading]);
 
   const update = useCallback(
     (patch: Partial<AgentFormValues>) => setValues((v) => ({ ...v, ...patch })),
@@ -110,41 +83,31 @@ export default function AgentForm({
   );
 
   /* --------------------------
-     Validation
-  -------------------------- */
-  const validate = (v: AgentFormValues) => {
-    if (!v.userId) return "You must be logged in.";
-    if (!v.fullName.trim()) return "Full name is required.";
-    return null;
-  };
-
-  /* --------------------------
      Submit
   -------------------------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const err = validate(values);
-    if (err) {
-      toast.error(err);
+    if (!values.userId) {
+      toast.error("Missing user ID");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      // ✅ ONLY SEND APPWRITE-SAFE FIELDS
+      // 🔥 EXACT APPWRITE PAYLOAD
       const payload: AgentPayload = {
-        userId: values.userId!,
+        userId: values.userId,
         licenseNumber: values.licenseNumber || null,
         agencyId: values.agencyId || null,
         rating: typeof values.rating === "number" ? values.rating : null,
-        verified: values.verified ?? false,
+        verified: values.verified,
       };
 
       await submitAgentApplication(payload);
 
-      toast.success("Application submitted successfully!");
+      toast.success("Application submitted");
 
       setValues((v) => ({
         ...v,
@@ -152,93 +115,51 @@ export default function AgentForm({
         agencyId: "",
         rating: "",
         verified: false,
-        message: "",
       }));
-
-      onSuccess?.();
     } catch (err: any) {
-      toast.error(err?.message || "Submission failed");
+      toast.error(err.message || "Failed");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading)
-    return <p className="text-sm text-slate-500">Loading your profile…</p>;
+  if (loading) return null;
 
   /* ============================
      UI
   ============================ */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input
-          value={values.fullName}
-          onChange={(e) => update({ fullName: e.target.value })}
-          placeholder="Full name"
-          className="input"
-        />
-        <input
-          value={values.email || ""}
-          onChange={(e) => update({ email: e.target.value })}
-          placeholder="Email"
-          className="input"
-        />
-      </div>
+      <input
+        value={values.licenseNumber}
+        onChange={(e) => update({ licenseNumber: e.target.value })}
+        placeholder="License number"
+        className="input"
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <input
-          value={values.phone || ""}
-          onChange={(e) => update({ phone: e.target.value })}
-          placeholder="Phone"
-          className="input"
-        />
-        <input
-          value={values.city || ""}
-          onChange={(e) => update({ city: e.target.value })}
-          placeholder="City"
-          className="input"
-        />
-        <input
-          type="number"
-          value={values.rating || ""}
-          onChange={(e) =>
-            update({
-              rating: e.target.value === "" ? "" : Number(e.target.value),
-            })
-          }
-          placeholder="Years experience"
-          className="input"
-        />
-      </div>
+      <input
+        value={values.agencyId}
+        onChange={(e) => update({ agencyId: e.target.value })}
+        placeholder="Agency ID"
+        className="input"
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input
-          value={values.licenseNumber || ""}
-          onChange={(e) => update({ licenseNumber: e.target.value })}
-          placeholder="License number"
-          className="input"
-        />
-        <input
-          value={values.agencyId || ""}
-          onChange={(e) => update({ agencyId: e.target.value })}
-          placeholder="Agency ID"
-          className="input"
-        />
-      </div>
-
-      <textarea
-        value={values.message || ""}
-        onChange={(e) => update({ message: e.target.value })}
-        rows={4}
-        placeholder="Tell us about your experience"
+      <input
+        type="number"
+        value={values.rating}
+        onChange={(e) =>
+          update({
+            rating: e.target.value === "" ? "" : Number(e.target.value),
+          })
+        }
+        placeholder="Years experience"
         className="input"
       />
 
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
-          checked={!!values.verified}
+          checked={values.verified}
           onChange={(e) => update({ verified: e.target.checked })}
         />
         I confirm the information is accurate
