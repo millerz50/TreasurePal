@@ -4,8 +4,11 @@ import { useAuth } from "@/context/AuthContext";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+/* ============================
+   FORM TYPES (UI ONLY)
+============================ */
 export type AgentFormValues = {
-  userId?: string; // logged-in user's ID
+  userId?: string;
   fullName: string;
   email?: string;
   phone?: string;
@@ -17,22 +20,20 @@ export type AgentFormValues = {
   message?: string;
 };
 
-// API payload type (matches backend)
+/* ============================
+   API PAYLOAD (MATCHES APPWRITE)
+============================ */
 export type AgentPayload = {
-  accountid: string; // REQUIRED by backend
-  userId?: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-  city?: string;
-  licenseNumber?: string;
-  agencyId?: string;
-  rating?: number;
-  verified?: boolean;
-  message?: string;
+  userId: string;
+  licenseNumber?: string | null;
+  agencyId?: string | null;
+  rating?: number | null;
+  verified?: boolean | null;
 };
 
-// Submit to your API
+/* ============================
+   API CALL
+============================ */
 async function submitAgentApplication(payload: AgentPayload) {
   const API_URL = "https://treasurepalapi.onrender.com/api/agents/apply";
 
@@ -50,6 +51,9 @@ async function submitAgentApplication(payload: AgentPayload) {
   return res.json();
 }
 
+/* ============================
+   COMPONENT
+============================ */
 export default function AgentForm({
   onSuccess,
   userAccountId,
@@ -74,12 +78,14 @@ export default function AgentForm({
 
   const [submitting, setSubmitting] = useState(false);
 
-  // Prefill user info if logged in
+  /* --------------------------
+     Prefill user info
+  -------------------------- */
   useEffect(() => {
     if (loading) return;
 
     if (!user && !userAccountId) {
-      toast.error("You need an account to apply for an agency.");
+      toast.error("You need an account to apply.");
       return;
     }
 
@@ -103,14 +109,18 @@ export default function AgentForm({
     []
   );
 
+  /* --------------------------
+     Validation
+  -------------------------- */
   const validate = (v: AgentFormValues) => {
     if (!v.userId) return "You must be logged in.";
     if (!v.fullName.trim()) return "Full name is required.";
-    if (v.email && !/^\S+@\S+\.\S+$/.test(v.email))
-      return "Invalid email address.";
     return null;
   };
 
+  /* --------------------------
+     Submit
+  -------------------------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -123,25 +133,19 @@ export default function AgentForm({
     setSubmitting(true);
 
     try {
+      // ✅ ONLY SEND APPWRITE-SAFE FIELDS
       const payload: AgentPayload = {
-        accountid: values.userId!, // ✅ backend requires this
-        userId: values.userId,
-        fullName: values.fullName,
-        email: values.email || undefined,
-        phone: values.phone || undefined,
-        city: values.city || undefined,
-        licenseNumber: values.licenseNumber || undefined,
-        agencyId: values.agencyId || undefined,
-        rating: typeof values.rating === "number" ? values.rating : undefined,
-        verified: values.verified || false,
-        message: values.message || undefined,
+        userId: values.userId!,
+        licenseNumber: values.licenseNumber || null,
+        agencyId: values.agencyId || null,
+        rating: typeof values.rating === "number" ? values.rating : null,
+        verified: values.verified ?? false,
       };
 
       await submitAgentApplication(payload);
 
       toast.success("Application submitted successfully!");
 
-      // Reset optional fields
       setValues((v) => ({
         ...v,
         licenseNumber: "",
@@ -162,6 +166,9 @@ export default function AgentForm({
   if (loading)
     return <p className="text-sm text-slate-500">Loading your profile…</p>;
 
+  /* ============================
+     UI
+  ============================ */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
