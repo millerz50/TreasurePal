@@ -17,9 +17,10 @@ export type AgentFormValues = {
   message?: string;
 };
 
-// API payload type
+// API payload type (matches backend)
 export type AgentPayload = {
-  userId: string;
+  accountid: string; // REQUIRED by backend
+  userId?: string;
   fullName: string;
   email?: string;
   phone?: string;
@@ -123,9 +124,10 @@ export default function AgentForm({
 
     try {
       const payload: AgentPayload = {
-        userId: values.userId!,
+        accountid: values.userId!, // ✅ backend requires this
+        userId: values.userId,
         fullName: values.fullName,
-        email: values.email || undefined, // Use undefined instead of null
+        email: values.email || undefined,
         phone: values.phone || undefined,
         city: values.city || undefined,
         licenseNumber: values.licenseNumber || undefined,
