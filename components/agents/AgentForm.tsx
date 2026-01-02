@@ -5,7 +5,15 @@ import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 /* ============================
-   APPWRITE FORM VALUES
+   PROPS
+============================ */
+type AgentFormProps = {
+  onSuccess?: () => void;
+  userAccountId?: string;
+};
+
+/* ============================
+   FORM VALUES (APPWRITE ONLY)
 ============================ */
 type AgentFormValues = {
   userId?: string;
@@ -50,11 +58,14 @@ async function submitAgentApplication(payload: AgentPayload) {
 /* ============================
    COMPONENT
 ============================ */
-export default function AgentForm() {
+export default function AgentForm({
+  onSuccess,
+  userAccountId,
+}: AgentFormProps) {
   const { user, loading } = useAuth();
 
   const [values, setValues] = useState<AgentFormValues>({
-    userId: undefined,
+    userId: userAccountId,
     licenseNumber: "",
     agencyId: "",
     rating: "",
@@ -64,18 +75,19 @@ export default function AgentForm() {
   const [submitting, setSubmitting] = useState(false);
 
   /* --------------------------
-     Inject userId ONLY
+     Inject userId
   -------------------------- */
   useEffect(() => {
     if (loading) return;
 
-    if (!user?.userId) {
+    const uid = user?.userId || userAccountId;
+    if (!uid) {
       toast.error("You must be logged in.");
       return;
     }
 
-    setValues((v) => ({ ...v, userId: user.userId }));
-  }, [user, loading]);
+    setValues((v) => ({ ...v, userId: uid }));
+  }, [user, userAccountId, loading]);
 
   const update = useCallback(
     (patch: Partial<AgentFormValues>) => setValues((v) => ({ ...v, ...patch })),
@@ -96,7 +108,6 @@ export default function AgentForm() {
     setSubmitting(true);
 
     try {
-      // 🔥 EXACT APPWRITE PAYLOAD
       const payload: AgentPayload = {
         userId: values.userId,
         licenseNumber: values.licenseNumber || null,
@@ -116,8 +127,10 @@ export default function AgentForm() {
         rating: "",
         verified: false,
       }));
+
+      onSuccess?.();
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || "Submission failed");
     } finally {
       setSubmitting(false);
     }
@@ -125,9 +138,6 @@ export default function AgentForm() {
 
   if (loading) return null;
 
-  /* ============================
-     UI
-  ============================ */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <input
