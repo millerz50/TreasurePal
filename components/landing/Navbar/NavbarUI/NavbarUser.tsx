@@ -1,4 +1,3 @@
-// components/NavbarUser.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -33,16 +32,9 @@ export default function NavbarUser() {
     return <div className="text-sm text-muted-foreground">Loading…</div>;
   }
 
-  // When not authenticated, show only "Join" (no Sign In)
+  // ❌ When NOT authenticated, render nothing
   if (!user) {
-    return (
-      <Button
-        variant="ghost"
-        className="text-sm flex items-center gap-2 rounded-full px-4 py-2 font-semibold"
-        onClick={() => router.push("/auth/signup")}>
-        Join
-      </Button>
-    );
+    return null;
   }
 
   return (
