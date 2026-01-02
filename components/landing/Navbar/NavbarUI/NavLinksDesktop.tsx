@@ -1,8 +1,5 @@
-// components/NavLinksDesktop.tsx
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -12,11 +9,9 @@ import { NAV_LINKS } from "./nav.config";
 
 export default function NavLinksDesktop() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const { user } = useAuth();
 
   return (
     <nav className="hidden lg:flex items-center gap-2">
-      {/* Navigation links */}
       {NAV_LINKS.map((item) => {
         const Icon = item.icon;
 
@@ -26,7 +21,7 @@ export default function NavLinksDesktop() {
               onClick={() =>
                 setOpenDropdown(openDropdown === item.label ? null : item.label)
               }
-              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/10 transition">
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/10">
               <Icon className="h-4 w-4" />
               {item.label}
               <ChevronDown
@@ -42,7 +37,6 @@ export default function NavLinksDesktop() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 12 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
                   className="absolute left-0 top-full mt-3 w-56 rounded-2xl border bg-background shadow-xl z-50">
                   <div className="p-2 space-y-1">
                     {item.dropdown.map((sub) => (
@@ -50,7 +44,7 @@ export default function NavLinksDesktop() {
                         key={sub.href}
                         href={sub.href}
                         onClick={() => setOpenDropdown(null)}
-                        className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-accent/10 hover:text-foreground transition">
+                        className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-accent/10 hover:text-foreground">
                         <span className="h-2 w-2 rounded-full bg-accent" />
                         {sub.label}
                       </Link>
@@ -64,23 +58,14 @@ export default function NavLinksDesktop() {
           <Link
             key={item.href}
             href={item.href!}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/10 transition">
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/10">
             <Icon className="h-4 w-4" />
             {item.label}
           </Link>
         );
       })}
 
-      {/* Auth action (show only Join when not authenticated) */}
-      <div className="ml-2">
-        {user ? (
-          <NavbarUser />
-        ) : (
-          <Link href="/auth/signup" className="inline-block">
-            <Button className="rounded-full px-6 font-semibold">Join</Button>
-          </Link>
-        )}
-      </div>
+      <NavbarUser />
     </nav>
   );
 }

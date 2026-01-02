@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
-import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -13,7 +11,6 @@ import { NAV_LINKS } from "./nav.config";
 export function NavbarMobileMenu() {
   const [open, setOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const { user } = useAuth();
 
   return (
     <div className="lg:hidden relative">
@@ -42,8 +39,7 @@ export function NavbarMobileMenu() {
                         openDropdown === item.label ? null : item.label
                       )
                     }
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent/10"
-                    type="button">
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent/10">
                     <span className="flex items-center gap-3">
                       <Icon className="h-4 w-4" />
                       {item.label}
@@ -88,13 +84,7 @@ export function NavbarMobileMenu() {
             })}
 
             <div className="my-4 border-t pt-4 space-y-3">
-              {user ? (
-                <NavbarUser />
-              ) : (
-                <Link href="/auth/signup" className="block">
-                  <Button className="w-full rounded-full">Join</Button>
-                </Link>
-              )}
+              <NavbarUser />
               <ThemeSwitcher />
             </div>
           </motion.div>

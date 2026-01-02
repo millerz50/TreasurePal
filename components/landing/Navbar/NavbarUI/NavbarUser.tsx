@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from "react";
 export default function NavbarUser() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
-
   const { user, loading } = useAuth();
 
   useEffect(() => {
@@ -25,17 +24,10 @@ export default function NavbarUser() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (loading) {
-    return <div className="text-sm text-muted-foreground">Loading…</div>;
-  }
-
-  // Not authenticated → render nothing
-  if (!user) {
-    return null;
-  }
+  if (loading || !user) return null;
 
   return (
-    <div ref={dropdownRef} className="relative flex items-center gap-3">
+    <div ref={dropdownRef} className="relative">
       <motion.button
         type="button"
         onClick={() => setOpen((p) => !p)}
