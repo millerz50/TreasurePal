@@ -16,7 +16,6 @@ type AgentFormValues = {
   fullname: string;
   message: string;
   agencyId: string;
-  rating: number | "";
   verified: boolean;
 };
 
@@ -25,7 +24,7 @@ type AgentPayload = {
   fullname: string;
   message: string;
   agencyId: string | null;
-  rating: number | null;
+  rating: number | null; // will be null on submission
   verified: boolean | null;
 };
 
@@ -82,7 +81,6 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       fullname,
       message,
       agencyId: "",
-      rating: "",
       verified: false, // always false
     });
   }, [user, loading]);
@@ -100,21 +98,12 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
   --------------------------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!values) {
-      toast.error("Form is not ready.");
-      return;
-    }
+    if (!values) return toast.error("Form is not ready.");
 
-    const { userId, fullname, message, agencyId, rating, verified } = values;
+    const { userId, fullname, message, agencyId, verified } = values;
 
-    if (!fullname || !message || !agencyId) {
-      toast.error("Please fill in the agency ID.");
-      return;
-    }
-
-    if (rating === "" || rating < 1 || rating > 5) {
-      toast.error("Please provide a valid rating (1-5).");
-      return;
+    if (!agencyId) {
+      return toast.error("Please fill in your Agency ID.");
     }
 
     setSubmitting(true);
@@ -125,7 +114,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
         fullname,
         message,
         agencyId: agencyId || null,
-        rating: typeof rating === "number" ? rating : null,
+        rating: null, // rating not provided by user
         verified, // always false
       };
 
@@ -135,7 +124,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       // WhatsApp auto-send
       const whatsappNumber = "+263777768431";
       const whatsappMessage = encodeURIComponent(
-        `Hello, I (${fullname}) have submitted my TreasurePal agent application. My rating: ${rating}`
+        `Hello, I (${fullname}) have submitted my TreasurePal agent application.`
       );
       window.open(
         `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
@@ -143,12 +132,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       );
 
       // Reset editable fields
-      setValues((v) => ({
-        ...v!,
-        agencyId: "",
-        rating: "",
-        verified: false,
-      }));
+      setValues((v) => ({ ...v!, agencyId: "", verified: false }));
 
       onSuccess?.();
     } catch (err: any) {
@@ -204,6 +188,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
           Agency ID
         </label>
         <input
+          type="text"
           value={values.agencyId}
           onChange={(e) => update({ agencyId: e.target.value })}
           placeholder="Enter your Agency ID"
@@ -212,30 +197,9 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
         />
       </div>
 
-      {/* User Rating */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-          Your Rating (1-5)
-        </label>
-        <input
-          type="number"
-          min={1}
-          max={5}
-          value={values.rating}
-          onChange={(e) =>
-            update({
-              rating: e.target.value === "" ? "" : Number(e.target.value),
-            })
-          }
-          placeholder="Enter your rating"
-          className="input"
-          required
-        />
-      </div>
-
       {/* Verified note */}
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Note: Verified status will be set by admin after review.
+        Note: Verified status and rating will be set by admin after review.
       </p>
 
       <button
