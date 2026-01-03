@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 /* ============================
@@ -30,7 +30,6 @@ type AgentPayload = {
    API CALLS
 ============================ */
 async function createAgency(): Promise<string> {
-  // call backend API to create a new agency and return its ID
   const res = await fetch(
     "https://treasurepalapi.onrender.com/api/agency/create",
     { method: "POST" }
@@ -89,14 +88,6 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     setValues({ userId: user.userId, fullname, message });
   }, [user, loading]);
-
-  const update = useCallback(
-    (patch: Partial<AgentFormValues>) => {
-      if (!values) return;
-      setValues((v) => ({ ...v!, ...patch }));
-    },
-    [values]
-  );
 
   // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
