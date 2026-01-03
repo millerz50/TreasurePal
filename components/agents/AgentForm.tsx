@@ -1,33 +1,32 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 /* ============================
-   PROPS
+   TYPES
 ============================ */
 type AgentFormProps = {
   onSuccess?: () => void;
-  userAccountId?: string;
 };
 
-/* ============================
-   FORM VALUES (APPWRITE ONLY)
-============================ */
+/* UI state */
 type AgentFormValues = {
-  userId?: string;
+  userId: string;
+  fullname: string;
+  message: string;
   licenseNumber: string;
   agencyId: string;
   rating: number | "";
   verified: boolean;
 };
 
-/* ============================
-   APPWRITE PAYLOAD (EXACT)
-============================ */
+/* Appwrite payload (EXACT SCHEMA) */
 type AgentPayload = {
-  userId: string;
+  userId: string; // ← agentId = userId
+  fullname: string;
+  message: string;
   licenseNumber: string | null;
   agencyId: string | null;
   rating: number | null;
@@ -35,7 +34,7 @@ type AgentPayload = {
 };
 
 /* ============================
-   API CALL
+   API
 ============================ */
 async function submitAgentApplication(payload: AgentPayload) {
   const res = await fetch(
@@ -49,7 +48,7 @@ async function submitAgentApplication(payload: AgentPayload) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.message || "Submission failed");
+    throw new Error(err?.message || "Application submission failed");
   }
 
   return res.json();
@@ -58,14 +57,13 @@ async function submitAgentApplication(payload: AgentPayload) {
 /* ============================
    COMPONENT
 ============================ */
-export default function AgentForm({
-  onSuccess,
-  userAccountId,
-}: AgentFormProps) {
+export default function AgentForm({ onSuccess }: AgentFormProps) {
   const { user, loading } = useAuth();
 
   const [values, setValues] = useState<AgentFormValues>({
-    userId: userAccountId,
+    userId: "",
+    fullname: "",
+    message: "",
     licenseNumber: "",
     agencyId: "",
     rating: "",
@@ -75,19 +73,38 @@ export default function AgentForm({
   const [submitting, setSubmitting] = useState(false);
 
   /* --------------------------
-     Inject userId
+     Resolve agentId (userId)
+  -------------------------- */
+  const agentId = useMemo(() => user?.userId ?? "", [user]);
+
+  const fullname = useMemo(() => {
+    if (!user) return "";
+    return `${user.firstName ?? ""} ${user.surname ?? ""}`.trim();
+  }, [user]);
+
+  const message = useMemo(() => {
+    if (!fullname) return "";
+    return `I, ${fullname}, hereby apply to become a TreasurePal agent. I confirm that all information provided is accurate and truthful.`;
+  }, [fullname]);
+
+  /* --------------------------
+     Autofill locked fields
   -------------------------- */
   useEffect(() => {
     if (loading) return;
 
-    const uid = user?.userId || userAccountId;
-    if (!uid) {
-      toast.error("You must be logged in.");
+    if (!agentId || !fullname) {
+      toast.error("You must be logged in to apply.");
       return;
     }
 
-    setValues((v) => ({ ...v, userId: uid }));
-  }, [user, userAccountId, loading]);
+    setValues((v) => ({
+      ...v,
+      userId: agentId, // ← agentId = userId (AUTO)
+      fullname,
+      message,
+    }));
+  }, [agentId, fullname, message, loading]);
 
   const update = useCallback(
     (patch: Partial<AgentFormValues>) => setValues((v) => ({ ...v, ...patch })),
@@ -100,8 +117,8 @@ export default function AgentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!values.userId) {
-      toast.error("Missing user ID");
+    if (!values.userId || !values.fullname || !values.message) {
+      toast.error("Missing required application data.");
       return;
     }
 
@@ -109,7 +126,9 @@ export default function AgentForm({
 
     try {
       const payload: AgentPayload = {
-        userId: values.userId,
+        userId: values.userId, // ← agentId
+        fullname: values.fullname,
+        message: values.message,
         licenseNumber: values.licenseNumber || null,
         agencyId: values.agencyId || null,
         rating: typeof values.rating === "number" ? values.rating : null,
@@ -118,7 +137,7 @@ export default function AgentForm({
 
       await submitAgentApplication(payload);
 
-      toast.success("Application submitted");
+      toast.success("Agent application submitted successfully");
 
       setValues((v) => ({
         ...v,
@@ -130,7 +149,7 @@ export default function AgentForm({
 
       onSuccess?.();
     } catch (err: any) {
-      toast.error(err.message || "Submission failed");
+      toast.error(err?.message || "Submission failed");
     } finally {
       setSubmitting(false);
     }
@@ -138,8 +157,29 @@ export default function AgentForm({
 
   if (loading) return null;
 
+  /* ============================
+     UI
+  ============================ */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Agent ID (userId) — hidden but guaranteed */}
+      <input type="hidden" value={values.userId} />
+
+      {/* Full name (locked) */}
+      <input
+        value={values.fullname}
+        disabled
+        className="input bg-gray-100 cursor-not-allowed"
+      />
+
+      {/* Message (locked) */}
+      <textarea
+        value={values.message}
+        disabled
+        rows={4}
+        className="input bg-gray-100 cursor-not-allowed"
+      />
+
       <input
         value={values.licenseNumber}
         onChange={(e) => update({ licenseNumber: e.target.value })}
@@ -162,7 +202,7 @@ export default function AgentForm({
             rating: e.target.value === "" ? "" : Number(e.target.value),
           })
         }
-        placeholder="Years experience"
+        placeholder="Years of experience"
         className="input"
       />
 
@@ -172,7 +212,7 @@ export default function AgentForm({
           checked={values.verified}
           onChange={(e) => update({ verified: e.target.checked })}
         />
-        I confirm the information is accurate
+        I confirm the information above is accurate
       </label>
 
       <button

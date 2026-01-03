@@ -60,7 +60,7 @@ export default function AgentJoinModal({ open, onClose, accountid }: Props) {
 
         <div className="p-6">
           {/* Pass accountid to AgentForm if needed */}
-          <AgentForm onSuccess={onClose} userAccountId={accountid} />
+          <AgentForm onSuccess={onClose} />
         </div>
       </div>
     </div>
