@@ -18,9 +18,9 @@ type AgentFormValues = {
 };
 
 type AgentPayload = {
-  userId: string; // required by backend
-  fullname: string; // required
-  message: string; // required
+  userId: string; // backend requires this
+  fullname: string;
+  message: string;
   agentId?: string; // optional
   rating?: number; // optional
   verified?: boolean; // optional
@@ -55,7 +55,6 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
   const [values, setValues] = useState<AgentFormValues | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Initialize form values
   useEffect(() => {
     if (loading) return;
 
@@ -73,13 +72,12 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
     const message = `I, ${fullname}, hereby apply to become a TreasurePal agent. I confirm that all information provided is accurate and truthful.`;
 
     setValues({
-      userId: user.userId, // <-- use userId from UserPayload
+      userId: user.userId,
       fullname,
       message,
     });
   }, [user, loading]);
 
-  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!values) return;
@@ -88,10 +86,10 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     try {
       const payload: AgentPayload = {
-        userId: values.userId, // correctly populated from UserPayload
+        userId: values.userId,
         fullname: values.fullname,
         message: values.message,
-        verified: false, // default false
+        verified: false, // optional default
       };
 
       await submitAgentApplication(payload);
