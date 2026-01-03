@@ -15,9 +15,7 @@ type AgentFormValues = {
   userId: string;
   fullname: string;
   message: string;
-  licenseNumber: string;
   agencyId: string;
-  rating: number | "";
   verified: boolean;
 };
 
@@ -25,9 +23,7 @@ type AgentPayload = {
   userId: string;
   fullname: string;
   message: string;
-  licenseNumber: string | null;
   agencyId: string | null;
-  rating: number | null;
   verified: boolean | null;
 };
 
@@ -57,7 +53,6 @@ async function submitAgentApplication(payload: AgentPayload) {
 ============================ */
 export default function AgentForm({ onSuccess }: AgentFormProps) {
   const { user, loading } = useAuth();
-
   const [values, setValues] = useState<AgentFormValues | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -73,7 +68,6 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
     }
 
     const fullname = `${user.firstName ?? ""} ${user.surname ?? ""}`.trim();
-
     if (!fullname) {
       toast.error("Your account is missing a name.");
       return;
@@ -85,9 +79,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       userId: user.userId,
       fullname,
       message,
-      licenseNumber: "",
       agencyId: "",
-      rating: "",
       verified: false,
     });
   }, [user, loading]);
@@ -105,24 +97,15 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
   --------------------------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!values) {
       toast.error("Form is not ready.");
       return;
     }
 
-    const {
-      userId,
-      fullname,
-      message,
-      licenseNumber,
-      agencyId,
-      rating,
-      verified,
-    } = values;
+    const { userId, fullname, message, agencyId, verified } = values;
 
-    if (!fullname || !message) {
-      toast.error("Fullname and message are required.");
+    if (!fullname || !message || !agencyId) {
+      toast.error("Please fill in the agency ID.");
       return;
     }
 
@@ -133,25 +116,25 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
         userId,
         fullname,
         message,
-        licenseNumber: licenseNumber || null,
         agencyId: agencyId || null,
-        rating: typeof rating === "number" ? rating : null,
         verified,
       };
 
       await submitAgentApplication(payload);
-
       toast.success("Agent application submitted successfully");
 
-      // Reset optional fields only
-      setValues((v) => ({
-        ...v!,
-        licenseNumber: "",
-        agencyId: "",
-        rating: "",
-        verified: false,
-      }));
+      // Open WhatsApp with prefilled message
+      const whatsappNumber = "+263777768431";
+      const whatsappMessage = encodeURIComponent(
+        `Hello, I (${fullname}) have submitted my TreasurePal agent application.`
+      );
+      window.open(
+        `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
+        "_blank"
+      );
 
+      // Reset editable fields
+      setValues((v) => ({ ...v!, agencyId: "", verified: false }));
       onSuccess?.();
     } catch (err: any) {
       toast.error(err?.message || "Submission failed");
@@ -164,50 +147,57 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
     return <p className="text-sm text-slate-500">Loading your profile…</p>;
   }
 
+  /* ============================
+     UI
+  ============================ */
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-5 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 max-w-lg mx-auto">
+      <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+        Apply to Become an Agent
+      </h2>
+
       {/* Fullname (locked) */}
-      <input
-        value={values.fullname}
-        disabled
-        className="input bg-gray-100 cursor-not-allowed"
-      />
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+          Full Name
+        </label>
+        <input
+          value={values.fullname}
+          disabled
+          className="input bg-gray-100 dark:bg-slate-800 cursor-not-allowed"
+        />
+      </div>
 
       {/* Message (locked) */}
-      <textarea
-        value={values.message}
-        disabled
-        rows={4}
-        className="input bg-gray-100 cursor-not-allowed"
-      />
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+          Application Message
+        </label>
+        <textarea
+          value={values.message}
+          disabled
+          rows={4}
+          className="input bg-gray-100 dark:bg-slate-800 cursor-not-allowed resize-none"
+        />
+      </div>
 
-      {/* Editable fields */}
-      <input
-        value={values.licenseNumber}
-        onChange={(e) => update({ licenseNumber: e.target.value })}
-        placeholder="License number"
-        className="input"
-      />
+      {/* Agency ID (editable) */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+          Agency ID
+        </label>
+        <input
+          value={values.agencyId}
+          onChange={(e) => update({ agencyId: e.target.value })}
+          placeholder="Enter your Agency ID"
+          className="input"
+          required
+        />
+      </div>
 
-      <input
-        value={values.agencyId}
-        onChange={(e) => update({ agencyId: e.target.value })}
-        placeholder="Agency ID"
-        className="input"
-      />
-
-      <input
-        type="number"
-        value={values.rating}
-        onChange={(e) =>
-          update({
-            rating: e.target.value === "" ? "" : Number(e.target.value),
-          })
-        }
-        placeholder="Years of experience"
-        className="input"
-      />
-
+      {/* Verified */}
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
@@ -220,8 +210,8 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="px-4 py-2 bg-emerald-600 text-white rounded disabled:opacity-60">
-        {submitting ? "Submitting…" : "Submit application"}
+        className="w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow hover:brightness-105 disabled:opacity-60 transition">
+        {submitting ? "Submitting…" : "Submit Application"}
       </button>
     </form>
   );
