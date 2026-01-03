@@ -27,10 +27,13 @@ type AgentPayload = {
 };
 
 /* ============================
-   API CALL
+   API CALL (with forced debugging)
 ============================ */
 async function submitAgentApplication(payload: AgentPayload) {
-  console.log("submitAgentApplication (frontend): Sending payload:", payload);
+  console.log("=======================================");
+  console.log("submitAgentApplication (frontend): START");
+  console.log("Payload being sent:", JSON.stringify(payload, null, 2));
+  console.log("=======================================");
 
   const res = await fetch(
     "https://treasurepalapi.onrender.com/api/agents/apply",
@@ -41,18 +44,26 @@ async function submitAgentApplication(payload: AgentPayload) {
     }
   );
 
+  console.log(
+    "submitAgentApplication (frontend): Response status:",
+    res.status
+  );
+
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));
-    console.error(
-      "submitAgentApplication (frontend): API error",
-      res.status,
-      errBody
-    );
+    console.error("=======================================");
+    console.error("submitAgentApplication (frontend): API ERROR");
+    console.error("Status:", res.status);
+    console.error("Error body:", JSON.stringify(errBody, null, 2));
+    console.error("=======================================");
     throw new Error(errBody?.message || "Application submission failed");
   }
 
   const data = await res.json();
-  console.log("submitAgentApplication (frontend): Success response:", data);
+  console.log("=======================================");
+  console.log("submitAgentApplication (frontend): SUCCESS RESPONSE");
+  console.log("Data:", JSON.stringify(data, null, 2));
+  console.log("=======================================");
   return data;
 }
 
@@ -95,11 +106,16 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     try {
       const payload: AgentPayload = {
-        accountid: values.userId,
+        accountid: values.userId, // map userId → accountid
         fullname: values.fullname,
         message: values.message,
         verified: false, // optional default
       };
+
+      console.log(
+        "AgentForm: Final payload before submit:",
+        JSON.stringify(payload, null, 2)
+      );
 
       await submitAgentApplication(payload);
 
@@ -117,6 +133,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
       onSuccess?.();
     } catch (err: any) {
+      console.error("AgentForm: Submission error:", err);
       toast.error(err?.message || "Submission failed");
     } finally {
       setSubmitting(false);
