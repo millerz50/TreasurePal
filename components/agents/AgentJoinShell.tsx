@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 import AgentJoinModal from "./AgentJoinModal";
 
-export default function AgentJoinShell({ accountid }: { accountid?: string }) {
-  const [open, setOpen] = useState<boolean>(true);
+export default function AgentJoinShell() {
+  const [open, setOpen] = useState(false);
 
+  /* --------------------------
+     Global open event support
+  -------------------------- */
   useEffect(() => {
     const onOpen = () => setOpen(true);
+
     window.addEventListener("openAgentJoin", onOpen as EventListener);
     return () =>
       window.removeEventListener("openAgentJoin", onOpen as EventListener);
@@ -22,14 +26,14 @@ export default function AgentJoinShell({ accountid }: { accountid?: string }) {
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             Join our network of trusted local agents. Submit your details and
-            we'll review your application.
+            we’ll review your application.
           </p>
         </header>
 
         <section className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-6 shadow-sm">
           <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">
             Apply here or open the quick modal from anywhere in the app by
-            clicking "Join".
+            clicking <strong>Join</strong>.
           </p>
 
           <div className="flex gap-3">
@@ -60,12 +64,8 @@ export default function AgentJoinShell({ accountid }: { accountid?: string }) {
         </div>
       </div>
 
-      {/* Pass accountid to modal */}
-      <AgentJoinModal
-        open={open}
-        onClose={() => setOpen(false)}
-        accountid={accountid}
-      />
+      {/* Agent Application Modal */}
+      <AgentJoinModal open={open} onClose={() => setOpen(false)} />
     </main>
   );
 }
