@@ -31,7 +31,7 @@ type AgentPayload = {
 ============================ */
 async function createAgency(): Promise<string> {
   const res = await fetch(
-    "https://treasurepalapi.onrender.com/api/agency/create",
+    "https://treasurepalapi.onrender.com/api/agents/create",
     { method: "POST" }
   );
 
