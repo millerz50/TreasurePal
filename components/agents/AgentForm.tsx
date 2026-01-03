@@ -21,7 +21,7 @@ type AgentPayload = {
   userId: string; // backend expects userId
   fullname: string;
   message: string;
-  agencyId?: string; // optional
+  agentId?: string; // optional
   rating?: number; // optional
   verified?: boolean; // optional
 };
