@@ -12,18 +12,20 @@ type AgentFormProps = {
 };
 
 type AgentFormValues = {
-  userId: string;
+  userId: string; // fetched userId
   fullname: string;
   message: string;
   agencyId: string;
+  rating: number | "";
   verified: boolean;
 };
 
 type AgentPayload = {
-  userId: string;
+  agentId: string; // map userId -> agentId
   fullname: string;
   message: string;
   agencyId: string | null;
+  rating: number | null;
   verified: boolean | null;
 };
 
@@ -76,11 +78,12 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
     const message = `I, ${fullname}, hereby apply to become a TreasurePal agent. I confirm that all information provided is accurate and truthful.`;
 
     setValues({
-      userId: user.userId,
+      userId: user.userId, // will map to agentId
       fullname,
       message,
       agencyId: "",
-      verified: false,
+      rating: "",
+      verified: false, // always false
     });
   }, [user, loading]);
 
@@ -102,10 +105,15 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       return;
     }
 
-    const { userId, fullname, message, agencyId, verified } = values;
+    const { userId, fullname, message, agencyId, rating, verified } = values;
 
     if (!fullname || !message || !agencyId) {
       toast.error("Please fill in the agency ID.");
+      return;
+    }
+
+    if (rating === "" || rating < 1 || rating > 5) {
+      toast.error("Please provide a valid rating (1-5).");
       return;
     }
 
@@ -113,20 +121,21 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     try {
       const payload: AgentPayload = {
-        userId,
+        agentId: userId, // map userId to agentId
         fullname,
         message,
         agencyId: agencyId || null,
-        verified,
+        rating: typeof rating === "number" ? rating : null,
+        verified, // always false
       };
 
       await submitAgentApplication(payload);
       toast.success("Agent application submitted successfully");
 
-      // Open WhatsApp with prefilled message
+      // WhatsApp auto-send
       const whatsappNumber = "+263777768431";
       const whatsappMessage = encodeURIComponent(
-        `Hello, I (${fullname}) have submitted my TreasurePal agent application.`
+        `Hello, I (${fullname}) have submitted my TreasurePal agent application. My rating: ${rating}`
       );
       window.open(
         `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
@@ -134,7 +143,13 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       );
 
       // Reset editable fields
-      setValues((v) => ({ ...v!, agencyId: "", verified: false }));
+      setValues((v) => ({
+        ...v!,
+        agencyId: "",
+        rating: "",
+        verified: false,
+      }));
+
       onSuccess?.();
     } catch (err: any) {
       toast.error(err?.message || "Submission failed");
@@ -183,7 +198,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
         />
       </div>
 
-      {/* Agency ID (editable) */}
+      {/* Agency ID */}
       <div className="flex flex-col">
         <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
           Agency ID
@@ -197,15 +212,31 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
         />
       </div>
 
-      {/* Verified */}
-      <label className="flex items-center gap-2 text-sm">
+      {/* User Rating */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+          Your Rating (1-5)
+        </label>
         <input
-          type="checkbox"
-          checked={values.verified}
-          onChange={(e) => update({ verified: e.target.checked })}
+          type="number"
+          min={1}
+          max={5}
+          value={values.rating}
+          onChange={(e) =>
+            update({
+              rating: e.target.value === "" ? "" : Number(e.target.value),
+            })
+          }
+          placeholder="Enter your rating"
+          className="input"
+          required
         />
-        I confirm the information above is accurate
-      </label>
+      </div>
+
+      {/* Verified note */}
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Note: Verified status will be set by admin after review.
+      </p>
 
       <button
         type="submit"
