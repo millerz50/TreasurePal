@@ -12,25 +12,39 @@ type AgentFormProps = {
 };
 
 type AgentFormValues = {
-  userId: string; // fetched userId
+  userId: string;
   fullname: string;
   message: string;
-  agencyId: string;
-  verified: boolean;
 };
 
 type AgentPayload = {
-  agentId: string; // map userId -> agentId
+  agentId: string; // maps to userId
   fullname: string;
   message: string;
   agencyId: string | null;
-  rating: number | null; // will be null on submission
-  verified: boolean | null;
+  rating: number | null; // always null
+  verified: boolean | null; // always false
 };
 
 /* ============================
-   API CALL
+   API CALLS
 ============================ */
+async function createAgency(): Promise<string> {
+  // call backend API to create a new agency and return its ID
+  const res = await fetch(
+    "https://treasurepalapi.onrender.com/api/agency/create",
+    { method: "POST" }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message || "Failed to create agency");
+  }
+
+  const data = await res.json();
+  return data.agencyId; // backend must return { agencyId: '...' }
+}
+
 async function submitAgentApplication(payload: AgentPayload) {
   const res = await fetch(
     "https://treasurepalapi.onrender.com/api/agents/apply",
@@ -57,12 +71,9 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
   const [values, setValues] = useState<AgentFormValues | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  /* ---------------------------
-     Initialize values once user is loaded
-  --------------------------- */
+  // Initialize form
   useEffect(() => {
     if (loading) return;
-
     if (!user || !user.userId) {
       toast.error("You must be logged in to apply.");
       return;
@@ -76,13 +87,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     const message = `I, ${fullname}, hereby apply to become a TreasurePal agent. I confirm that all information provided is accurate and truthful.`;
 
-    setValues({
-      userId: user.userId, // will map to agentId
-      fullname,
-      message,
-      agencyId: "",
-      verified: false, // always false
-    });
+    setValues({ userId: user.userId, fullname, message });
   }, [user, loading]);
 
   const update = useCallback(
@@ -93,46 +98,43 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
     [values]
   );
 
-  /* ---------------------------
-     Submit handler
-  --------------------------- */
+  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!values) return toast.error("Form is not ready.");
 
-    const { userId, fullname, message, agencyId, verified } = values;
-
-    if (!agencyId) {
-      return toast.error("Please fill in your Agency ID.");
-    }
-
     setSubmitting(true);
 
     try {
+      // 1️⃣ Create agency first
+      const agencyId = await createAgency();
+
+      // 2️⃣ Build payload
       const payload: AgentPayload = {
-        agentId: userId, // map userId to agentId
-        fullname,
-        message,
-        agencyId: agencyId || null,
-        rating: null, // rating not provided by user
-        verified, // always false
+        agentId: values.userId,
+        fullname: values.fullname,
+        message: values.message,
+        agencyId,
+        rating: null, // rating set by admin
+        verified: false, // always false
       };
 
+      // 3️⃣ Submit agent application
       await submitAgentApplication(payload);
       toast.success("Agent application submitted successfully");
 
-      // WhatsApp auto-send
+      // 4️⃣ WhatsApp notification
       const whatsappNumber = "+263777768431";
       const whatsappMessage = encodeURIComponent(
-        `Hello, I (${fullname}) have submitted my TreasurePal agent application.`
+        `Hello, I (${values.fullname}) have submitted my TreasurePal agent application.`
       );
       window.open(
         `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
         "_blank"
       );
 
-      // Reset editable fields
-      setValues((v) => ({ ...v!, agencyId: "", verified: false }));
+      // Reset form
+      setValues((v) => ({ ...v!, message: "", fullname: "" }));
 
       onSuccess?.();
     } catch (err: any) {
@@ -146,9 +148,6 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
     return <p className="text-sm text-slate-500">Loading your profile…</p>;
   }
 
-  /* ============================
-     UI
-  ============================ */
   return (
     <form
       onSubmit={handleSubmit}
@@ -181,26 +180,6 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
           className="input bg-gray-100 dark:bg-slate-800 cursor-not-allowed resize-none"
         />
       </div>
-
-      {/* Agency ID */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-          Agency ID
-        </label>
-        <input
-          type="text"
-          value={values.agencyId}
-          onChange={(e) => update({ agencyId: e.target.value })}
-          placeholder="Enter your Agency ID"
-          className="input"
-          required
-        />
-      </div>
-
-      {/* Verified note */}
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Note: Verified status and rating will be set by admin after review.
-      </p>
 
       <button
         type="submit"
