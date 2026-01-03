@@ -18,9 +18,9 @@ type AgentFormValues = {
 };
 
 type AgentPayload = {
-  userId: string; // backend expects userId
-  fullname: string;
-  message: string;
+  userId: string; // required by backend
+  fullname: string; // required
+  message: string; // required
   agentId?: string; // optional
   rating?: number; // optional
   verified?: boolean; // optional
@@ -88,11 +88,10 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     try {
       const payload: AgentPayload = {
-        userId: values.userId, // matches backend
+        userId: values.userId, // from AuthContext
         fullname: values.fullname,
         message: values.message,
-        // Optional fields can be added if available
-        // agencyId, rating, verified can be included here if needed
+        verified: false, // default false
       };
 
       await submitAgentApplication(payload);
