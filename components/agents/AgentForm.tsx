@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 /* ============================
@@ -11,7 +11,6 @@ type AgentFormProps = {
   onSuccess?: () => void;
 };
 
-/* UI state */
 type AgentFormValues = {
   userId: string;
   fullname: string;
@@ -22,9 +21,8 @@ type AgentFormValues = {
   verified: boolean;
 };
 
-/* Appwrite payload (EXACT SCHEMA) */
 type AgentPayload = {
-  userId: string; // ← agentId = userId
+  userId: string;
   fullname: string;
   message: string;
   licenseNumber: string | null;
@@ -34,7 +32,7 @@ type AgentPayload = {
 };
 
 /* ============================
-   API
+   API CALL
 ============================ */
 async function submitAgentApplication(payload: AgentPayload) {
   const res = await fetch(
@@ -60,65 +58,71 @@ async function submitAgentApplication(payload: AgentPayload) {
 export default function AgentForm({ onSuccess }: AgentFormProps) {
   const { user, loading } = useAuth();
 
-  const [values, setValues] = useState<AgentFormValues>({
-    userId: "",
-    fullname: "",
-    message: "",
-    licenseNumber: "",
-    agencyId: "",
-    rating: "",
-    verified: false,
-  });
-
+  const [values, setValues] = useState<AgentFormValues | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  /* --------------------------
-     Resolve agentId (userId)
-  -------------------------- */
-  const agentId = useMemo(() => user?.userId ?? "", [user]);
-
-  const fullname = useMemo(() => {
-    if (!user) return "";
-    return `${user.firstName ?? ""} ${user.surname ?? ""}`.trim();
-  }, [user]);
-
-  const message = useMemo(() => {
-    if (!fullname) return "";
-    return `I, ${fullname}, hereby apply to become a TreasurePal agent. I confirm that all information provided is accurate and truthful.`;
-  }, [fullname]);
-
-  /* --------------------------
-     Autofill locked fields
-  -------------------------- */
+  /* ---------------------------
+     Initialize values once user is loaded
+  --------------------------- */
   useEffect(() => {
     if (loading) return;
 
-    if (!agentId || !fullname) {
+    if (!user || !user.userId) {
       toast.error("You must be logged in to apply.");
       return;
     }
 
-    setValues((v) => ({
-      ...v,
-      userId: agentId, // ← agentId = userId (AUTO)
+    const fullname = `${user.firstName ?? ""} ${user.surname ?? ""}`.trim();
+
+    if (!fullname) {
+      toast.error("Your account is missing a name.");
+      return;
+    }
+
+    const message = `I, ${fullname}, hereby apply to become a TreasurePal agent. I confirm that all information provided is accurate and truthful.`;
+
+    setValues({
+      userId: user.userId,
       fullname,
       message,
-    }));
-  }, [agentId, fullname, message, loading]);
+      licenseNumber: "",
+      agencyId: "",
+      rating: "",
+      verified: false,
+    });
+  }, [user, loading]);
 
   const update = useCallback(
-    (patch: Partial<AgentFormValues>) => setValues((v) => ({ ...v, ...patch })),
-    []
+    (patch: Partial<AgentFormValues>) => {
+      if (!values) return;
+      setValues((v) => ({ ...v!, ...patch }));
+    },
+    [values]
   );
 
-  /* --------------------------
-     Submit
-  -------------------------- */
+  /* ---------------------------
+     Submit handler
+  --------------------------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!values.userId || !values.fullname || !values.message) {
-      toast.error("Missing required application data.");
+    if (!values) {
+      toast.error("Form is not ready.");
+      return;
+    }
+
+    const {
+      userId,
+      fullname,
+      message,
+      licenseNumber,
+      agencyId,
+      rating,
+      verified,
+    } = values;
+
+    if (!fullname || !message) {
+      toast.error("Fullname and message are required.");
       return;
     }
 
@@ -126,21 +130,22 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     try {
       const payload: AgentPayload = {
-        userId: values.userId, // ← agentId
-        fullname: values.fullname,
-        message: values.message,
-        licenseNumber: values.licenseNumber || null,
-        agencyId: values.agencyId || null,
-        rating: typeof values.rating === "number" ? values.rating : null,
-        verified: values.verified,
+        userId,
+        fullname,
+        message,
+        licenseNumber: licenseNumber || null,
+        agencyId: agencyId || null,
+        rating: typeof rating === "number" ? rating : null,
+        verified,
       };
 
       await submitAgentApplication(payload);
 
       toast.success("Agent application submitted successfully");
 
+      // Reset optional fields only
       setValues((v) => ({
-        ...v,
+        ...v!,
         licenseNumber: "",
         agencyId: "",
         rating: "",
@@ -155,17 +160,13 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
     }
   };
 
-  if (loading) return null;
+  if (loading || !values) {
+    return <p className="text-sm text-slate-500">Loading your profile…</p>;
+  }
 
-  /* ============================
-     UI
-  ============================ */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Agent ID (userId) — hidden but guaranteed */}
-      <input type="hidden" value={values.userId} />
-
-      {/* Full name (locked) */}
+      {/* Fullname (locked) */}
       <input
         value={values.fullname}
         disabled
@@ -180,6 +181,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
         className="input bg-gray-100 cursor-not-allowed"
       />
 
+      {/* Editable fields */}
       <input
         value={values.licenseNumber}
         onChange={(e) => update({ licenseNumber: e.target.value })}
