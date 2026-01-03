@@ -18,12 +18,12 @@ type AgentFormValues = {
 };
 
 type AgentPayload = {
-  agentId: string;
+  userId: string; // backend expects userId
   fullname: string;
   message: string;
-  agencyId: null;
-  rating: null;
-  verified: false;
+  agencyId?: string; // optional
+  rating?: number; // optional
+  verified?: boolean; // optional
 };
 
 /* ============================
@@ -55,7 +55,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
   const [values, setValues] = useState<AgentFormValues | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Initialize form
+  // Initialize form values
   useEffect(() => {
     if (loading) return;
 
@@ -88,12 +88,11 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     try {
       const payload: AgentPayload = {
-        agentId: values.userId,
+        userId: values.userId, // matches backend
         fullname: values.fullname,
         message: values.message,
-        agencyId: null,
-        rating: null,
-        verified: false,
+        // Optional fields can be added if available
+        // agencyId, rating, verified can be included here if needed
       };
 
       await submitAgentApplication(payload);
