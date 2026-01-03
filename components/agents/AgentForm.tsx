@@ -73,7 +73,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
     const message = `I, ${fullname}, hereby apply to become a TreasurePal agent. I confirm that all information provided is accurate and truthful.`;
 
     setValues({
-      userId: user.userId,
+      userId: user.userId, // <-- use userId from UserPayload
       fullname,
       message,
     });
@@ -88,7 +88,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     try {
       const payload: AgentPayload = {
-        userId: values.userId, // from AuthContext
+        userId: values.userId, // correctly populated from UserPayload
         fullname: values.fullname,
         message: values.message,
         verified: false, // default false
