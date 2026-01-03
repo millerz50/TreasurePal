@@ -18,18 +18,20 @@ type AgentFormValues = {
 };
 
 type AgentPayload = {
-  userId: string; // backend requires this
+  accountid: string; // backend requires this now
   fullname: string;
   message: string;
-  agentId?: string; // optional
-  rating?: number; // optional
-  verified?: boolean; // optional
+  agentId?: string | null; // optional
+  rating?: number | null; // optional
+  verified?: boolean | null; // optional
 };
 
 /* ============================
    API CALL
 ============================ */
 async function submitAgentApplication(payload: AgentPayload) {
+  console.log("submitAgentApplication (frontend): Sending payload:", payload);
+
   const res = await fetch(
     "https://treasurepalapi.onrender.com/api/agents/apply",
     {
@@ -40,11 +42,18 @@ async function submitAgentApplication(payload: AgentPayload) {
   );
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.message || "Application submission failed");
+    const errBody = await res.json().catch(() => ({}));
+    console.error(
+      "submitAgentApplication (frontend): API error",
+      res.status,
+      errBody
+    );
+    throw new Error(errBody?.message || "Application submission failed");
   }
 
-  return res.json();
+  const data = await res.json();
+  console.log("submitAgentApplication (frontend): Success response:", data);
+  return data;
 }
 
 /* ============================
@@ -86,7 +95,7 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     try {
       const payload: AgentPayload = {
-        userId: values.userId,
+        accountid: values.userId,
         fullname: values.fullname,
         message: values.message,
         verified: false, // optional default
