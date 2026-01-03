@@ -18,32 +18,17 @@ type AgentFormValues = {
 };
 
 type AgentPayload = {
-  agentId: string; // maps to userId
+  agentId: string;
   fullname: string;
   message: string;
-  agencyId: string | null;
-  rating: number | null; // always null
-  verified: boolean | null; // always false
+  agencyId: null;
+  rating: null;
+  verified: false;
 };
 
 /* ============================
-   API CALLS
+   API CALL
 ============================ */
-async function createAgency(): Promise<string> {
-  const res = await fetch(
-    "https://treasurepalapi.onrender.com/api/agents/create",
-    { method: "POST" }
-  );
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.message || "Failed to create agency");
-  }
-
-  const data = await res.json();
-  return data.agencyId; // backend must return { agencyId: '...' }
-}
-
 async function submitAgentApplication(payload: AgentPayload) {
   const res = await fetch(
     "https://treasurepalapi.onrender.com/api/agents/apply",
@@ -73,7 +58,8 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
   // Initialize form
   useEffect(() => {
     if (loading) return;
-    if (!user || !user.userId) {
+
+    if (!user?.userId) {
       toast.error("You must be logged in to apply.");
       return;
     }
@@ -86,36 +72,36 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
 
     const message = `I, ${fullname}, hereby apply to become a TreasurePal agent. I confirm that all information provided is accurate and truthful.`;
 
-    setValues({ userId: user.userId, fullname, message });
+    setValues({
+      userId: user.userId,
+      fullname,
+      message,
+    });
   }, [user, loading]);
 
   // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!values) return toast.error("Form is not ready.");
+    if (!values) return;
 
     setSubmitting(true);
 
     try {
-      // 1️⃣ Create agency first
-      const agencyId = await createAgency();
-
-      // 2️⃣ Build payload
       const payload: AgentPayload = {
         agentId: values.userId,
         fullname: values.fullname,
         message: values.message,
-        agencyId,
-        rating: null, // rating set by admin
-        verified: false, // always false
+        agencyId: null,
+        rating: null,
+        verified: false,
       };
 
-      // 3️⃣ Submit agent application
       await submitAgentApplication(payload);
+
       toast.success("Agent application submitted successfully");
 
-      // 4️⃣ WhatsApp notification
-      const whatsappNumber = "+263777768431";
+      // Optional WhatsApp notification
+      const whatsappNumber = "263777768431";
       const whatsappMessage = encodeURIComponent(
         `Hello, I (${values.fullname}) have submitted my TreasurePal agent application.`
       );
@@ -123,9 +109,6 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
         `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
         "_blank"
       );
-
-      // Reset form
-      setValues((v) => ({ ...v!, message: "", fullname: "" }));
 
       onSuccess?.();
     } catch (err: any) {
@@ -147,35 +130,29 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
         Apply to Become an Agent
       </h2>
 
-      {/* Fullname (locked) */}
       <div className="flex flex-col">
-        <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-          Full Name
-        </label>
+        <label className="text-sm font-medium mb-1">Full Name</label>
         <input
           value={values.fullname}
           disabled
-          className="input bg-gray-100 dark:bg-slate-800 cursor-not-allowed"
+          className="input bg-gray-100 cursor-not-allowed"
         />
       </div>
 
-      {/* Message (locked) */}
       <div className="flex flex-col">
-        <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-          Application Message
-        </label>
+        <label className="text-sm font-medium mb-1">Application Message</label>
         <textarea
           value={values.message}
           disabled
           rows={4}
-          className="input bg-gray-100 dark:bg-slate-800 cursor-not-allowed resize-none"
+          className="input bg-gray-100 cursor-not-allowed resize-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={submitting}
-        className="w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow hover:brightness-105 disabled:opacity-60 transition">
+        className="w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg disabled:opacity-60">
         {submitting ? "Submitting…" : "Submit Application"}
       </button>
     </form>
