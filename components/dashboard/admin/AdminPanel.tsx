@@ -49,29 +49,48 @@ export default function AdminPanel() {
   }, []);
 
   /* ----------------------------------
-     PROMOTE ROLE
+     APPROVE AGENT
   ----------------------------------- */
-  const promote = async (userId: string, role: "agent" | "admin") => {
+  const approveAgent = async (userId: string) => {
     setActionLoading(userId);
 
     try {
-      const res = await fetch("/api/admin/promote", {
+      const res = await fetch(`/api/admin/agents/${userId}/approve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, role }),
       });
 
-      if (!res.ok) throw new Error("Promotion failed");
+      if (!res.ok) throw new Error("Approval failed");
 
       setUsers((prev) =>
         prev.map((u) =>
-          u.$id === userId
-            ? { ...u, roles: [...new Set([...u.roles, role])] }
-            : u
+          u.$id === userId ? { ...u, roles: [...u.roles, "agent"] } : u
         )
       );
     } catch {
-      alert("❌ Failed to update role");
+      alert("❌ Failed to approve agent");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  /* ----------------------------------
+     DISAPPROVE AGENT
+  ----------------------------------- */
+  const disapproveAgent = async (userId: string) => {
+    setActionLoading(userId);
+
+    try {
+      const res = await fetch(`/api/admin/agents/${userId}/disapprove`, {
+        method: "POST",
+      });
+
+      if (!res.ok) throw new Error("Disapproval failed");
+
+      setUsers((prev) =>
+        prev.filter((u) => u.$id !== userId)
+      );
+    } catch {
+      alert("❌ Failed to disapprove agent");
     } finally {
       setActionLoading(null);
     }
@@ -115,7 +134,6 @@ export default function AdminPanel() {
             <tbody>
               {users.map((user) => {
                 const isAgent = user.roles.includes("agent");
-                const isAdmin = user.roles.includes("admin");
 
                 return (
                   <tr key={user.$id}>
@@ -129,7 +147,7 @@ export default function AdminPanel() {
                     <td className="text-right space-x-2">
                       {!isAgent && (
                         <button
-                          onClick={() => promote(user.$id, "agent")}
+                          onClick={() => approveAgent(user.$id)}
                           disabled={actionLoading === user.$id}
                           className="btn btn-xs btn-outline btn-primary">
                           <UserCheck className="h-4 w-4 mr-1" />
@@ -137,20 +155,13 @@ export default function AdminPanel() {
                         </button>
                       )}
 
-                      {!isAdmin && (
+                      {isAgent && (
                         <button
-                          onClick={() => promote(user.$id, "admin")}
+                          onClick={() => disapproveAgent(user.$id)}
                           disabled={actionLoading === user.$id}
-                          className="btn btn-xs btn-outline">
-                          <ShieldCheck className="h-4 w-4 mr-1" />
-                          Make Admin
+                          className="btn btn-xs btn-outline btn-danger">
+                          Disapprove
                         </button>
-                      )}
-
-                      {isAdmin && (
-                        <span className="text-xs text-muted-foreground">
-                          Admin
-                        </span>
                       )}
                     </td>
                   </tr>
