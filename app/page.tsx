@@ -1,0 +1,78 @@
+import type { Metadata } from "next";
+
+import BlogSection from "@/components/landing/Blog";
+import FaqFull from "@/components/landing/FaqFull";
+import Hero from "@/components/landing/hero/Hero.server";
+import PropertyList from "@/components/property/PropertyList";
+import AgencySection from "@/components/user/AgencySection";
+import JoinHero from "@/components/user/JoinHero";
+
+/* ---------------------------
+   SEO METADATA (HOME)
+---------------------------- */
+
+export const metadata: Metadata = {
+  title: "TreasureProps | Explore Properties Across Zimbabwe",
+  description:
+    "Discover, list, and access properties across Zimbabwe — from affordable student housing to premium estates. TreasureProps makes property discovery simple, trusted, and inclusive.",
+
+  metadataBase: new URL("https://treasureprops.com"),
+
+  alternates: {
+    canonical: "https://treasureprops.com",
+    languages: {
+      en: "https://treasureprops.com",
+      "en-ZW": "https://treasureprops.com",
+      sn: "https://treasureprops.com/sn",
+      nd: "https://treasureprops.com/nd",
+    },
+  },
+
+  openGraph: {
+    title: "TreasureProps | Zimbabwe’s Smart Property Marketplace",
+    description:
+      "From student housing to premium estates, TreasureProps helps you find properties across Zimbabwe with ease.",
+    url: "https://treasureprops.com",
+    siteName: "TreasureProps",
+    images: [
+      {
+        url: "/logo/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "TreasureProps Zimbabwe property marketplace",
+      },
+    ],
+    type: "website",
+    locale: "en_ZW",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "TreasureProps | Find Property in Zimbabwe",
+    description:
+      "Affordable rentals, student housing, and premium estates — all in one Zimbabwean marketplace.",
+    images: ["/logo/logo.png"],
+  },
+};
+
+/* ---------------------------
+   HOME PAGE
+---------------------------- */
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-base-200">
+      {/* HERO — full bleed */}
+      <Hero />
+
+      {/* CONTENT — constrained */}
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20 py-16">
+        <PropertyList />
+        <BlogSection />
+        <FaqFull includeSchema storageKey="faq.home.open" />
+        <AgencySection />
+        <JoinHero />
+      </main>
+    </div>
+  );
+}
