@@ -3,9 +3,6 @@
 import { ShieldCheck, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
-/* ----------------------------------
-   TYPES
------------------------------------ */
 type User = {
   $id: string;
   userId: string;
@@ -17,72 +14,37 @@ type User = {
   agentId?: string;
 };
 
-type ApiConfig = {
-  version: string; // e.g. "v1" or "v2"
-};
-
 /* ----------------------------------
-   ENV BASE URLS
+   API versioning env
 ----------------------------------- */
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
+
 const API_BASE_V1 =
   process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
 const API_BASE_V2 =
   process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
 
-/* ----------------------------------
-   COMPONENT
------------------------------------ */
+const API_BASE =
+  API_VERSION === "v2" && API_BASE_V2
+    ? `${API_BASE_V2}/api/v2`
+    : `${API_BASE_V1}/api/v1`;
+
 export default function AdminPanel() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [apiBase, setApiBase] = useState<string>("");
 
-  /* ----------------------------------
-     FETCH API CONFIG (version from DB)
-  ----------------------------------- */
   useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        const res = await fetch("/api/config"); // your backend should expose this
-        if (!res.ok) throw new Error("Failed to load API config");
-        const data: ApiConfig = await res.json();
-
-        const version = data.version.trim();
-        const base =
-          version === "v2" && API_BASE_V2
-            ? `${API_BASE_V2}/api/v2`
-            : `${API_BASE_V1}/api/v1`;
-
-        setApiBase(base);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Error loading API configuration"
-        );
-      }
-    };
-
-    loadConfig();
-  }, []);
-
-  /* ----------------------------------
-     FETCH USERS (ADMIN ONLY)
-  ----------------------------------- */
-  useEffect(() => {
-    if (!apiBase) return; // wait until apiBase is set
-
     const loadUsers = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const res = await fetch(`${apiBase}/users`, {
+        const res = await fetch(`${API_BASE}/users`, {
           method: "GET",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         });
         if (!res.ok) throw new Error("Failed to load users");
 
@@ -96,24 +58,16 @@ export default function AdminPanel() {
     };
 
     loadUsers();
-  }, [apiBase]);
+  }, []);
 
-  /* ----------------------------------
-     APPROVE AGENT
-  ----------------------------------- */
   const approveAgent = async (userId: string) => {
-    if (!apiBase) return;
     setActionLoading(userId);
-
     try {
-      const res = await fetch(`${apiBase}/agents/${userId}/approve`, {
+      const res = await fetch(`${API_BASE}/agents/${userId}/approve`, {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-
       if (!res.ok) throw new Error("Approval failed");
 
       setUsers((prev) =>
@@ -126,22 +80,14 @@ export default function AdminPanel() {
     }
   };
 
-  /* ----------------------------------
-     DISAPPROVE AGENT
-  ----------------------------------- */
   const disapproveAgent = async (userId: string) => {
-    if (!apiBase) return;
     setActionLoading(userId);
-
     try {
-      const res = await fetch(`${apiBase}/agents/${userId}/disapprove`, {
+      const res = await fetch(`${API_BASE}/agents/${userId}/disapprove`, {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-
       if (!res.ok) throw new Error("Disapproval failed");
 
       setUsers((prev) =>
@@ -154,9 +100,6 @@ export default function AdminPanel() {
     }
   };
 
-  /* ----------------------------------
-     UI
-  ----------------------------------- */
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-2xl shadow-sm space-y-6">
       <div className="flex items-center gap-3">
@@ -168,16 +111,10 @@ export default function AdminPanel() {
         Approve agents, manage verification, and oversee system access.
       </p>
 
-      {/* ERROR */}
       {error && <div className="text-sm text-red-600">{error}</div>}
+      {loading && <div className="text-sm text-muted-foreground">Loading users…</div>}
 
-      {/* LOADING */}
-      {loading && (
-        <div className="text-sm text-muted-foreground">Loading users…</div>
-      )}
-
-      {/* USERS TABLE */}
-      {!loading && users.length > 0 && (
+      {!loading && (
         <div className="overflow-x-auto">
           <table className="table table-sm">
             <thead>
@@ -188,7 +125,6 @@ export default function AdminPanel() {
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
-
             <tbody>
               {users.map((user) => (
                 <tr key={user.$id}>
@@ -206,7 +142,6 @@ export default function AdminPanel() {
                         Approve Agent
                       </button>
                     )}
-
                     {user.verified && (
                       <button
                         onClick={() => disapproveAgent(user.$id)}
@@ -226,3 +161,4 @@ export default function AdminPanel() {
     </section>
   );
 }
+
