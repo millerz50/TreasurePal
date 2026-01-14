@@ -17,6 +17,26 @@ import { hasRole } from "@/lib/auth/role";
 // ✅ Step type
 export type Step = 1 | 2 | 3 | 4 | 5;
 
+/* ----------------------------------
+   API URL SELECTION
+   - Uses env var NEXT_PUBLIC_API_VERSION to pick v1 or v2.
+   - If NEXT_PUBLIC_API_VERSION is not set, falls back to V2 then V1.
+   - Expected env values for version: "v1" or "v2"
+----------------------------------- */
+function getApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_VERSION;
+  const v1 = process.env.NEXT_PUBLIC_API_URLV1;
+  const v2 = process.env.NEXT_PUBLIC_API_URLV2;
+
+  if (v === "v2" && v2) return v2;
+  if (v === "v1" && v1) return v1;
+
+  if (v2) return v2;
+  if (v1) return v1;
+
+  return "";
+}
+
 // ✅ Zod schema
 export const PropertySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -36,19 +56,12 @@ export const PropertySchema = z.object({
   agentId: z.string().min(1, "Agent ID required"),
   depositAvailable: z.boolean().default(false),
 
-  frontElevation: z.instanceof(File).nullable().optional(),
-  southView: z.instanceof(File).nullable().optional(),
-  westView: z.instanceof(File).nullable().optional(),
-  eastView: z.instanceof(File).nullable().optional(),
-  floorPlan: z.instanceof(File).nullable().optional(),
-
-  // Marketing fields
-  // website: z.string().url().optional(),
-  // flyers: z.string().optional(),
-  // hireDesigner: z.boolean().optional(),
-  // subscriptionPlan: z.string().optional(),
-  // whatsappGroup: z.string().optional(),
-  // ads: z.string().optional(),
+  // File fields are optional and nullable
+  frontElevation: z.any().optional().nullable(),
+  southView: z.any().optional().nullable(),
+  westView: z.any().optional().nullable(),
+  eastView: z.any().optional().nullable(),
+  floorPlan: z.any().optional().nullable(),
 
   depositOption: z.enum(["none", "required"]).default("none"),
   depositPercentage: z.union([z.string(), z.number()]).optional(),
@@ -80,6 +93,7 @@ export default function AddPropertyWizard() {
     depositAvailable: false,
     depositOption: "none",
     depositPercentage: "",
+    // file fields left undefined by default
   });
 
   // ✅ Always inject agentId from authenticated user
@@ -92,7 +106,7 @@ export default function AddPropertyWizard() {
     }
   }, [user?.userId]);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE = getApiUrl();
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -109,15 +123,29 @@ export default function AddPropertyWizard() {
         throw new Error(parsed.error.errors[0]?.message || "Validation failed");
 
       // ✅ Get fresh JWT from Appwrite (avoid expired token / missing token)
-      const jwtResponse = await account.createJWT();
-      const token = jwtResponse.jwt;
+      let token: string | null = null;
+      try {
+        const jwtResponse = await account.createJWT();
+        token = jwtResponse?.jwt ?? null;
+      } catch (jwtErr) {
+        // If Appwrite JWT creation fails, try to fall back to local token (if any)
+        console.warn(
+          "Failed to create Appwrite JWT, falling back to local token",
+          jwtErr
+        );
+        token =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      }
 
       // ✅ Build FormData
       const fd = new FormData();
       Object.entries(parsed.data).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
 
-        if (value instanceof File) {
+        // If value is a File or Blob, append directly
+        if (typeof File !== "undefined" && value instanceof File) {
+          fd.append(key, value);
+        } else if (value instanceof Blob) {
           fd.append(key, value);
         } else if (Array.isArray(value)) {
           value.forEach((v) => fd.append(key, String(v)));
@@ -126,15 +154,16 @@ export default function AddPropertyWizard() {
         }
       });
 
-      // Extra safety
-      if (!fd.get("agentId")) fd.append("agentId", user.userId);
+      // Extra safety: ensure agentId present
+      if (!fd.get("agentId") && user?.userId) fd.append("agentId", user.userId);
 
       // ✅ Submit
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch(`${API_BASE}/api/properties/add`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: fd,
       });
 
@@ -152,8 +181,26 @@ export default function AddPropertyWizard() {
 
       const result = await res.json();
       console.log("✅ Property submitted successfully:", result);
+
+      // Optionally reset wizard or navigate to newly created property
+      setStep(1);
+      setFormData((prev) => ({
+        ...prev,
+        title: "",
+        price: "",
+        location: "",
+        address: "",
+        rooms: 0,
+        description: "",
+        amenities: [],
+        frontElevation: null,
+        southView: null,
+        westView: null,
+        eastView: null,
+        floorPlan: null,
+      }));
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
+      setError(err?.message || "An unexpected error occurred");
       console.error(err);
     } finally {
       setLoading(false);

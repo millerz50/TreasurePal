@@ -13,6 +13,26 @@ type Activity = {
   [key: string]: any;
 };
 
+/* ----------------------------------
+   API URL SELECTION
+   - Uses env var NEXT_PUBLIC_API_VERSION to pick v1 or v2.
+   - Falls back to NEXT_PUBLIC_API_URL if provided.
+   - If none are set, returns an empty string.
+----------------------------------- */
+function getApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_VERSION;
+  const v1 = process.env.NEXT_PUBLIC_API_URLV1;
+  const v2 = process.env.NEXT_PUBLIC_API_URLV2;
+  const legacy = process.env.NEXT_PUBLIC_API_URL;
+
+  if (v === "v2" && v2) return v2;
+  if (v === "v1" && v1) return v1;
+  if (v2) return v2;
+  if (v1) return v1;
+  if (legacy) return legacy;
+  return "";
+}
+
 export default function RecentActivity() {
   const { user, loading: authLoading } = useAuth();
 
@@ -20,7 +40,7 @@ export default function RecentActivity() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+  const API_BASE = getApiUrl() ? getApiUrl().replace(/\/$/, "") : "";
 
   /* ----------------------------------
      RESOLVE PRIMARY ROLE (FROM roles[])
@@ -43,6 +63,8 @@ export default function RecentActivity() {
       setError(null);
 
       try {
+        if (!API_BASE) throw new Error("API base URL is not configured");
+
         let endpoint = "/api/activity/recent";
 
         if (primaryRole === "admin") {
@@ -57,7 +79,8 @@ export default function RecentActivity() {
           )}`;
         }
 
-        const token = localStorage.getItem("token");
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (!token) throw new Error("Not authenticated");
 
         const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -76,9 +99,11 @@ export default function RecentActivity() {
         const data = await res.json();
         setActivities(Array.isArray(data) ? data : []);
       } catch (err: any) {
-        if (err.name === "AbortError") return;
+        if (err?.name === "AbortError") return;
         console.error("❌ Failed to fetch recent activity:", err);
-        setError("Could not load activity");
+        setError(
+          err instanceof Error ? err.message : "Could not load activity"
+        );
         setActivities([]);
       } finally {
         setLoading(false);

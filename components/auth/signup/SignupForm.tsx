@@ -41,11 +41,34 @@ function formatZodError(err: unknown) {
   return String(err);
 }
 
-function safeJson(res: Response) {
-  return res
-    .clone()
-    .json()
-    .catch(() => null);
+function safeJson(res: Response | null) {
+  return (
+    res
+      ?.clone()
+      .json()
+      .catch(() => null) ?? null
+  );
+}
+
+/* ----------------------------------
+   API URL SELECTION
+   - Uses env var NEXT_PUBLIC_API_VERSION to pick v1 or v2.
+   - If NEXT_PUBLIC_API_VERSION is not set, falls back to V2 then V1.
+   - Expected env values for version: "v1" or "v2"
+----------------------------------- */
+function getApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_VERSION;
+  const v1 = process.env.NEXT_PUBLIC_API_URLV1;
+  const v2 = process.env.NEXT_PUBLIC_API_URLV2;
+
+  if (v === "v2" && v2) return v2;
+  if (v === "v1" && v1) return v1;
+
+  // fallback order: V2 then V1
+  if (v2) return v2;
+  if (v1) return v1;
+
+  return "";
 }
 
 /* ----------------------------------
@@ -157,6 +180,13 @@ export default function SignupForm({
     const tId = toast.loading("Creating your account...");
 
     try {
+      const API_URL = getApiUrl();
+      if (!API_URL) {
+        throw new Error(
+          "API base URL is not configured. Set NEXT_PUBLIC_API_URLV1 or NEXT_PUBLIC_API_URLV2 and optionally NEXT_PUBLIC_API_VERSION."
+        );
+      }
+
       const payload = cleanForm(form);
       payload.email = String(payload.email).toLowerCase();
       payload.phone = getE164() ?? undefined;
@@ -170,14 +200,11 @@ export default function SignupForm({
 
       const parsed = parsedResult.data;
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(parsed),
-        }
-      );
+      const res = await fetch(`${API_URL}/api/users/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed),
+      });
 
       if (!res.ok) {
         const body = await safeJson(res);
@@ -192,13 +219,10 @@ export default function SignupForm({
         avatarForm.append("file", avatar);
         avatarForm.append("accountid", parsed.accountid);
 
-        const uploadRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/storage/upload`,
-          {
-            method: "POST",
-            body: avatarForm,
-          }
-        );
+        const uploadRes = await fetch(`${API_URL}/api/storage/upload`, {
+          method: "POST",
+          body: avatarForm,
+        });
 
         if (!uploadRes.ok) {
           toast.error("Avatar upload failed", {
@@ -237,7 +261,8 @@ export default function SignupForm({
                  bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}>
+      transition={{ duration: 0.5 }}
+    >
       <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
         <AvatarField
           avatar={avatar}
@@ -277,12 +302,14 @@ export default function SignupForm({
           <Button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full sm:w-auto">
+            className="btn-primary w-full sm:w-auto"
+          >
             {loading ? "Creating..." : "Create Account"}
           </Button>
           <a
             href="/auth/signin"
-            className="btn-outline w-full sm:w-auto text-center">
+            className="btn-outline w-full sm:w-auto text-center"
+          >
             Already have an account?
           </a>
         </div>

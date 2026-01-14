@@ -1,3 +1,4 @@
+// src/features/insights/components/InsightsSection.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,12 +9,32 @@ type InsightPost = {
   summary: string;
 };
 
+/* ----------------------------------
+   API URL SELECTION
+   - Uses env var NEXT_PUBLIC_API_VERSION to pick v1 or v2.
+   - If NEXT_PUBLIC_API_VERSION is not set, falls back to V2 then V1.
+   - Expected env values for version: "v1" or "v2"
+----------------------------------- */
+function getApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_VERSION;
+  const v1 = process.env.NEXT_PUBLIC_API_URLV1;
+  const v2 = process.env.NEXT_PUBLIC_API_URLV2;
+
+  if (v === "v2" && v2) return v2;
+  if (v === "v1" && v1) return v1;
+
+  if (v2) return v2;
+  if (v1) return v1;
+
+  return "";
+}
+
 export default function InsightsSection() {
   const [posts, setPosts] = useState<InsightPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE = getApiUrl();
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -27,9 +48,16 @@ export default function InsightsSection() {
           throw new Error("Not authenticated");
         }
 
+        if (!API_BASE) {
+          throw new Error(
+            "API base URL is not configured. Set NEXT_PUBLIC_API_URLV1 or NEXT_PUBLIC_API_URLV2 and optionally NEXT_PUBLIC_API_VERSION."
+          );
+        }
+
         const res = await fetch(`${API_BASE}/api/insights`, {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         });
 
@@ -39,9 +67,12 @@ export default function InsightsSection() {
 
         const data = await res.json();
         setPosts(data);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("❌ Failed to fetch insights:", err);
-        setError("Could not load insights");
+        setError(
+          err instanceof Error ? err.message : "Could not load insights"
+        );
+        setPosts([]);
       } finally {
         setLoading(false);
       }
@@ -72,7 +103,8 @@ export default function InsightsSection() {
           {posts.map((post, idx) => (
             <div
               key={idx}
-              className="bg-base-100 border border-base-300 rounded-lg p-4 space-y-2 hover:shadow-md transition">
+              className="bg-base-100 border border-base-300 rounded-lg p-4 space-y-2 hover:shadow-md transition"
+            >
               <h3 className="text-lg font-semibold text-primary">
                 {post.title}
               </h3>

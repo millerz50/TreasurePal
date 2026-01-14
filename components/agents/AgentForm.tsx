@@ -5,6 +5,26 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 /* ============================
+   API URL SELECTION
+   - Uses env var NEXT_PUBLIC_API_VERSION to pick v1 or v2.
+   - If NEXT_PUBLIC_API_VERSION is not set, falls back to V2 then V1.
+   - Expected env values for version: "v1" or "v2"
+============================ */
+function getApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_VERSION;
+  const v1 = process.env.NEXT_PUBLIC_API_URLV1;
+  const v2 = process.env.NEXT_PUBLIC_API_URLV2;
+
+  if (v === "v2" && v2) return v2;
+  if (v === "v1" && v1) return v1;
+
+  if (v2) return v2;
+  if (v1) return v1;
+
+  return "";
+}
+
+/* ============================
    TYPES
 ============================ */
 type AgentFormProps = {
@@ -30,19 +50,33 @@ type AgentPayload = {
    API CALL (with forced debugging)
 ============================ */
 async function submitAgentApplication(payload: AgentPayload) {
+  const API_BASE = getApiUrl();
+  if (!API_BASE) {
+    console.error("submitAgentApplication: API base URL not configured");
+    throw new Error(
+      "API base URL is not configured. Set NEXT_PUBLIC_API_URLV1 or NEXT_PUBLIC_API_URLV2 and optionally NEXT_PUBLIC_API_VERSION."
+    );
+  }
+
   console.log("=======================================");
   console.log("submitAgentApplication (frontend): START");
   console.log("Payload being sent:", JSON.stringify(payload, null, 2));
+  console.log("Using API base:", API_BASE);
   console.log("=======================================");
 
-  const res = await fetch(
-    "https://treasurepalapi.onrender.com/api/agents/apply",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }
-  );
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}/api/agents/apply`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
 
   console.log(
     "submitAgentApplication (frontend): Response status:",
@@ -59,7 +93,7 @@ async function submitAgentApplication(payload: AgentPayload) {
     throw new Error(errBody?.message || "Application submission failed");
   }
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
   console.log("=======================================");
   console.log("submitAgentApplication (frontend): SUCCESS RESPONSE");
   console.log("Data:", JSON.stringify(data, null, 2));
@@ -126,10 +160,12 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       const whatsappMessage = encodeURIComponent(
         `Hello, I (${values.fullname}) have submitted my TreasurePal agent application.`
       );
-      window.open(
-        `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
-        "_blank"
-      );
+      if (typeof window !== "undefined") {
+        window.open(
+          `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
+          "_blank"
+        );
+      }
 
       onSuccess?.();
     } catch (err: any) {
@@ -147,7 +183,8 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 max-w-lg mx-auto">
+      className="space-y-5 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 max-w-lg mx-auto"
+    >
       <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
         Apply to Become an Agent
       </h2>
@@ -174,7 +211,8 @@ export default function AgentForm({ onSuccess }: AgentFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg disabled:opacity-60">
+        className="w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg disabled:opacity-60"
+      >
         {submitting ? "Submitting…" : "Submit Application"}
       </button>
     </form>

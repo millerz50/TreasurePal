@@ -1,3 +1,4 @@
+// src/features/user/components/UserFavorites.tsx
 "use client";
 
 import { Heart, Share, Trash2 } from "lucide-react";
@@ -13,25 +14,50 @@ type Favorite = {
   image: string;
 };
 
+/* ----------------------------------
+   API URL SELECTION
+   - Uses env var NEXT_PUBLIC_API_VERSION to pick v1 or v2.
+   - If NEXT_PUBLIC_API_VERSION is not set, falls back to V2 then V1.
+   - Expected env values for version: "v1" or "v2"
+----------------------------------- */
+function getApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_VERSION;
+  const v1 = process.env.NEXT_PUBLIC_API_URLV1;
+  const v2 = process.env.NEXT_PUBLIC_API_URLV2;
+
+  if (v === "v2" && v2) return v2;
+  if (v === "v1" && v1) return v1;
+
+  // fallback order: V2 then V1
+  if (v2) return v2;
+  if (v1) return v1;
+
+  return "";
+}
+
 export default function UserFavorites() {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFavorites = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("Not authenticated");
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/favorites`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // ✅ REQUIRED
-            },
-          }
-        );
+        const API_URL = getApiUrl();
+        if (!API_URL) throw new Error("API base URL is not configured.");
+
+        const res = await fetch(`${API_URL}/favorites`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!res.ok) {
           throw new Error("Failed to load favorites");
@@ -39,9 +65,12 @@ export default function UserFavorites() {
 
         const data: Favorite[] = await res.json();
         setFavorites(data);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("❌ Favorites fetch error:", err);
         setFavorites([]);
+        setError(
+          err instanceof Error ? err.message : "Failed to load favorites"
+        );
       } finally {
         setLoading(false);
       }
@@ -53,6 +82,11 @@ export default function UserFavorites() {
   if (loading) {
     return <p>Loading favorites...</p>;
   }
+
+  if (error) {
+    return <p className="text-sm text-red-600">Error: {error}</p>;
+  }
+
   if (favorites.length === 0) {
     return <p>No favorites found.</p>;
   }
@@ -68,7 +102,8 @@ export default function UserFavorites() {
         {favorites.map((fav) => (
           <div
             key={fav.id}
-            className="border border-base-300 rounded-lg overflow-hidden shadow hover:shadow-lg transition transform hover:scale-[1.02]">
+            className="border border-base-300 rounded-lg overflow-hidden shadow hover:shadow-lg transition transform hover:scale-[1.02]"
+          >
             <Image
               src={fav.image}
               alt={fav.title}

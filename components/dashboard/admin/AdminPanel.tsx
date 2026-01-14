@@ -1,7 +1,29 @@
+// src/features/admin/components/AdminPanel.tsx
 "use client";
 
 import { ShieldCheck, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+
+/* ----------------------------------
+   API URL SELECTION
+   - Uses env var NEXT_PUBLIC_API_VERSION to pick v1 or v2.
+   - If NEXT_PUBLIC_API_VERSION is not set, falls back to V2 then V1.
+   - Expected env values for version: "v1" or "v2"
+----------------------------------- */
+function getApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_VERSION;
+  const v1 = process.env.NEXT_PUBLIC_API_URLV1;
+  const v2 = process.env.NEXT_PUBLIC_API_URLV2;
+
+  if (v === "v2" && v2) return v2;
+  if (v === "v1" && v1) return v1;
+
+  // fallback order: V2 then V1
+  if (v2) return v2;
+  if (v1) return v1;
+
+  return "";
+}
 
 /* ----------------------------------
    TYPES
@@ -33,9 +55,10 @@ export default function AdminPanel() {
       setError(null);
 
       try {
-        const res = await fetch(
-          "https://treasurepalapi.onrender.com/api/admin/users"
-        );
+        const API_URL = getApiUrl();
+        if (!API_URL) throw new Error("API base URL is not configured.");
+
+        const res = await fetch(`${API_URL}/api/admin/users`);
         if (!res.ok) throw new Error("Failed to load users");
 
         const data = await res.json();
@@ -57,22 +80,26 @@ export default function AdminPanel() {
     setActionLoading(userId);
 
     try {
-      const res = await fetch(
-        `https://treasurepalapi.onrender.com/api/admin/agents/${userId}/approve`,
-        {
-          method: "POST",
-        }
-      );
+      const API_URL = getApiUrl();
+      if (!API_URL) throw new Error("API base URL is not configured.");
+
+      const res = await fetch(`${API_URL}/api/admin/agents/${userId}/approve`, {
+        method: "POST",
+      });
 
       if (!res.ok) throw new Error("Approval failed");
 
       setUsers((prev) =>
         prev.map((u) =>
-          u.$id === userId ? { ...u, roles: [...u.roles, "agent"] } : u
+          u.$id === userId
+            ? { ...u, roles: Array.from(new Set([...u.roles, "agent"])) }
+            : u
         )
       );
-    } catch {
-      alert("❌ Failed to approve agent");
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "❌ Failed to approve agent";
+      alert(msg);
     } finally {
       setActionLoading(null);
     }
@@ -85,15 +112,23 @@ export default function AdminPanel() {
     setActionLoading(userId);
 
     try {
-      const res = await fetch(`/api/admin/agents/${userId}/disapprove`, {
-        method: "POST",
-      });
+      const API_URL = getApiUrl();
+      if (!API_URL) throw new Error("API base URL is not configured.");
+
+      const res = await fetch(
+        `${API_URL}/api/admin/agents/${userId}/disapprove`,
+        {
+          method: "POST",
+        }
+      );
 
       if (!res.ok) throw new Error("Disapproval failed");
 
       setUsers((prev) => prev.filter((u) => u.$id !== userId));
-    } catch {
-      alert("❌ Failed to disapprove agent");
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "❌ Failed to disapprove agent";
+      alert(msg);
     } finally {
       setActionLoading(null);
     }

@@ -3,22 +3,46 @@
 import { useEffect, useState } from "react";
 import PropertyCard, { Property } from "./PropertyCard";
 
+/* ----------------------------------
+   API URL SELECTION
+   - Uses env var NEXT_PUBLIC_API_VERSION to pick v1 or v2.
+   - Falls back to NEXT_PUBLIC_API_URL if provided.
+----------------------------------- */
+function getApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_VERSION;
+  const v1 = process.env.NEXT_PUBLIC_API_URLV1;
+  const v2 = process.env.NEXT_PUBLIC_API_URLV2;
+  const legacy = process.env.NEXT_PUBLIC_API_URL;
+
+  if (v === "v2" && v2) return v2;
+  if (v === "v1" && v1) return v1;
+  if (v2) return v2;
+  if (v1) return v1;
+  if (legacy) return legacy;
+  return "";
+}
+
 export default function PropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProperties = async () => {
+      setLoading(true);
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+        const API_BASE = getApiUrl();
         if (!API_BASE) throw new Error("API base URL is not configured");
 
-        const token = localStorage.getItem("token");
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (!token) throw new Error("Not authenticated");
 
-        const res = await fetch(`${API_BASE}/api/properties/all`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(
+          `${API_BASE.replace(/\/$/, "")}/api/properties/all`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         if (!res.ok)
           throw new Error(`Failed to fetch properties (${res.status})`);
@@ -28,16 +52,23 @@ export default function PropertyList() {
         // Map raw API data into Property type
         const mapped: Property[] = Array.isArray(data)
           ? data.map((doc: any) => ({
-              id: doc.$id, // map $id to id
-              title: doc.title,
-              description: doc.description,
-              price: doc.price,
-              type: doc.type,
-              location: doc.location,
-              rooms: doc.rooms,
+              id: String(doc.$id ?? doc.id ?? ""),
+              title: String(doc.title ?? ""),
+              description: String(doc.description ?? ""),
+              price: doc.price ?? "",
+              type: String(doc.type ?? ""),
+              location: String(doc.location ?? ""),
+              rooms:
+                typeof doc.rooms === "number"
+                  ? doc.rooms
+                  : Number(doc.rooms) || 0,
               amenities: Array.isArray(doc.amenities) ? doc.amenities : [],
               images: {
-                frontElevation: doc.frontElevation, // wrap into images
+                frontElevation: doc.frontElevation ?? null,
+                southView: doc.southView ?? null,
+                westView: doc.westView ?? null,
+                eastView: doc.eastView ?? null,
+                floorPlan: doc.floorPlan ?? null,
               },
             }))
           : [];
