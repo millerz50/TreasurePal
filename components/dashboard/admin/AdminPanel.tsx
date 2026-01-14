@@ -1,164 +1,219 @@
-"use client";
+import { NextFunction, Request, Response } from "express";
+import {
+  getAgentDashboardMetrics,
+  recordAgentMetrics,
+} from "../services/dashboard/dashboardService";
+import {
+  approveApplication,
+  getApplicationById,
+  getUserByAccountId,
+  listPendingApplications,
+  rejectApplication,
+  submitAgentApplication,
+} from "../services/user/userService";
+import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 
-import { ShieldCheck, UserCheck } from "lucide-react";
-import { useEffect, useState } from "react";
-
-type User = {
-  $id: string;
-  userId: string;
-  fullname: string;
-  email: string;
-  verified?: boolean;
-  rating?: number;
-  message?: string;
-  agentId?: string;
-};
-
-/* ----------------------------------
-   API versioning env
------------------------------------ */
-const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
-
-const API_BASE_V1 =
-  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
-const API_BASE_V2 =
-  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-
-const API_BASE =
-  API_VERSION === "v2" && API_BASE_V2
-    ? `${API_BASE_V2}/api/v2`
-    : `${API_BASE_V1}/api/v1`;
-
-export default function AdminPanel() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadUsers = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const res = await fetch(`${API_BASE}/applications/pending`, {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!res.ok) throw new Error("Failed to load users");
-
-        const data = await res.json();
-        setUsers(data);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Error loading users");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUsers();
-  }, []);
-
-  const approveAgent = async (userId: string) => {
-    setActionLoading(userId);
-    try {
-      const res = await fetch(`${API_BASE}/agents/${userId}/approve`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error("Approval failed");
-
-      setUsers((prev) =>
-        prev.map((u) => (u.$id === userId ? { ...u, verified: true } : u))
-      );
-    } catch {
-      alert("❌ Failed to approve agent");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const disapproveAgent = async (userId: string) => {
-    setActionLoading(userId);
-    try {
-      const res = await fetch(`${API_BASE}/agents/${userId}/disapprove`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error("Disapproval failed");
-
-      setUsers((prev) =>
-        prev.map((u) => (u.$id === userId ? { ...u, verified: false } : u))
-      );
-    } catch {
-      alert("❌ Failed to disapprove agent");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  return (
-    <section className="p-6 bg-base-100 border border-base-300 rounded-2xl shadow-sm space-y-6">
-      <div className="flex items-center gap-3">
-        <ShieldCheck className="h-6 w-6 text-primary" />
-        <h2 className="text-xl font-semibold">Admin Panel</h2>
-      </div>
-
-      <p className="text-sm text-muted-foreground">
-        Approve agents, manage verification, and oversee system access.
-      </p>
-
-      {error && <div className="text-sm text-red-600">{error}</div>}
-      {loading && <div className="text-sm text-muted-foreground">Loading users…</div>}
-
-      {!loading && (
-        <div className="overflow-x-auto">
-          <table className="table table-sm">
-            <thead>
-              <tr className="text-xs uppercase text-muted-foreground">
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Verified</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.$id}>
-                  <td className="font-medium">{user.fullname}</td>
-                  <td className="text-xs">{user.email}</td>
-                  <td className="text-xs">{user.verified ? "Yes" : "No"}</td>
-                  <td className="text-right space-x-2">
-                    {!user.verified && (
-                      <button
-                        onClick={() => approveAgent(user.$id)}
-                        disabled={actionLoading === user.$id}
-                        className="btn btn-xs btn-outline btn-primary"
-                      >
-                        <UserCheck className="h-4 w-4 mr-1" />
-                        Approve Agent
-                      </button>
-                    )}
-                    {user.verified && (
-                      <button
-                        onClick={() => disapproveAgent(user.$id)}
-                        disabled={actionLoading === user.$id}
-                        className="btn btn-xs btn-outline btn-danger"
-                      >
-                        Disapprove
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
+/* -------------------------
+   Helpers
+------------------------- */
+function isAdmin(req: AuthenticatedRequest) {
+  const user = (req as any).user;
+  if (!user) return false;
+  const roles: string[] = Array.isArray(user.roles) ? user.roles : [];
+  return roles.includes("admin");
 }
 
+/* ============================
+   SUBMIT APPLICATION
+============================ */
+export async function submitApplicationHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const body = req.body ?? {};
+
+    if (!body.accountid || typeof body.accountid !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "accountid is required" });
+    }
+
+    if (!body.fullname || typeof body.fullname !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "fullname is required" });
+    }
+
+    if (!body.message || typeof body.message !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "message is required" });
+    }
+
+    const payload = {
+      userId: body.accountid,
+      fullname: body.fullname,
+      message: body.message,
+      agentId: body.agentId ?? null,
+      rating: typeof body.rating === "number" ? body.rating : null,
+      verified: typeof body.verified === "boolean" ? body.verified : null,
+    };
+
+    const created = await submitAgentApplication(payload);
+
+    return res.status(201).json({ success: true, data: created });
+  } catch (err: any) {
+    return next(err);
+  }
+}
+
+/* ============================
+   LIST PENDING APPLICATIONS
+============================ */
+export async function listPendingHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!isAdmin(req)) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Admin access required" });
+    }
+
+    const limit = Number(req.query.limit ?? 50);
+    const applications = await listPendingApplications(limit);
+
+    return res.status(200).json({ success: true, data: applications });
+  } catch (err: any) {
+    return next(err);
+  }
+}
+
+/* ============================
+   APPROVE APPLICATION (Frontend expects /agents/:id/approve)
+============================ */
+export async function approveAgentHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!isAdmin(req)) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Admin access required" });
+    }
+
+    const agentId = req.params.id;
+    if (!agentId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Agent id is required" });
+    }
+
+    const application = await getApplicationById(agentId);
+    if (!application) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Application not found" });
+    }
+
+    const adminPayload = (req as any).user;
+    const adminId =
+      adminPayload?.accountid ??
+      adminPayload?.$id ??
+      adminPayload?.id ??
+      "admin";
+
+    const reviewNotes = req.body?.reviewNotes ?? null;
+
+    const result = await approveApplication(agentId, adminId, reviewNotes);
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (err: any) {
+    return next(err);
+  }
+}
+
+/* ============================
+   DISAPPROVE APPLICATION (Frontend expects /agents/:id/disapprove)
+============================ */
+export async function disapproveAgentHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!isAdmin(req)) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Admin access required" });
+    }
+
+    const agentId = req.params.id;
+    if (!agentId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Agent id is required" });
+    }
+
+    const application = await getApplicationById(agentId);
+    if (!application) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Application not found" });
+    }
+
+    const adminPayload = (req as any).user;
+    const adminId =
+      adminPayload?.accountid ??
+      adminPayload?.$id ??
+      adminPayload?.id ??
+      "admin";
+
+    const reviewNotes = req.body?.reviewNotes ?? null;
+
+    const result = await rejectApplication(agentId, adminId, reviewNotes);
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (err: any) {
+    return next(err);
+  }
+}
+
+/* ============================
+   GET AGENT METRICS
+============================ */
+export async function getMetricsHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const agentPayload = (req as any).agent ?? (req as any).user;
+    if (
+      !agentPayload ||
+      (!agentPayload.id && !agentPayload.$id && !agentPayload.accountid)
+    ) {
+      return res.status(401).json({ error: "Invalid token payload" });
+    }
+
+    const agentId =
+      agentPayload.id ?? agentPayload.$id ?? agentPayload.accountid;
+
+    const userDoc = await getUserByAccountId(
+      agentPayload.accountid ?? agentId
+    ).catch(() => null);
+
+    const metrics = await getAgentDashboardMetrics(agentId);
+    await recordAgentMetrics(agentId, metrics);
+
+    return res.status(200).json({ success: true, agentId, metrics });
+  } catch (err: any) {
+    return next(err);
+  }
+}
