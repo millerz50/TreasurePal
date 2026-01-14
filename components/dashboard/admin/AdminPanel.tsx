@@ -17,20 +17,17 @@ type User = {
   agentId?: string;
 };
 
-/* ----------------------------------
-   API versioning env
------------------------------------ */
-const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
+type ApiConfig = {
+  version: string; // e.g. "v1" or "v2"
+};
 
+/* ----------------------------------
+   ENV BASE URLS
+----------------------------------- */
 const API_BASE_V1 =
   process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
 const API_BASE_V2 =
   process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-
-const API_BASE =
-  API_VERSION === "v2" && API_BASE_V2
-    ? `${API_BASE_V2}/api/v2`
-    : `${API_BASE_V1}/api/v1`;
 
 /* ----------------------------------
    COMPONENT
@@ -40,17 +37,47 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [apiBase, setApiBase] = useState<string>("");
+
+  /* ----------------------------------
+     FETCH API CONFIG (version from DB)
+  ----------------------------------- */
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const res = await fetch("/api/config"); // your backend should expose this
+        if (!res.ok) throw new Error("Failed to load API config");
+        const data: ApiConfig = await res.json();
+
+        const version = data.version.trim();
+        const base =
+          version === "v2" && API_BASE_V2
+            ? `${API_BASE_V2}/api/v2`
+            : `${API_BASE_V1}/api/v1`;
+
+        setApiBase(base);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error loading API configuration"
+        );
+      }
+    };
+
+    loadConfig();
+  }, []);
 
   /* ----------------------------------
      FETCH USERS (ADMIN ONLY)
   ----------------------------------- */
   useEffect(() => {
+    if (!apiBase) return; // wait until apiBase is set
+
     const loadUsers = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const res = await fetch(`${API_BASE}/users`, {
+        const res = await fetch(`${apiBase}/users`, {
           method: "GET",
           credentials: "include",
           headers: {
@@ -69,16 +96,17 @@ export default function AdminPanel() {
     };
 
     loadUsers();
-  }, []);
+  }, [apiBase]);
 
   /* ----------------------------------
-     APPROVE AGENT (set verified = true)
+     APPROVE AGENT
   ----------------------------------- */
   const approveAgent = async (userId: string) => {
+    if (!apiBase) return;
     setActionLoading(userId);
 
     try {
-      const res = await fetch(`${API_BASE}/agents/${userId}/approve`, {
+      const res = await fetch(`${apiBase}/agents/${userId}/approve`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -99,13 +127,14 @@ export default function AdminPanel() {
   };
 
   /* ----------------------------------
-     DISAPPROVE AGENT (set verified = false)
+     DISAPPROVE AGENT
   ----------------------------------- */
   const disapproveAgent = async (userId: string) => {
+    if (!apiBase) return;
     setActionLoading(userId);
 
     try {
-      const res = await fetch(`${API_BASE}/agents/${userId}/disapprove`, {
+      const res = await fetch(`${apiBase}/agents/${userId}/disapprove`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -126,7 +155,7 @@ export default function AdminPanel() {
   };
 
   /* ----------------------------------
-     UIs
+     UI
   ----------------------------------- */
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-2xl shadow-sm space-y-6">
@@ -148,7 +177,7 @@ export default function AdminPanel() {
       )}
 
       {/* USERS TABLE */}
-      {!loading && (
+      {!loading && users.length > 0 && (
         <div className="overflow-x-auto">
           <table className="table table-sm">
             <thead>
