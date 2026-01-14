@@ -18,6 +18,21 @@ type User = {
 };
 
 /* ----------------------------------
+   API versioning env
+----------------------------------- */
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
+
+const API_BASE_V1 =
+  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
+const API_BASE_V2 =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+
+const API_BASE =
+  API_VERSION === "v2" && API_BASE_V2
+    ? `${API_BASE_V2}/api/v2`
+    : `${API_BASE_V1}/api/v1`;
+
+/* ----------------------------------
    COMPONENT
 ----------------------------------- */
 export default function AdminPanel() {
@@ -35,7 +50,13 @@ export default function AdminPanel() {
       setError(null);
 
       try {
-        const res = await fetch("/api/admin/users");
+        const res = await fetch(`${API_BASE}/users`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         if (!res.ok) throw new Error("Failed to load users");
 
         const data = await res.json();
@@ -57,8 +78,12 @@ export default function AdminPanel() {
     setActionLoading(userId);
 
     try {
-      const res = await fetch(`/api/admin/agents/${userId}/approve`, {
+      const res = await fetch(`${API_BASE}/agents/${userId}/approve`, {
         method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (!res.ok) throw new Error("Approval failed");
@@ -80,8 +105,12 @@ export default function AdminPanel() {
     setActionLoading(userId);
 
     try {
-      const res = await fetch(`/api/admin/agents/${userId}/disapprove`, {
+      const res = await fetch(`${API_BASE}/agents/${userId}/disapprove`, {
         method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (!res.ok) throw new Error("Disapproval failed");
