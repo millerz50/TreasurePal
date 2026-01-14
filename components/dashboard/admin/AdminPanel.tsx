@@ -35,6 +35,10 @@ export default function AdminPanel() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // 🔑 Get JWT from localStorage (or however you store it after login)
+  const jwt =
+    typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+
   useEffect(() => {
     const loadUsers = async () => {
       setLoading(true);
@@ -44,7 +48,10 @@ export default function AdminPanel() {
         const res = await fetch(`${API_BASE}/agents/applications/pending`, {
           method: "GET",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+          },
         });
         if (!res.ok) throw new Error("Failed to load users");
 
@@ -58,8 +65,12 @@ export default function AdminPanel() {
       }
     };
 
-    loadUsers();
-  }, []);
+    if (jwt) {
+      loadUsers();
+    } else {
+      setError("No JWT token found. Please log in as admin.");
+    }
+  }, [jwt]);
 
   const approveAgent = async (userId: string) => {
     setActionLoading(userId);
@@ -67,7 +78,10 @@ export default function AdminPanel() {
       const res = await fetch(`${API_BASE}/agents/${userId}/approve`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+        },
         body: JSON.stringify({ reviewNotes: "Approved via Admin Panel" }),
       });
       if (!res.ok) throw new Error("Approval failed");
@@ -88,7 +102,10 @@ export default function AdminPanel() {
       const res = await fetch(`${API_BASE}/agents/${userId}/disapprove`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+        },
         body: JSON.stringify({ reviewNotes: "Disapproved via Admin Panel" }),
       });
       if (!res.ok) throw new Error("Disapproval failed");
@@ -119,7 +136,7 @@ export default function AdminPanel() {
         <div className="text-sm text-muted-foreground">Loading users…</div>
       )}
 
-      {!loading && (
+      {!loading && users.length > 0 && (
         <div className="overflow-x-auto">
           <table className="table table-sm">
             <thead>
@@ -163,7 +180,10 @@ export default function AdminPanel() {
           </table>
         </div>
       )}
+
+      {!loading && users.length === 0 && !error && (
+        <div className="text-sm text-muted-foreground">No pending applications.</div>
+      )}
     </section>
   );
 }
-
