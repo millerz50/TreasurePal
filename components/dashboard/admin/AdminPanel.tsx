@@ -41,7 +41,7 @@ export default function AdminPanel() {
       setError(null);
 
       try {
-        const res = await fetch(`${API_BASE}/applications/pending`, {
+        const res = await fetch(`${API_BASE}/agents/applications/pending`, {
           method: "GET",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
