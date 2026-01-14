@@ -35,9 +35,9 @@ export default function AdminPanel() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔑 Get JWT from localStorage (or however you store it after login)
+  // ✅ Get JWT from localStorage (saved as "token" in SigninForm)
   const jwt =
-    typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -182,7 +182,9 @@ export default function AdminPanel() {
       )}
 
       {!loading && users.length === 0 && !error && (
-        <div className="text-sm text-muted-foreground">No pending applications.</div>
+        <div className="text-sm text-muted-foreground">
+          No pending applications.
+        </div>
       )}
     </section>
   );
