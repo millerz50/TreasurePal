@@ -8,11 +8,13 @@ import { useEffect, useState } from "react";
 ----------------------------------- */
 type User = {
   $id: string;
-  firstName: string;
-  surname: string;
+  userId: string;
+  fullname: string;
   email: string;
-  roles: string[];
-  status?: string;
+  verified?: boolean;
+  rating?: number;
+  message?: string;
+  agentId?: string;
 };
 
 /* ----------------------------------
@@ -49,7 +51,7 @@ export default function AdminPanel() {
   }, []);
 
   /* ----------------------------------
-     APPROVE AGENT
+     APPROVE AGENT (set verified = true)
   ----------------------------------- */
   const approveAgent = async (userId: string) => {
     setActionLoading(userId);
@@ -62,9 +64,7 @@ export default function AdminPanel() {
       if (!res.ok) throw new Error("Approval failed");
 
       setUsers((prev) =>
-        prev.map((u) =>
-          u.$id === userId ? { ...u, roles: [...u.roles, "agent"] } : u
-        )
+        prev.map((u) => (u.$id === userId ? { ...u, verified: true } : u))
       );
     } catch {
       alert("❌ Failed to approve agent");
@@ -74,7 +74,7 @@ export default function AdminPanel() {
   };
 
   /* ----------------------------------
-     DISAPPROVE AGENT
+     DISAPPROVE AGENT (set verified = false)
   ----------------------------------- */
   const disapproveAgent = async (userId: string) => {
     setActionLoading(userId);
@@ -87,7 +87,7 @@ export default function AdminPanel() {
       if (!res.ok) throw new Error("Disapproval failed");
 
       setUsers((prev) =>
-        prev.filter((u) => u.$id !== userId)
+        prev.map((u) => (u.$id === userId ? { ...u, verified: false } : u))
       );
     } catch {
       alert("❌ Failed to disapprove agent");
@@ -97,7 +97,7 @@ export default function AdminPanel() {
   };
 
   /* ----------------------------------
-     UI
+     UIs
   ----------------------------------- */
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-2xl shadow-sm space-y-6">
@@ -107,7 +107,7 @@ export default function AdminPanel() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Approve agents, manage user roles, and oversee system access.
+        Approve agents, manage verification, and oversee system access.
       </p>
 
       {/* ERROR */}
@@ -124,49 +124,43 @@ export default function AdminPanel() {
           <table className="table table-sm">
             <thead>
               <tr className="text-xs uppercase text-muted-foreground">
-                <th>User</th>
+                <th>Full Name</th>
                 <th>Email</th>
-                <th>Roles</th>
+                <th>Verified</th>
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {users.map((user) => {
-                const isAgent = user.roles.includes("agent");
+              {users.map((user) => (
+                <tr key={user.$id}>
+                  <td className="font-medium">{user.fullname}</td>
+                  <td className="text-xs">{user.email}</td>
+                  <td className="text-xs">{user.verified ? "Yes" : "No"}</td>
+                  <td className="text-right space-x-2">
+                    {!user.verified && (
+                      <button
+                        onClick={() => approveAgent(user.$id)}
+                        disabled={actionLoading === user.$id}
+                        className="btn btn-xs btn-outline btn-primary"
+                      >
+                        <UserCheck className="h-4 w-4 mr-1" />
+                        Approve Agent
+                      </button>
+                    )}
 
-                return (
-                  <tr key={user.$id}>
-                    <td className="font-medium">
-                      {user.firstName} {user.surname}
-                    </td>
-                    <td className="text-xs">{user.email}</td>
-                    <td className="text-xs capitalize">
-                      {user.roles.join(", ")}
-                    </td>
-                    <td className="text-right space-x-2">
-                      {!isAgent && (
-                        <button
-                          onClick={() => approveAgent(user.$id)}
-                          disabled={actionLoading === user.$id}
-                          className="btn btn-xs btn-outline btn-primary">
-                          <UserCheck className="h-4 w-4 mr-1" />
-                          Approve Agent
-                        </button>
-                      )}
-
-                      {isAgent && (
-                        <button
-                          onClick={() => disapproveAgent(user.$id)}
-                          disabled={actionLoading === user.$id}
-                          className="btn btn-xs btn-outline btn-danger">
-                          Disapprove
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                    {user.verified && (
+                      <button
+                        onClick={() => disapproveAgent(user.$id)}
+                        disabled={actionLoading === user.$id}
+                        className="btn btn-xs btn-outline btn-danger"
+                      >
+                        Disapprove
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
