@@ -1,238 +1,317 @@
+// src/features/auth/components/SignupForm.tsx
 "use client";
 
-import { Separator } from "@/components/ui/Separator";
-import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
-import { z } from "zod";
+import { motion } from "framer-motion";
+import { AlertTriangle, Camera, CheckCircle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "../../../components/ui/button";
 
-import AmenitiesStep from "./steps/AmenitiesStep";
-import BasicInfoStep from "./steps/BasicInfoStep";
-import LocationStep from "./steps/LocationStep";
-import PropertyImagesStep from "./steps/PropertyImagesStep";
-import ReviewStep from "./steps/ReviewStep";
+import usePhoneFormatter from "../../../hooks/usePhoneFormatter";
+import { SignupFormData, SignupSchema } from "../SignupSchema";
+import SocialSignup from "../SocialSignup";
 
-import { account } from "@/lib/appwrite"; // Appwrite client
-import { hasRole } from "@/lib/auth/role";
+import AvatarField from "./AvatarField";
+import BioField from "./BioField";
+import ContactFields from "./ContactFields";
+import CountryLocationFields from "./CountryLocationFields";
+import DOBField from "./DOBField";
+import NameFields from "./NameFields";
+import PasswordField from "./PasswordField";
 
-// ✅ Step type
-export type Step = 1 | 2 | 3 | 4 | 5;
+/* ----------------------------------
+   DEBUG UTILITIES
+----------------------------------- */
+const DEBUG = false; // set to true to enable debug logs
+function logGroup(label: string, data?: unknown) {
+  if (!DEBUG) return;
+  console.groupCollapsed(`🔎 ${label}`);
+  if (data !== undefined) console.log(data);
+  console.groupEnd();
+}
 
-// ✅ Zod schema
-export const PropertySchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  price: z.union([z.string(), z.number()]).refine((val) => Number(val) > 0, {
-    message: "Price must be greater than 0",
-  }),
-  location: z.string().min(2, "Location is required"),
-  address: z.string().min(5, "Address must be more detailed"),
-  rooms: z.number().min(1, "At least 1 room required"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  type: z.string(),
-  status: z.string(),
-  country: z.string(),
-  amenities: z.array(z.string()).optional(),
-  locationLat: z.number().nullable().optional(),
-  locationLng: z.number().nullable().optional(),
-  agentId: z.string().min(1, "Agent ID required"),
-  depositAvailable: z.boolean().default(false),
+function formatZodError(err: unknown) {
+  if (!err || typeof err !== "object") return String(err);
+  const anyErr = err as any;
+  if (Array.isArray(anyErr?.issues)) {
+    return anyErr.issues
+      .map((i: any) => `• ${i.path?.join(".") || "(root)"}: ${i.message}`)
+      .join("\n");
+  }
+  return String(err);
+}
 
-  frontElevation: z.instanceof(File).nullable().optional(),
-  southView: z.instanceof(File).nullable().optional(),
-  westView: z.instanceof(File).nullable().optional(),
-  eastView: z.instanceof(File).nullable().optional(),
-  floorPlan: z.instanceof(File).nullable().optional(),
+async function safeJson(res: Response) {
+  return res
+    .clone()
+    .json()
+    .catch(() => null);
+}
 
-  // Marketing fields
-  // website: z.string().url().optional(),
-  // flyers: z.string().optional(),
-  // hireDesigner: z.boolean().optional(),
-  // subscriptionPlan: z.string().optional(),
-  // whatsappGroup: z.string().optional(),
-  // ads: z.string().optional(),
+/* ----------------------------------
+   API versioning env
+----------------------------------- */
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
+const API_BASE_V1 =
+  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
+const API_BASE_V2 =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const API_BASE =
+  API_VERSION === "v2" && API_BASE_V2 ? API_BASE_V2 : API_BASE_V1;
 
-  depositOption: z.enum(["none", "required"]).default("none"),
-  depositPercentage: z.union([z.string(), z.number()]).optional(),
-});
+/* ----------------------------------
+   PROPS
+----------------------------------- */
+interface SignupFormProps {
+  redirectTo?: string;
+}
 
-export type PropertyFormValues = z.infer<typeof PropertySchema>;
-
-export default function AddPropertyWizard() {
-  const { user, loading: authLoading } = useAuth();
-
-  const [step, setStep] = useState<Step>(1);
+/* ----------------------------------
+   COMPONENT
+----------------------------------- */
+export default function SignupForm({
+  redirectTo = "/auth/signin",
+}: SignupFormProps) {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<File | null>(null);
 
-  const [formData, setFormData] = useState<PropertyFormValues>({
-    title: "",
-    price: "",
+  const initialAccountIdRef = useRef<string>(crypto.randomUUID());
+
+  const [form, setForm] = useState<SignupFormData>({
+    accountid: initialAccountIdRef.current,
+    email: "",
+    firstName: "",
+    surname: "",
+    phone: undefined,
+    country: "",
     location: "",
-    address: "",
-    rooms: 0,
-    description: "",
-    type: "House",
-    status: "Available",
-    country: "Zimbabwe",
-    amenities: [],
-    locationLat: null,
-    locationLng: null,
-    agentId: "",
-    depositAvailable: false,
-    depositOption: "none",
-    depositPercentage: "",
+    roles: ["user"],
+    status: "Pending",
+    bio: undefined,
+    password: "",
+    dateOfBirth: undefined,
   });
 
-  // ✅ Always inject agentId from authenticated user
+  /* ----------------------------------
+     PHONE FORMATTER
+  ----------------------------------- */
+  const { phone, setPhone, getE164 } = usePhoneFormatter(form.country);
+  const formWithDerivedPhone = useMemo(
+    () => ({ ...form, phone }),
+    [form, phone]
+  );
+
+  /* ----------------------------------
+     DEBUG: State changes
+  ----------------------------------- */
   useEffect(() => {
-    if (user?.userId) {
-      setFormData((prev) => ({
-        ...prev,
-        agentId: user.userId,
-      }));
+    logGroup("Form state changed", form);
+  }, [form]);
+
+  useEffect(() => {
+    logGroup("Display phone changed", {
+      displayPhone: phone,
+      country: form.country,
+    });
+  }, [phone, form.country]);
+
+  /* ----------------------------------
+     HANDLERS
+  ----------------------------------- */
+  const updateField = (name: string, value: any) =>
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    if (name === "phone") {
+      setPhone(value);
+      updateField("phone", value);
+      return;
     }
-  }, [user?.userId]);
+    updateField(name, value);
+  };
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+  const handleBlur = (
+    e: React.FocusEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    const trimmed = value.trim();
+    updateField(name, trimmed === "" ? undefined : trimmed);
+    if (name === "phone") setPhone(trimmed);
+  };
 
-  const handleSubmit = async () => {
+  const cleanForm = (obj: Record<string, any>) => {
+    const cleaned = Object.fromEntries(
+      Object.entries(obj)
+        .map(([k, v]) =>
+          typeof v === "string"
+            ? [k, v.trim() === "" ? undefined : v.trim()]
+            : [k, v]
+        )
+        .filter(([, v]) => v !== undefined)
+    );
+    return cleaned;
+  };
+
+  /* ----------------------------------
+     SUBMIT
+  ----------------------------------- */
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setLoading(true);
-    setError(null);
+    const tId = toast.loading("Creating your account...");
 
     try {
       if (!API_BASE) throw new Error("API base URL is not configured");
-      if (!user || !hasRole(user, "agent"))
-        throw new Error("Only agents can add properties.");
 
-      // ✅ Validate data
-      const parsed = PropertySchema.safeParse(formData);
-      if (!parsed.success)
-        throw new Error(parsed.error.errors[0]?.message || "Validation failed");
+      const payload = cleanForm(form);
+      payload.email = String(payload.email).toLowerCase();
+      payload.phone = getE164() ?? undefined;
 
-      // ✅ Get fresh JWT from Appwrite (avoid expired token / missing token)
-      const jwtResponse = await account.createJWT();
-      const token = jwtResponse.jwt;
+      const parsedResult = SignupSchema.safeParse(payload);
+      if (!parsedResult.success) {
+        const formatted = formatZodError(parsedResult.error);
+        toast.error(formatted, { icon: <AlertTriangle className="w-5 h-5" /> });
+        throw new Error("Client validation failed");
+      }
 
-      // ✅ Build FormData
-      const fd = new FormData();
-      Object.entries(parsed.data).forEach(([key, value]) => {
-        if (value === undefined || value === null) return;
+      const parsed = parsedResult.data;
 
-        if (value instanceof File) {
-          fd.append(key, value);
-        } else if (Array.isArray(value)) {
-          value.forEach((v) => fd.append(key, String(v)));
-        } else {
-          fd.append(key, String(value));
-        }
-      });
+      // Build endpoint (version-aware)
+      const signupEndpoint = `${API_BASE}/api/${API_VERSION}/users/signup`;
 
-      // Extra safety
-      if (!fd.get("agentId")) fd.append("agentId", user.userId);
+      if (DEBUG) {
+        console.debug("Signup payload", { signupEndpoint, parsed });
+      }
 
-      // ✅ Submit
-      const res = await fetch(`${API_BASE}/api/properties/add`, {
+      const res = await fetch(signupEndpoint, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: fd,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed),
       });
 
       if (!res.ok) {
-        let message = `Failed to submit property (${res.status})`;
-        try {
-          const json = await res.json();
-          message = json?.error || json?.message || message;
-        } catch {
-          const text = await res.text();
-          if (text) message = text;
-        }
-        throw new Error(message);
+        const body = await safeJson(res);
+        throw new Error(
+          body?.message || body?.error || `Signup failed (${res.status})`
+        );
       }
 
-      const result = await res.json();
-      console.log("✅ Property submitted successfully:", result);
+      // Avatar upload (if provided)
+      if (avatar) {
+        const avatarForm = new FormData();
+        avatarForm.append("file", avatar);
+        avatarForm.append("accountid", parsed.accountid);
+
+        const uploadEndpoint = `${API_BASE}/api/${API_VERSION}/storage/upload`;
+
+        if (DEBUG) console.debug("Uploading avatar", { uploadEndpoint });
+
+        const uploadRes = await fetch(uploadEndpoint, {
+          method: "POST",
+          body: avatarForm,
+        });
+
+        if (!uploadRes.ok) {
+          // show a non-blocking toast but continue
+          toast.error("Avatar upload failed", {
+            icon: <AlertTriangle className="w-5 h-5" />,
+          });
+        }
+      }
+
+      toast.success("Account created!", {
+        icon: <CheckCircle className="w-5 h-5" />,
+      });
+
+      // Redirect with email query param
+      window.location.href = `${redirectTo}?email=${encodeURIComponent(
+        parsed.email
+      )}`;
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
-      console.error(err);
+      if (DEBUG) console.error("Signup error:", err);
+      toast.error(err?.message || "Signup failed", {
+        icon: <AlertTriangle className="w-5 h-5" />,
+      });
     } finally {
+      toast.dismiss(tId);
       setLoading(false);
     }
   };
 
-  const renderSteps = () => (
-    <ul className="steps steps-horizontal w-full text-sm sm:text-base">
-      <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Basic Info</li>
-      <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Amenities</li>
-      <li className={`step ${step >= 3 ? "step-primary" : ""}`}>Location</li>
-      <li className={`step ${step >= 4 ? "step-primary" : ""}`}>Images</li>
-      <li className={`step ${step >= 5 ? "step-primary" : ""}`}>Review</li>
-    </ul>
-  );
-
-  if (authLoading) {
-    // ✅ Wait until AuthContext is loaded
-    return (
-      <div className="flex justify-center items-center p-6 text-gray-500">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!user) {
-    // ✅ If no user is authenticated
-    return (
-      <div className="p-6 text-center text-red-500">
-        You must be logged in to add a property.
-      </div>
-    );
-  }
-
+  /* ----------------------------------
+     UI
+  ----------------------------------- */
   return (
-    <div className="max-w-3xl mx-auto p-4 sm:p-6 bg-background rounded-xl shadow-md space-y-6">
-      {renderSteps()}
-      <Separator />
+    <motion.form
+      onSubmit={handleSubmit}
+      noValidate
+      autoComplete="off"
+      className="w-full max-w-xl mx-auto p-6 sm:p-8 rounded-2xl shadow-2xl
+                 bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
+        <AvatarField
+          avatar={avatar}
+          onChange={(file: File | null) => {
+            setAvatar(file);
+            if (file) {
+              toast.success("Avatar selected", {
+                icon: <Camera className="w-5 h-5" />,
+              });
+            }
+          }}
+        />
 
-      {step === 1 && (
-        <BasicInfoStep
-          formData={formData}
-          setFormData={setFormData}
-          setStep={setStep}
-          error={error}
-          setError={setError}
+        <NameFields form={form} onChange={handleChange} onBlur={handleBlur} />
+        <ContactFields
+          form={formWithDerivedPhone}
+          onChange={handleChange}
+          onBlur={handleBlur}
         />
-      )}
+        <CountryLocationFields
+          form={form}
+          onChange={handleChange}
+          onLocationSelect={(loc) => {
+            const name = loc?.name?.trim() ?? "";
+            setForm((prev) => ({ ...prev, location: name || undefined }));
+          }}
+        />
+        <BioField form={form} onChange={handleChange} />
+        <DOBField form={form} onChange={handleChange} onBlur={handleBlur} />
+        <PasswordField
+          form={form}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
 
-      {step === 2 && (
-        <AmenitiesStep
-          formData={formData}
-          setFormData={setFormData}
-          setStep={setStep}
-        />
-      )}
-      {step === 3 && (
-        <LocationStep
-          formData={formData}
-          setFormData={setFormData}
-          setStep={setStep}
-        />
-      )}
-      {step === 4 && (
-        <PropertyImagesStep
-          formData={formData}
-          setFormData={setFormData}
-          setStep={setStep}
-        />
-      )}
-      {step === 5 && (
-        <ReviewStep
-          formData={formData}
-          setStep={setStep}
-          handleSubmit={handleSubmit}
-          loading={loading}
-          error={error}
-        />
-      )}
-    </div>
+        <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full sm:w-auto"
+          >
+            {loading ? "Creating..." : "Create Account"}
+          </Button>
+          <a
+            href="/auth/signin"
+            className="btn-outline w-full sm:w-auto text-center"
+          >
+            Already have an account?
+          </a>
+        </div>
+
+        <SocialSignup />
+      </div>
+    </motion.form>
   );
 }

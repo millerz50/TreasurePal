@@ -41,12 +41,23 @@ function formatZodError(err: unknown) {
   return String(err);
 }
 
-function safeJson(res: Response) {
+async function safeJson(res: Response) {
   return res
     .clone()
     .json()
     .catch(() => null);
 }
+
+/* ----------------------------------
+   API versioning env
+----------------------------------- */
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
+const API_BASE_V1 =
+  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
+const API_BASE_V2 =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const API_BASE =
+  API_VERSION === "v2" && API_BASE_V2 ? API_BASE_V2 : API_BASE_V1;
 
 /* ----------------------------------
    PROPS
@@ -157,6 +168,8 @@ export default function SignupForm({
     const tId = toast.loading("Creating your account...");
 
     try {
+      if (!API_BASE) throw new Error("API base URL is not configured");
+
       const payload = cleanForm(form);
       payload.email = String(payload.email).toLowerCase();
       payload.phone = getE164() ?? undefined;
@@ -170,14 +183,18 @@ export default function SignupForm({
 
       const parsed = parsedResult.data;
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/signup`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(parsed),
-        }
-      );
+      // Build endpoint (version-aware)
+      const signupEndpoint = `${API_BASE}/api/${API_VERSION}/users/signup`;
+
+      if (DEBUG) {
+        console.debug("Signup payload", { signupEndpoint, parsed });
+      }
+
+      const res = await fetch(signupEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed),
+      });
 
       if (!res.ok) {
         const body = await safeJson(res);
@@ -186,21 +203,23 @@ export default function SignupForm({
         );
       }
 
-      // Avatar upload
+      // Avatar upload (if provided)
       if (avatar) {
         const avatarForm = new FormData();
         avatarForm.append("file", avatar);
         avatarForm.append("accountid", parsed.accountid);
 
-        const uploadRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/storage/upload`,
-          {
-            method: "POST",
-            body: avatarForm,
-          }
-        );
+        const uploadEndpoint = `${API_BASE}/api/${API_VERSION}/storage/upload`;
+
+        if (DEBUG) console.debug("Uploading avatar", { uploadEndpoint });
+
+        const uploadRes = await fetch(uploadEndpoint, {
+          method: "POST",
+          body: avatarForm,
+        });
 
         if (!uploadRes.ok) {
+          // show a non-blocking toast but continue
           toast.error("Avatar upload failed", {
             icon: <AlertTriangle className="w-5 h-5" />,
           });
@@ -211,6 +230,7 @@ export default function SignupForm({
         icon: <CheckCircle className="w-5 h-5" />,
       });
 
+      // Redirect with email query param
       window.location.href = `${redirectTo}?email=${encodeURIComponent(
         parsed.email
       )}`;
@@ -237,7 +257,8 @@ export default function SignupForm({
                  bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}>
+      transition={{ duration: 0.5 }}
+    >
       <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-6 flex flex-col">
         <AvatarField
           avatar={avatar}
@@ -277,12 +298,14 @@ export default function SignupForm({
           <Button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full sm:w-auto">
+            className="btn-primary w-full sm:w-auto"
+          >
             {loading ? "Creating..." : "Create Account"}
           </Button>
           <a
             href="/auth/signin"
-            className="btn-outline w-full sm:w-auto text-center">
+            className="btn-outline w-full sm:w-auto text-center"
+          >
             Already have an account?
           </a>
         </div>

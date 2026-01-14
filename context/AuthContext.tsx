@@ -13,25 +13,57 @@ import React, {
 /* ----------------------------------
    ENV
 ----------------------------------- */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
+const API_BASE_V1 =
+  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
+const API_BASE_V2 =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const API_BASE_URL =
+  API_VERSION === "v2" && API_BASE_V2 ? API_BASE_V2 : API_BASE_V1;
+
+const APPWRITE_ENDPOINT =
+  process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
+const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
 
 /* ----------------------------------
    API
 ----------------------------------- */
-async function fetchProfileMe(jwt: string) {
+async function fetchProfileMe(jwt: string, signal?: AbortSignal) {
+  if (!API_BASE_URL) {
+    console.warn("fetchProfileMe: API_BASE_URL is not configured");
+    return null;
+  }
+
+  const profilePath = `/api/${API_VERSION}/users/me`;
+  const url = `${API_BASE_URL}${profilePath}`;
+
   try {
-    const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+    const res = await fetch(url, {
+      method: "GET",
       credentials: "include",
+      signal,
       headers: {
         Authorization: `Bearer ${jwt}`,
+        "Content-Type": "application/json",
       },
     });
 
-    if (!res.ok) throw new Error("Profile fetch failed");
+    if (!res.ok) {
+      console.warn("fetchProfileMe failed", {
+        url,
+        status: res.status,
+        statusText: res.statusText,
+      });
+      return null;
+    }
+
     return await res.json();
-  } catch {
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      console.info("fetchProfileMe aborted");
+    } else {
+      console.error("fetchProfileMe error:", err);
+    }
     return null;
   }
 }
@@ -102,16 +134,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     (async () => {
       try {
+        // Debug info in non-production builds
+        if (process.env.NODE_ENV !== "production") {
+          console.debug("AuthProvider init", {
+            API_VERSION,
+            API_BASE_URL,
+            APPWRITE_ENDPOINT,
+            APPWRITE_PROJECT_ID,
+          });
+        }
+
         /* -----------------------------
            APPWRITE SESSION
         ------------------------------ */
-        const appwriteUser: Models.User<any> = await account.get();
-        const jwt = await account.createJWT();
+        let appwriteUser: Models.User<any> | null = null;
+        let jwtToken: string | null = null;
+
+        try {
+          appwriteUser = await account.get();
+        } catch (err) {
+          // If there's no session or Appwrite call fails, treat as unauthenticated
+          console.info("Appwrite account.get failed or no session", err);
+          appwriteUser = null;
+        }
+
+        try {
+          const jwtResp = await account.createJWT();
+          jwtToken = jwtResp?.jwt ?? null;
+        } catch (err) {
+          console.info("Appwrite createJWT failed", err);
+          jwtToken = null;
+        }
 
         /* -----------------------------
            BACKEND PROFILE
         ------------------------------ */
-        const profile = await fetchProfileMe(jwt.jwt);
+        let profile: any = null;
+        if (jwtToken) {
+          profile = await fetchProfileMe(
+            jwtToken,
+            abortCtrl.current?.signal ?? undefined
+          );
+        } else {
+          // No JWT available, skip backend profile fetch
+          profile = null;
+        }
 
         /* -----------------------------
            AVATAR
@@ -119,13 +186,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         let avatarUrl: string | undefined;
 
         const fileId =
-          profile?.avatarFileId ?? appwriteUser.prefs?.avatarFileId;
+          profile?.avatarFileId ?? appwriteUser?.prefs?.avatarFileId;
 
         if (fileId && APPWRITE_ENDPOINT && APPWRITE_PROJECT_ID) {
           avatarUrl = `${APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${fileId}/view?project=${APPWRITE_PROJECT_ID}`;
         } else {
           const displayName =
-            profile?.firstName || appwriteUser.name || appwriteUser.email;
+            profile?.firstName ||
+            appwriteUser?.name ||
+            appwriteUser?.email ||
+            "User";
 
           avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
             displayName
@@ -133,37 +203,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         /* -----------------------------
-           NORMALIZED USER (FIXED)
+           NORMALIZED USER
         ------------------------------ */
-        const payload: UserPayload = {
-          userId: appwriteUser.$id,
-          email: appwriteUser.email,
+        if (appwriteUser) {
+          const payload: UserPayload = {
+            userId: appwriteUser.$id,
+            email: appwriteUser.email,
 
-          firstName: profile?.firstName ?? "",
-          surname: profile?.surname ?? "",
+            firstName: profile?.firstName ?? "",
+            surname: profile?.surname ?? "",
 
-          roles: Array.isArray(profile?.roles)
-            ? profile.roles
-            : Array.isArray(appwriteUser.prefs?.roles)
-            ? appwriteUser.prefs.roles
-            : ["user"],
+            roles: Array.isArray(profile?.roles)
+              ? profile.roles
+              : Array.isArray(appwriteUser.prefs?.roles)
+              ? appwriteUser.prefs.roles
+              : ["user"],
 
-          status:
-            typeof profile?.status === "string" ? profile.status : "Active",
+            status:
+              typeof profile?.status === "string" ? profile.status : "Active",
 
-          phone: profile?.phone ?? undefined,
-          bio: profile?.bio ?? undefined,
+            phone: profile?.phone ?? undefined,
+            bio: profile?.bio ?? undefined,
 
-          country: profile?.country ?? undefined,
-          dateOfBirth: profile?.dateOfBirth ?? undefined,
-          agentId: profile?.agentId ?? undefined,
-          credits: profile?.credits ?? undefined,
+            country: profile?.country ?? undefined,
+            dateOfBirth: profile?.dateOfBirth ?? undefined,
+            agentId: profile?.agentId ?? undefined,
+            credits: profile?.credits ?? undefined,
 
-          avatarUrl,
-        };
+            avatarUrl,
+          };
 
-        if (mounted.current) setUser(payload);
-      } catch {
+          if (mounted.current) setUser(payload);
+        } else {
+          // No authenticated Appwrite user
+          if (mounted.current) setUser(null);
+        }
+      } catch (err) {
+        console.error("AuthProvider unexpected error:", err);
         if (mounted.current) setUser(null);
       } finally {
         if (mounted.current) setLoading(false);
@@ -179,8 +255,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await account.deleteSession("current");
       setUser(null);
-    } catch {
-      // optional toast
+    } catch (err) {
+      console.warn("signOut failed", err);
     }
   };
 
