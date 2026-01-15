@@ -27,7 +27,7 @@ const APPWRITE_PROJECT_ID =
   process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
 
 /* ----------------------------------
-   TYPES (SOURCE OF TRUTH)
+   TYPES
 ----------------------------------- */
 export type UserPayload = {
   userId: string;
@@ -74,13 +74,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchLock = useRef(false);
   const mounted = useRef(true);
-  const abortCtrl = useRef<AbortController | null>(null);
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
-      abortCtrl.current?.abort();
     };
   }, []);
 
@@ -88,39 +86,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (fetchLock.current) return;
     fetchLock.current = true;
 
-    abortCtrl.current = new AbortController();
-
     (async () => {
       try {
         /* -----------------------------
-           APPWRITE SESSION
+           1️⃣ Get Appwrite user
         ------------------------------ */
         let appwriteUser: Models.User<any> | null = null;
-
         try {
-          appwriteUser = await account.get(); // ✅ REAL SESSION
+          appwriteUser = await account.get();
         } catch {
           appwriteUser = null;
         }
 
+        if (!appwriteUser) {
+          if (mounted.current) setUser(null);
+          return;
+        }
+
         /* -----------------------------
-           BACKEND PROFILE (SESSION-BASED)
+           2️⃣ Get JWT for backend
+        ------------------------------ */
+        let jwt: string | null = null;
+        try {
+          const jwtRes = await account.createJWT();
+          jwt = jwtRes.jwt;
+        } catch (err) {
+          console.warn("Failed to create JWT", err);
+          jwt = null;
+        }
+
+        /* -----------------------------
+           3️⃣ Fetch backend profile
         ------------------------------ */
         let profile: any = null;
-
-        if (appwriteUser && API_BASE_URL) {
+        if (jwt && API_BASE_URL) {
           try {
             const res = await fetch(
               `${API_BASE_URL}/api/${API_VERSION}/users/me`,
               {
                 method: "GET",
-                credentials: "include", // ✅ REQUIRED
-                signal: abortCtrl.current.signal,
+                headers: {
+                  Authorization: `Bearer ${jwt}`,
+                },
               }
             );
-
             if (res.ok) {
               profile = await res.json();
+            } else {
+              console.warn("Backend profile fetch failed", res.status);
             }
           } catch (err) {
             console.warn("Failed to fetch backend profile", err);
@@ -128,10 +141,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         /* -----------------------------
-           AVATAR
+           4️⃣ Build avatar URL
         ------------------------------ */
         let avatarUrl: string | undefined;
-
         const fileId =
           profile?.avatarFileId ?? appwriteUser?.prefs?.avatarFileId;
 
@@ -150,42 +162,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         /* -----------------------------
-           NORMALIZED USER
+           5️⃣ Normalize user payload
         ------------------------------ */
-        if (appwriteUser) {
-          const payload: UserPayload = {
-            userId: appwriteUser.$id,
-            email: appwriteUser.email,
+        const payload: UserPayload = {
+          userId: appwriteUser.$id,
+          email: appwriteUser.email,
 
-            firstName: profile?.firstName ?? "",
-            surname: profile?.surname ?? "",
+          firstName: profile?.firstName ?? "",
+          surname: profile?.surname ?? "",
 
-            roles: Array.isArray(profile?.roles)
-              ? profile.roles
-              : Array.isArray(appwriteUser.prefs?.roles)
-              ? appwriteUser.prefs.roles
-              : ["user"],
+          roles: Array.isArray(profile?.roles)
+            ? profile.roles
+            : Array.isArray(appwriteUser.prefs?.roles)
+            ? appwriteUser.prefs.roles
+            : ["user"],
 
-            status:
-              typeof profile?.status === "string"
-                ? profile.status
-                : "Active",
+          status:
+            typeof profile?.status === "string" ? profile.status : "Active",
 
-            phone: profile?.phone ?? undefined,
-            bio: profile?.bio ?? undefined,
+          phone: profile?.phone ?? undefined,
+          bio: profile?.bio ?? undefined,
 
-            country: profile?.country ?? undefined,
-            dateOfBirth: profile?.dateOfBirth ?? undefined,
-            agentId: profile?.agentId ?? undefined,
-            credits: profile?.credits ?? undefined,
+          country: profile?.country ?? undefined,
+          dateOfBirth: profile?.dateOfBirth ?? undefined,
+          agentId: profile?.agentId ?? undefined,
+          credits: profile?.credits ?? undefined,
 
-            avatarUrl,
-          };
+          avatarUrl,
+        };
 
-          if (mounted.current) setUser(payload);
-        } else {
-          if (mounted.current) setUser(null);
-        }
+        if (mounted.current) setUser(payload);
       } catch (err) {
         console.error("AuthProvider unexpected error:", err);
         if (mounted.current) setUser(null);
@@ -219,4 +225,3 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    HOOK
 ----------------------------------- */
 export const useAuth = () => useContext(AuthContext);
-
