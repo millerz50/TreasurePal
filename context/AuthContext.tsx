@@ -23,50 +23,8 @@ const API_BASE_URL =
 
 const APPWRITE_ENDPOINT =
   process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
-const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
-
-/* ----------------------------------
-   API
------------------------------------ */
-async function fetchProfileMe(jwt: string, signal?: AbortSignal) {
-  if (!API_BASE_URL) {
-    console.warn("fetchProfileMe: API_BASE_URL is not configured");
-    return null;
-  }
-
-  const profilePath = `/api/${API_VERSION}/users/me`;
-  const url = `${API_BASE_URL}${profilePath}`;
-
-  try {
-    const res = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-      signal,
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!res.ok) {
-      console.warn("fetchProfileMe failed", {
-        url,
-        status: res.status,
-        statusText: res.statusText,
-      });
-      return null;
-    }
-
-    return await res.json();
-  } catch (err: any) {
-    if (err?.name === "AbortError") {
-      console.info("fetchProfileMe aborted");
-    } else {
-      console.error("fetchProfileMe error:", err);
-    }
-    return null;
-  }
-}
+const APPWRITE_PROJECT_ID =
+  process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
 
 /* ----------------------------------
    TYPES (SOURCE OF TRUTH)
@@ -134,50 +92,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     (async () => {
       try {
-        // Debug info in non-production builds
-        if (process.env.NODE_ENV !== "production") {
-          console.debug("AuthProvider init", {
-            API_VERSION,
-            API_BASE_URL,
-            APPWRITE_ENDPOINT,
-            APPWRITE_PROJECT_ID,
-          });
-        }
-
         /* -----------------------------
            APPWRITE SESSION
         ------------------------------ */
         let appwriteUser: Models.User<any> | null = null;
-        let jwtToken: string | null = null;
 
         try {
-          appwriteUser = await account.get();
-        } catch (err) {
-          // If there's no session or Appwrite call fails, treat as unauthenticated
-          console.info("Appwrite account.get failed or no session", err);
+          appwriteUser = await account.get(); // ✅ REAL SESSION
+        } catch {
           appwriteUser = null;
         }
 
-        try {
-          const jwtResp = await account.createJWT();
-          jwtToken = jwtResp?.jwt ?? null;
-        } catch (err) {
-          console.info("Appwrite createJWT failed", err);
-          jwtToken = null;
-        }
-
         /* -----------------------------
-           BACKEND PROFILE
+           BACKEND PROFILE (SESSION-BASED)
         ------------------------------ */
         let profile: any = null;
-        if (jwtToken) {
-          profile = await fetchProfileMe(
-            jwtToken,
-            abortCtrl.current?.signal ?? undefined
-          );
-        } else {
-          // No JWT available, skip backend profile fetch
-          profile = null;
+
+        if (appwriteUser && API_BASE_URL) {
+          try {
+            const res = await fetch(
+              `${API_BASE_URL}/api/${API_VERSION}/users/me`,
+              {
+                method: "GET",
+                credentials: "include", // ✅ REQUIRED
+                signal: abortCtrl.current.signal,
+              }
+            );
+
+            if (res.ok) {
+              profile = await res.json();
+            }
+          } catch (err) {
+            console.warn("Failed to fetch backend profile", err);
+          }
         }
 
         /* -----------------------------
@@ -220,7 +167,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               : ["user"],
 
             status:
-              typeof profile?.status === "string" ? profile.status : "Active",
+              typeof profile?.status === "string"
+                ? profile.status
+                : "Active",
 
             phone: profile?.phone ?? undefined,
             bio: profile?.bio ?? undefined,
@@ -235,7 +184,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
           if (mounted.current) setUser(payload);
         } else {
-          // No authenticated Appwrite user
           if (mounted.current) setUser(null);
         }
       } catch (err) {
@@ -271,3 +219,4 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    HOOK
 ----------------------------------- */
 export const useAuth = () => useContext(AuthContext);
+
