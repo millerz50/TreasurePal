@@ -39,6 +39,7 @@ export type UserPayload = {
   // ✅ ADD THESE PROFILE FIELDS
   country?: string;
   credits?: number;
+  dateOfBirth?:string;
 };
 
 
