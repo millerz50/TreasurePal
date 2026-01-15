@@ -34,7 +34,11 @@ export type UserPayload = {
   status: string;
   phone?: string;
   avatarUrl?: string;
+
+  // ✅ ADD THIS
+  credits?: number;
 };
+
 
 interface AuthContextType {
   user: UserPayload | null;
