@@ -32,12 +32,15 @@ export type UserPayload = {
   surname: string;
   roles: ("user" | "agent" | "admin")[];
   status: string;
+
   phone?: string;
   avatarUrl?: string;
 
-  // ✅ ADD THIS
+  // ✅ ADD THESE PROFILE FIELDS
+  country?: string;
   credits?: number;
 };
+
 
 
 interface AuthContextType {
