@@ -38,10 +38,7 @@ export default function SigninForm({
     const tId = toast.loading("Updating phone number…");
 
     try {
-      // ✅ CORRECT SDK USAGE
       await account.updatePhone(e164, password);
-
-      // Send OTP
       await account.createPhoneVerification();
 
       toast.success("Verification code sent!");
@@ -71,8 +68,11 @@ export default function SigninForm({
     const tId = toast.loading("Signing you in…");
 
     try {
-      // Create session
-      await account.createEmailPasswordSession(email.toLowerCase(), password);
+      // ✅ Create Appwrite session (cookie-based)
+      await account.createEmailPasswordSession(
+        email.toLowerCase(),
+        password
+      );
 
       const user = await account.get();
 
@@ -83,13 +83,11 @@ export default function SigninForm({
         return;
       }
 
-      // Create JWT for backend
-      const jwt = await account.createJWT();
-      localStorage.setItem("token", jwt.jwt);
-
       toast.success("Welcome back!");
       toast.dismiss(tId);
 
+      // ✅ Refresh auth state (recommended)
+      router.refresh();
       router.push(redirectTo);
     } catch (err: any) {
       console.error("Login error:", err);
@@ -109,7 +107,8 @@ export default function SigninForm({
                    bg-gradient-to-br from-green-500 via-teal-500 to-blue-600"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}>
+        transition={{ duration: 0.5 }}
+      >
         <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md p-6 shadow-lg space-y-4">
           <div className="flex flex-col">
             <label className="font-semibold">Email</label>
@@ -134,13 +133,15 @@ export default function SigninForm({
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white">
+            className="w-full bg-blue-600 text-white"
+          >
             {loading ? "Signing in…" : "Sign in"}
           </Button>
 
           <a
             href="/auth/signup"
-            className="block text-center mt-3 text-blue-700 underline">
+            className="block text-center mt-3 text-blue-700 underline"
+          >
             Create an account
           </a>
         </div>
@@ -150,7 +151,9 @@ export default function SigninForm({
       {phoneModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md space-y-4">
-            <h2 className="text-xl font-bold text-center">Add Phone Number</h2>
+            <h2 className="text-xl font-bold text-center">
+              Add Phone Number
+            </h2>
 
             <p className="text-sm text-gray-600 text-center">
               Please verify your phone number to continue.
@@ -166,14 +169,16 @@ export default function SigninForm({
 
             <Button
               onClick={updatePhoneAndVerify}
-              className="w-full bg-green-600 text-white">
+              className="w-full bg-green-600 text-white"
+            >
               Save & Verify Phone
             </Button>
 
             <Button
               variant="ghost"
               className="w-full text-gray-600"
-              onClick={() => setPhoneModal(false)}>
+              onClick={() => setPhoneModal(false)}
+            >
               Cancel
             </Button>
           </div>
@@ -182,3 +187,4 @@ export default function SigninForm({
     </>
   );
 }
+
