@@ -7,7 +7,7 @@ type Ad = {
   bannerImg: string;
   impressionPixel: string;
   alt: string;
-  title: string; // Added CTA / affiliate text
+  title: string;
 };
 
 const ads: Ad[] = [
@@ -19,7 +19,7 @@ const ads: Ad[] = [
     impressionPixel:
       "https://deriv.partners/rx?ca=&strategy_node_id=256926&slink_id=0&is_ib=0&type=view&media=banner",
     alt: "Deriv Banner",
-    title: "Start Trading Today! Get Exclusive Bonuses 🎯",
+    title: "Trade Now! Earn Exclusive Rewards 🔥",
   },
 ];
 
@@ -35,24 +35,31 @@ export default function AdsLoader() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="relative bg-white rounded-xl overflow-hidden shadow-xl max-w-xs sm:max-w-sm w-full">
-        <a href={ads[0].clickLink} target="_blank" rel="noopener noreferrer">
+      <div className="relative bg-white rounded-xl overflow-hidden shadow-lg max-w-xs w-full">
+        <a
+          href={ads[0].clickLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block relative"
+        >
+          {/* Banner Image */}
           <img
             src={ads[0].bannerImg}
             alt={ads[0].alt}
             className="w-full h-auto object-contain"
           />
-          {/* Overlay text CTA */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-semibold shadow-md">
+          {/* CTA overlay */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">
             {ads[0].title}
           </div>
-          {/* Hidden impression pixel */}
+          {/* Hidden pixel for impressions */}
           <img
             src={ads[0].impressionPixel}
             alt=""
             style={{ display: "none" }}
           />
         </a>
+        {/* Close button */}
         <button
           onClick={() => setVisible(false)}
           className="absolute top-2 right-2 bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-700 transition"
