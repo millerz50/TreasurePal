@@ -35,14 +35,10 @@ export type UserPayload = {
 
   phone?: string;
   avatarUrl?: string;
-
-  // ✅ ADD THESE PROFILE FIELDS
   country?: string;
   credits?: number;
-  dateOfBirth?:string;
+  dateOfBirth?: string;
 };
-
-
 
 interface AuthContextType {
   user: UserPayload | null;
@@ -62,7 +58,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserPayload | null>(null);
   const [loading, setLoading] = useState(true);
-
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -75,7 +70,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     (async () => {
       try {
-        /* 1️⃣ Appwrite session */
+        /* ---------------------------------
+           1️⃣ Check Appwrite session
+        ---------------------------------- */
         let appwriteUser: Models.User<any> | null = null;
         try {
           appwriteUser = await account.get();
@@ -88,11 +85,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        /* 2️⃣ Backend profile (COOKIE-BASED) */
+        /* ---------------------------------
+           2️⃣ Create JWT
+        ---------------------------------- */
+        const jwt = await account.createJWT();
+
+        /* ---------------------------------
+           3️⃣ Fetch backend profile (JWT)
+        ---------------------------------- */
         const res = await fetch(
           `${API_BASE_URL}/api/${API_VERSION}/users/me`,
           {
-            credentials: "include", // ✅ CRITICAL
+            headers: {
+              Authorization: `Bearer ${jwt.jwt}`,
+            },
           }
         );
 
@@ -100,14 +106,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const profile = await res.json();
 
-        /* 3️⃣ Avatar */
+        /* ---------------------------------
+           4️⃣ Avatar
+        ---------------------------------- */
         const avatarUrl = profile?.avatarFileId
           ? `${APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${profile.avatarFileId}/view?project=${APPWRITE_PROJECT_ID}`
           : `https://ui-avatars.com/api/?name=${encodeURIComponent(
               appwriteUser.email
             )}`;
 
-        /* 4️⃣ Normalize */
+        /* ---------------------------------
+           5️⃣ Normalize
+        ---------------------------------- */
         if (mounted.current) {
           setUser({
             userId: appwriteUser.$id,
@@ -117,10 +127,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             roles: profile.roles ?? ["user"],
             status: profile.status ?? "Active",
             phone: profile.phone,
+            country: profile.country,
+            credits: profile.credits,
+            dateOfBirth: profile.dateOfBirth,
             avatarUrl,
           });
         }
-      } catch {
+      } catch (err) {
+        console.error("AuthProvider error:", err);
         if (mounted.current) setUser(null);
       } finally {
         if (mounted.current) setLoading(false);
