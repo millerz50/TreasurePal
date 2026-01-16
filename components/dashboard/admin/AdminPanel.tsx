@@ -27,7 +27,7 @@ export default function AdminPanel() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Helper to call API with fresh JWT
+  // Helper to call API with fresh JWT
   const apiRequest = async (url: string, method: "GET" | "POST" = "GET", body?: any) => {
     const jwtResponse = await account.createJWT();
     const token = jwtResponse.jwt;
@@ -150,4 +150,5 @@ export default function AdminPanel() {
     </section>
   );
 }
+
 
