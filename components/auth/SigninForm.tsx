@@ -82,12 +82,13 @@ export default function SigninForm({
       const user = await account.get();
 
       /* ---------------------------------
-         3️⃣ Warm up JWT (CRITICAL)
+         3️⃣ Generate JWT and save it
       ---------------------------------- */
-      await account.createJWT();
+      const jwtResponse = await account.createJWT();
+      localStorage.setItem("token", jwtResponse.jwt); // ✅ critical step
 
       /* ---------------------------------
-         4️⃣ Phone required
+         4️⃣ Check if phone is required
       ---------------------------------- */
       if (!user.phone) {
         toast.dismiss(tId);
