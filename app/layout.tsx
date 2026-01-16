@@ -1,3 +1,4 @@
+// app/layout.tsx
 import "@/app/globals.css";
 import "leaflet/dist/leaflet.css";
 
@@ -12,6 +13,9 @@ import Footer from "@/components/landing/footer/Footer";
 import { Hreflang } from "@/components/seo/Hreflang";
 import LogoLoader from "@/components/ui/LogoLoader";
 
+import AdsLoader from "@/components/ads/AdsLoader"; // Splash modal
+import AdsCarousel from "@/components/ads/AdsCarousel"; // Rotating banner showcase
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -22,7 +26,6 @@ const poppins = Poppins({
 /* --------------------------------
    GLOBAL SEO (PRIMARY: ZIMBABWE)
 --------------------------------- */
-
 export const metadata: Metadata = {
   title: "TreasurePal | Explore Zimbabwe’s Treasures for Everyone",
   description:
@@ -81,13 +84,24 @@ export default function RootLayout({
       </head>
 
       <body className="bg-base-100 text-base-content font-sans">
+        {/* Loading animation/logo */}
         <LogoLoader />
+
+        {/* Splash Ad Loader */}
+        <AdsLoader />
 
         <Providers>
           <Navbar />
 
-          {/* Global offset for fixed navbar */}
-          <main className="min-h-screen pt-20">{children}</main>
+          {/* Main content */}
+          <main className="min-h-screen pt-20">
+            {children}
+
+            {/* Rotating banner ad showcase */}
+            <div className="my-8">
+              <AdsCarousel />
+            </div>
+          </main>
         </Providers>
 
         <ContactChannels />
