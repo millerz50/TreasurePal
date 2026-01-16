@@ -15,20 +15,11 @@ type User = {
   agentId?: string;
 };
 
-/* ----------------------------------
-   API versioning env
------------------------------------ */
-const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
-
-const API_BASE_V1 =
-  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
-const API_BASE_V2 =
-  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-
-const API_BASE =
-  API_VERSION === "v2" && API_BASE_V2
-    ? `${API_BASE_V2}/api/v2`
-    : `${API_BASE_V1}/api/v1`;
+/* API ENV */
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
+const API_BASE_V1 = process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
+const API_BASE_V2 = process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const API_BASE = API_VERSION === "v2" && API_BASE_V2 ? `${API_BASE_V2}/api/v2` : `${API_BASE_V1}/api/v1`;
 
 export default function AdminPanel() {
   const [users, setUsers] = useState<User[]>([]);
@@ -36,29 +27,29 @@ export default function AdminPanel() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  /* ---------------------------------
-     Fetch users with fresh JWT
-  ---------------------------------- */
+  // ✅ Helper to call API with fresh JWT
+  const apiRequest = async (url: string, method: "GET" | "POST" = "GET", body?: any) => {
+    const jwtResponse = await account.createJWT();
+    const token = jwtResponse.jwt;
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      // ✅ Generate fresh JWT every time
-      const jwtResponse = await account.createJWT();
-      const freshJWT = jwtResponse.jwt;
-
-      const res = await fetch(`${API_BASE}/agents/applications/pending`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${freshJWT}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to load users");
-
-      const data = await res.json();
+      const data = await apiRequest(`${API_BASE}/agents/applications/pending`);
       setUsers(data.data || []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error loading users");
@@ -71,29 +62,11 @@ export default function AdminPanel() {
     fetchUsers();
   }, []);
 
-  /* ---------------------------------
-     Approve agent
-  ---------------------------------- */
   const approveAgent = async (userId: string) => {
     setActionLoading(userId);
     try {
-      const jwtResponse = await account.createJWT();
-      const freshJWT = jwtResponse.jwt;
-
-      const res = await fetch(`${API_BASE}/agents/${userId}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${freshJWT}`,
-        },
-        body: JSON.stringify({ reviewNotes: "Approved via Admin Panel" }),
-      });
-
-      if (!res.ok) throw new Error("Approval failed");
-
-      setUsers((prev) =>
-        prev.map((u) => (u.$id === userId ? { ...u, verified: true } : u))
-      );
+      await apiRequest(`${API_BASE}/agents/${userId}/approve`, "POST", { reviewNotes: "Approved via Admin Panel" });
+      setUsers((prev) => prev.map((u) => (u.$id === userId ? { ...u, verified: true } : u)));
     } catch {
       alert("❌ Failed to approve agent");
     } finally {
@@ -101,29 +74,11 @@ export default function AdminPanel() {
     }
   };
 
-  /* ---------------------------------
-     Disapprove agent
-  ---------------------------------- */
   const disapproveAgent = async (userId: string) => {
     setActionLoading(userId);
     try {
-      const jwtResponse = await account.createJWT();
-      const freshJWT = jwtResponse.jwt;
-
-      const res = await fetch(`${API_BASE}/agents/${userId}/disapprove`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${freshJWT}`,
-        },
-        body: JSON.stringify({ reviewNotes: "Disapproved via Admin Panel" }),
-      });
-
-      if (!res.ok) throw new Error("Disapproval failed");
-
-      setUsers((prev) =>
-        prev.map((u) => (u.$id === userId ? { ...u, verified: false } : u))
-      );
+      await apiRequest(`${API_BASE}/agents/${userId}/disapprove`, "POST", { reviewNotes: "Disapproved via Admin Panel" });
+      setUsers((prev) => prev.map((u) => (u.$id === userId ? { ...u, verified: false } : u)));
     } catch {
       alert("❌ Failed to disapprove agent");
     } finally {
@@ -143,9 +98,7 @@ export default function AdminPanel() {
       </p>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
-      {loading && (
-        <div className="text-sm text-muted-foreground">Loading users…</div>
-      )}
+      {loading && <div className="text-sm text-muted-foreground">Loading users…</div>}
 
       {!loading && users.length > 0 && (
         <div className="overflow-x-auto">
@@ -171,8 +124,7 @@ export default function AdminPanel() {
                         disabled={actionLoading === user.$id}
                         className="btn btn-xs btn-outline btn-primary"
                       >
-                        <UserCheck className="h-4 w-4 mr-1" />
-                        Approve Agent
+                        <UserCheck className="h-4 w-4 mr-1" /> Approve Agent
                       </button>
                     )}
                     {user.verified && (
@@ -193,10 +145,9 @@ export default function AdminPanel() {
       )}
 
       {!loading && users.length === 0 && !error && (
-        <div className="text-sm text-muted-foreground">
-          No pending applications.
-        </div>
+        <div className="text-sm text-muted-foreground">No pending applications.</div>
       )}
     </section>
   );
 }
+
