@@ -85,7 +85,7 @@ const emailMap: UserMap = {};
 
 await Promise.all(
   apps.map(async (app) => {
-    const accountId = app.accountId; // ✅ FIX HERE
+    const accountId = app.accountid; // ✅ FIX HERE
 
     if (!accountId) {
       console.warn("Missing accountId in app:", app);
