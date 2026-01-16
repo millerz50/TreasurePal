@@ -27,9 +27,11 @@ export default function OverviewCards({
   const showUserExtras = role === "user";
   const showAdminExtras = role === "admin";
 
+  // Format numbers safely
   const formatNumber = (v?: number | null) =>
     v === undefined || v === null ? "—" : v.toString();
 
+  // Format percentages safely
   const formatPercent = (v?: number | null) =>
     v === undefined || v === null
       ? "—"
@@ -37,6 +39,7 @@ export default function OverviewCards({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Properties */}
       <div className="p-4 bg-white rounded shadow">
         <div className="text-sm text-gray-500">Properties</div>
         <div className="text-2xl font-semibold">
@@ -44,6 +47,7 @@ export default function OverviewCards({
         </div>
       </div>
 
+      {/* Average Rating */}
       <div className="p-4 bg-white rounded shadow">
         <div className="text-sm text-gray-500">Avg rating</div>
         <div className="text-2xl font-semibold">
@@ -51,15 +55,15 @@ export default function OverviewCards({
         </div>
       </div>
 
+      {/* Historical Metric Records */}
       <div className="p-4 bg-white rounded shadow">
         <div className="text-sm text-gray-500">Metric records</div>
         <div className="text-2xl font-semibold">
-          {loading
-            ? "Loading…"
-            : formatNumber(metrics?.historicalMetricRecords)}
+          {loading ? "Loading…" : formatNumber(metrics?.historicalMetricRecords)}
         </div>
       </div>
 
+      {/* Agent-specific metrics */}
       {showAgentExtras && (
         <>
           <div className="p-4 bg-white rounded shadow">
@@ -78,6 +82,7 @@ export default function OverviewCards({
         </>
       )}
 
+      {/* User-specific metrics */}
       {showUserExtras && (
         <div className="p-4 bg-white rounded shadow">
           <div className="text-sm text-gray-500">Favorites</div>
@@ -87,6 +92,7 @@ export default function OverviewCards({
         </div>
       )}
 
+      {/* Admin-specific metrics */}
       {showAdminExtras && (
         <>
           <div className="p-4 bg-white rounded shadow">
@@ -107,3 +113,4 @@ export default function OverviewCards({
     </div>
   );
 }
+
