@@ -13,6 +13,7 @@ type AgentApplication = {
   fullname: string;
   message: string;
   verified: boolean;
+   accountid:string;
 };
 
 type UserMap = Record<string, string>; // accountid -> email
