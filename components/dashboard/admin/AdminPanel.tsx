@@ -4,69 +4,127 @@ import { ShieldCheck, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { account } from "@/lib/appwrite";
 
-type User = {
+/* =========================
+   TYPES
+========================= */
+type AgentApplication = {
   $id: string;
-  userId: string;
+  accountid: string;
   fullname: string;
-  email: string;
-  verified?: boolean;
-  rating?: number;
-  message?: string;
-  agentId?: string;
+  message: string;
+  verified: boolean;
 };
 
-/* API ENV */
+type UserMap = Record<string, string>; // accountid -> email
+
+/* =========================
+   API ENV
+========================= */
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
-const API_BASE_V1 = process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
-const API_BASE_V2 = process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-const API_BASE = API_VERSION === "v2" && API_BASE_V2 ? `${API_BASE_V2}/api/v2` : `${API_BASE_V1}/api/v1`;
+const API_BASE_V1 =
+  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
+const API_BASE_V2 =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+
+const API_BASE =
+  API_VERSION === "v2" && API_BASE_V2
+    ? `${API_BASE_V2}/api/v2`
+    : `${API_BASE_V1}/api/v1`;
 
 export default function AdminPanel() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [applications, setApplications] = useState<AgentApplication[]>([]);
+  const [emails, setEmails] = useState<UserMap>({});
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper to call API with fresh JWT
-  const apiRequest = async (url: string, method: "GET" | "POST" = "GET", body?: any) => {
+  /* =========================
+     API HELPER (JWT)
+  ========================= */
+  const apiRequest = async (
+    url: string,
+    method: "GET" | "POST" = "GET",
+    body?: any
+  ) => {
     const jwtResponse = await account.createJWT();
-    const token = jwtResponse.jwt;
 
     const res = await fetch(url, {
       method,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${jwtResponse.jwt}`,
       },
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
     return res.json();
   };
 
-  const fetchUsers = async () => {
+  /* =========================
+     FETCH PENDING APPLICATIONS
+  ========================= */
+  const fetchApplications = async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const data = await apiRequest(`${API_BASE}/agents/applications/pending`);
-      setUsers(data.data || []);
+      // 1️⃣ Get pending agent applications
+      const res = await apiRequest(
+        `${API_BASE}/agents/applications/pending`
+      );
+
+      const apps: AgentApplication[] = res.data || [];
+      setApplications(apps);
+
+      // 2️⃣ Fetch user emails for each accountid
+      const emailMap: UserMap = {};
+
+      await Promise.all(
+        apps.map(async (app) => {
+          try {
+            const userRes = await apiRequest(
+              `${API_BASE}/users/account/${app.accountid}`
+            );
+            emailMap[app.accountid] = userRes.data.email;
+          } catch {
+            emailMap[app.accountid] = "—";
+          }
+        })
+      );
+
+      setEmails(emailMap);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error loading users");
+      setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchApplications();
   }, []);
 
-  const approveAgent = async (userId: string) => {
-    setActionLoading(userId);
+  /* =========================
+     ACTIONS
+  ========================= */
+  const approveAgent = async (applicationId: string) => {
+    setActionLoading(applicationId);
     try {
-      await apiRequest(`${API_BASE}/agents/${userId}/approve`, "POST", { reviewNotes: "Approved via Admin Panel" });
-      setUsers((prev) => prev.map((u) => (u.$id === userId ? { ...u, verified: true } : u)));
+      await apiRequest(
+        `${API_BASE}/agents/${applicationId}/approve`,
+        "POST",
+        { reviewNotes: "Approved via Admin Panel" }
+      );
+
+      setApplications((prev) =>
+        prev.map((a) =>
+          a.$id === applicationId ? { ...a, verified: true } : a
+        )
+      );
     } catch {
       alert("❌ Failed to approve agent");
     } finally {
@@ -74,18 +132,30 @@ export default function AdminPanel() {
     }
   };
 
-  const disapproveAgent = async (userId: string) => {
-    setActionLoading(userId);
+  const rejectAgent = async (applicationId: string) => {
+    setActionLoading(applicationId);
     try {
-      await apiRequest(`${API_BASE}/agents/${userId}/disapprove`, "POST", { reviewNotes: "Disapproved via Admin Panel" });
-      setUsers((prev) => prev.map((u) => (u.$id === userId ? { ...u, verified: false } : u)));
+      await apiRequest(
+        `${API_BASE}/agents/${applicationId}/reject`,
+        "POST",
+        { reviewNotes: "Rejected via Admin Panel" }
+      );
+
+      setApplications((prev) =>
+        prev.map((a) =>
+          a.$id === applicationId ? { ...a, verified: false } : a
+        )
+      );
     } catch {
-      alert("❌ Failed to disapprove agent");
+      alert("❌ Failed to reject agent");
     } finally {
       setActionLoading(null);
     }
   };
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-2xl shadow-sm space-y-6">
       <div className="flex items-center gap-3">
@@ -94,13 +164,17 @@ export default function AdminPanel() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Approve agents, manage verification, and oversee system access.
+        Review and approve agent applications.
       </p>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
-      {loading && <div className="text-sm text-muted-foreground">Loading users…</div>}
+      {loading && (
+        <div className="text-sm text-muted-foreground">
+          Loading applications…
+        </div>
+      )}
 
-      {!loading && users.length > 0 && (
+      {!loading && applications.length > 0 && (
         <div className="overflow-x-auto">
           <table className="table table-sm">
             <thead>
@@ -112,28 +186,33 @@ export default function AdminPanel() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user.$id}>
-                  <td className="font-medium">{user.fullname}</td>
-                  <td className="text-xs">{user.email}</td>
-                  <td className="text-xs">{user.verified ? "Yes" : "No"}</td>
+              {applications.map((app) => (
+                <tr key={app.$id}>
+                  <td className="font-medium">{app.fullname}</td>
+                  <td className="text-xs">
+                    {emails[app.accountid] ?? "—"}
+                  </td>
+                  <td className="text-xs">
+                    {app.verified ? "Yes" : "No"}
+                  </td>
                   <td className="text-right space-x-2">
-                    {!user.verified && (
+                    {!app.verified && (
                       <button
-                        onClick={() => approveAgent(user.$id)}
-                        disabled={actionLoading === user.$id}
+                        onClick={() => approveAgent(app.$id)}
+                        disabled={actionLoading === app.$id}
                         className="btn btn-xs btn-outline btn-primary"
                       >
-                        <UserCheck className="h-4 w-4 mr-1" /> Approve Agent
+                        <UserCheck className="h-4 w-4 mr-1" />
+                        Approve
                       </button>
                     )}
-                    {user.verified && (
+                    {app.verified && (
                       <button
-                        onClick={() => disapproveAgent(user.$id)}
-                        disabled={actionLoading === user.$id}
+                        onClick={() => rejectAgent(app.$id)}
+                        disabled={actionLoading === app.$id}
                         className="btn btn-xs btn-outline btn-error"
                       >
-                        Disapprove
+                        Reject
                       </button>
                     )}
                   </td>
@@ -144,8 +223,10 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {!loading && users.length === 0 && !error && (
-        <div className="text-sm text-muted-foreground">No pending applications.</div>
+      {!loading && applications.length === 0 && !error && (
+        <div className="text-sm text-muted-foreground">
+          No pending applications.
+        </div>
       )}
     </section>
   );
