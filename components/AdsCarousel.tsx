@@ -1,19 +1,25 @@
-// components/AdsCarousel.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 
 type Ad = {
-  link: string;
-  banner: string;
+  clickLink: string;
+  bannerImg: string;
+  impressionPixel: string;
   alt: string;
+  title: string;
 };
 
 const ads: Ad[] = [
   {
-    link: "https://deriv.partners/rx?sidc=7CCE174A-5078-425E-8194-93D9AD9A63F8&utm_campaign=dynamicworks&utm_medium=affiliate&utm_source=CU218274",
-    banner: "https://deriv.partners/rx?ca=&strategy_node_id=256926&slink_id=0&is_ib=0&type=view&media=banner",
+    clickLink:
+      "https://deriv.partners/rx?ca=&strategy_node_id=256926&slink_id=0&is_ib=0&type=click&media=banner&lang=en",
+    bannerImg:
+      "https://deriv.partners/assets/image/imageoriginal/247-120x600.png",
+    impressionPixel:
+      "https://deriv.partners/rx?ca=&strategy_node_id=256926&slink_id=0&is_ib=0&type=view&media=banner",
     alt: "Deriv Banner",
+    title: "Trade Now! Earn Exclusive Rewards 🔥",
   },
   // Add more ads here
 ];
@@ -22,27 +28,38 @@ export default function AdsCarousel() {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % ads.length);
-    }, 4000); // rotate every 4 seconds
+    const interval = setInterval(
+      () => setCurrent((prev) => (prev + 1) % ads.length),
+      4000
+    );
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="relative w-full max-w-3xl mx-auto overflow-hidden rounded-lg shadow-lg">
-      {ads.map((ad, index) => (
+    <div className="relative w-full max-w-md mx-auto overflow-hidden rounded-lg shadow-lg">
+      {ads.map((ad, idx) => (
         <a
-          key={index}
-          href={ad.link}
+          key={idx}
+          href={ad.clickLink}
           target="_blank"
           rel="noopener noreferrer"
           className={`transition-opacity duration-1000 ${
-            index === current ? "opacity-100" : "opacity-0 absolute inset-0"
+            idx === current ? "opacity-100 relative" : "opacity-0 absolute inset-0"
           }`}
         >
-          <img src={ad.banner} alt={ad.alt} className="w-full h-auto" />
+          <img
+            src={ad.bannerImg}
+            alt={ad.alt}
+            className="w-full h-auto object-contain"
+          />
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-semibold shadow-md">
+            {ad.title}
+          </div>
+          {/* Hidden impression pixel */}
+          <img src={ad.impressionPixel} alt="" style={{ display: "none" }} />
         </a>
       ))}
+      {/* Navigation dots */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
         {ads.map((_, idx) => (
           <span
