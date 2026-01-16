@@ -85,27 +85,30 @@ const emailMap: UserMap = {};
 
 await Promise.all(
   apps.map(async (app) => {
-    const accountId = app.accountid; // ✅ FIX HERE
+    // ✅ agent_profiles uses userId (Appwrite account ID)
+    const accountId = app.userId;
 
     if (!accountId) {
-      console.warn("Missing accountId in app:", app);
+      console.warn("Missing userId in agent profile:", app);
       return;
     }
 
     try {
+      // ✅ matches: router.get("/:id", verifyTokenAndAdmin)
       const userRes = await apiRequest(
-        `${API_BASE}/users/account/${accountId}`
+        `${API_BASE}/users/${accountId}`
       );
 
       emailMap[accountId] = userRes.data?.email ?? "—";
     } catch (err) {
-      console.error("Failed to fetch user by accountId:", accountId, err);
+      console.error("Failed to fetch user for agent:", accountId, err);
       emailMap[accountId] = "—";
     }
   })
 );
 
 setEmails(emailMap);
+
 
 
     } catch (err: unknown) {
