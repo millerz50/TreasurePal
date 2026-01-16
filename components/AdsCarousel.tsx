@@ -30,13 +30,13 @@ export default function AdsCarousel() {
   useEffect(() => {
     const interval = setInterval(
       () => setCurrent((prev) => (prev + 1) % ads.length),
-      4000
+      5000
     );
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="relative w-full max-w-md mx-auto overflow-hidden rounded-lg shadow-lg">
+    <div className="relative w-full max-w-xs sm:max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg">
       {ads.map((ad, idx) => (
         <a
           key={idx}
@@ -52,7 +52,7 @@ export default function AdsCarousel() {
             alt={ad.alt}
             className="w-full h-auto object-contain"
           />
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-semibold shadow-md">
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-2 py-1 rounded-md text-xs sm:text-sm font-semibold shadow-md">
             {ad.title}
           </div>
           {/* Hidden impression pixel */}
@@ -73,3 +73,4 @@ export default function AdsCarousel() {
     </div>
   );
 }
+
