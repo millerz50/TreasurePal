@@ -25,7 +25,7 @@ export default function SigninForm({
   const [loading, setLoading] = useState(false);
 
   /* -----------------------------
-     STEP 2: SAVE PHONE + OTP
+     STEP 2: SAVE PHONE + SEND OTP
   ------------------------------ */
   async function updatePhoneAndVerify() {
     const e164 = getE164();
@@ -68,28 +68,17 @@ export default function SigninForm({
     const tId = toast.loading("Signing you in…");
 
     try {
-      /* ---------------------------------
-         1️⃣ Create Appwrite session
-      ---------------------------------- */
-      await account.createEmailPasswordSession(
-        email.toLowerCase(),
-        password
-      );
+      // 1️⃣ Create Appwrite email/password session
+      await account.createEmailPasswordSession(email.toLowerCase(), password);
 
-      /* ---------------------------------
-         2️⃣ Ensure session is active
-      ---------------------------------- */
+      // 2️⃣ Ensure session is active
       const user = await account.get();
 
-      /* ---------------------------------
-         3️⃣ Generate JWT and save it
-      ---------------------------------- */
+      // 3️⃣ Generate JWT and save in localStorage (critical for API calls)
       const jwtResponse = await account.createJWT();
-      localStorage.setItem("token", jwtResponse.jwt); // ✅ critical step
+      localStorage.setItem("token", jwtResponse.jwt);
 
-      /* ---------------------------------
-         4️⃣ Check if phone is required
-      ---------------------------------- */
+      // 4️⃣ If user phone is missing, prompt for phone verification
       if (!user.phone) {
         toast.dismiss(tId);
         setPhoneModal(true);
@@ -99,9 +88,7 @@ export default function SigninForm({
       toast.success("Welcome back!");
       toast.dismiss(tId);
 
-      /* ---------------------------------
-         5️⃣ Redirect
-      ---------------------------------- */
+      // 5️⃣ Redirect to the desired page
       router.refresh();
       router.push(redirectTo);
     } catch (err: any) {
@@ -132,6 +119,7 @@ export default function SigninForm({
               className="border p-3 rounded-lg"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
             />
           </div>
 
@@ -142,6 +130,7 @@ export default function SigninForm({
               className="border p-3 rounded-lg"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
             />
           </div>
 
@@ -162,7 +151,7 @@ export default function SigninForm({
         </div>
       </motion.form>
 
-      {/* PHONE MODAL */}
+      {/* PHONE VERIFICATION MODAL */}
       {phoneModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md space-y-4">
@@ -202,3 +191,4 @@ export default function SigninForm({
     </>
   );
 }
+
