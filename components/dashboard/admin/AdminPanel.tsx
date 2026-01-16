@@ -9,7 +9,7 @@ import { account } from "@/lib/appwrite";
 ========================= */
 type AgentApplication = {
   $id: string;
-  accountid: string;
+  userId: string;
   fullname: string;
   message: string;
   verified: boolean;
