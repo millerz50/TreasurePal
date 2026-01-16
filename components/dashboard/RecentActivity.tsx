@@ -2,6 +2,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { account } from "@/lib/appwrite";
 import { useEffect, useMemo, useState } from "react";
 
 type Activity = {
@@ -10,7 +11,6 @@ type Activity = {
   createdAt: string;
   actorId?: string;
   actorRole?: string;
-  [key: string]: any;
 };
 
 export default function RecentActivity() {
@@ -20,10 +20,12 @@ export default function RecentActivity() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+  const API_BASE =
+    (process.env.NEXT_PUBLIC_API_URLV2 || "").replace(/\/$/, "") +
+    `/api/${process.env.NEXT_PUBLIC_API_VERSION || "v2"}`;
 
   /* ----------------------------------
-     RESOLVE PRIMARY ROLE (FROM roles[])
+     RESOLVE PRIMARY ROLE
   ----------------------------------- */
   const primaryRole = useMemo(() => {
     if (!user?.roles?.length) return "user";
@@ -36,41 +38,41 @@ export default function RecentActivity() {
     if (authLoading || !user) return;
 
     const controller = new AbortController();
-    const signal = controller.signal;
 
     const fetchActivity = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        let endpoint = "/api/activity/recent";
+        // 1️⃣ Build endpoint
+        let endpoint = "/activity/recent";
 
         if (primaryRole === "admin") {
-          endpoint = "/api/activity/recent?scope=all";
+          endpoint += "?scope=all";
         } else if (primaryRole === "agent") {
-          endpoint = `/api/activity/recent?scope=agent&agentId=${encodeURIComponent(
+          endpoint += `?scope=agent&agentId=${encodeURIComponent(
             user.userId
           )}`;
         } else {
-          endpoint = `/api/activity/recent?scope=user&userId=${encodeURIComponent(
+          endpoint += `?scope=user&userId=${encodeURIComponent(
             user.userId
           )}`;
         }
 
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("Not authenticated");
+        // 2️⃣ Create fresh Appwrite JWT
+        const jwt = await account.createJWT();
 
+        // 3️⃣ Fetch activity
         const res = await fetch(`${API_BASE}${endpoint}`, {
-          method: "GET",
           headers: {
+            Authorization: `Bearer ${jwt.jwt}`,
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
-          signal,
+          signal: controller.signal,
         });
 
         if (!res.ok) {
-          throw new Error(`Failed to fetch recent activity (${res.status})`);
+          throw new Error(`Failed (${res.status})`);
         }
 
         const data = await res.json();
@@ -86,9 +88,8 @@ export default function RecentActivity() {
     };
 
     fetchActivity();
-
     return () => controller.abort();
-  }, [API_BASE, user?.userId, primaryRole, authLoading]);
+  }, [authLoading, user, primaryRole, API_BASE]);
 
   return (
     <div className="card bg-base-100 shadow-sm border border-base-300">
