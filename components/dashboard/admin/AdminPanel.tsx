@@ -81,22 +81,26 @@ export default function AdminPanel() {
       setApplications(apps);
 
       // 2️⃣ Fetch user emails for each accountid
-      const emailMap: UserMap = {};
+     // 2️⃣ Fetch user emails for each accountid
+const emailMap: UserMap = {};
 
-      await Promise.all(
-        apps.map(async (app) => {
-          try {
-            const userRes = await apiRequest(
-              `${API_BASE}/users/account/${app.accountid}`
-            );
-            emailMap[app.accountid] = userRes.data.email;
-          } catch {
-            emailMap[app.accountid] = "—";
-          }
-        })
+await Promise.all(
+  apps.map(async (app) => {
+    try {
+      const userRes = await apiRequest(
+        `${API_BASE}/users/account/${app.accountid}`
       );
 
-      setEmails(emailMap);
+      emailMap[app.accountid] = userRes.data.email ?? "—";
+    } catch (err) {
+      console.error("Failed to fetch user by accountId:", app.accountid, err);
+      emailMap[app.accountid] = "—";
+    }
+  })
+);
+
+setEmails(emailMap);
+
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
