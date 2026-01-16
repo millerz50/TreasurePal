@@ -2,6 +2,7 @@
 
 import { ShieldCheck, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { account } from "@/lib/appwrite";
 
 type User = {
   $id: string;
@@ -35,55 +36,59 @@ export default function AdminPanel() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Get JWT from localStorage (saved as "token" in SigninForm)
-  const jwt =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  /* ---------------------------------
+     Fetch users with fresh JWT
+  ---------------------------------- */
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // ✅ Generate fresh JWT every time
+      const jwtResponse = await account.createJWT();
+      const freshJWT = jwtResponse.jwt;
+
+      const res = await fetch(`${API_BASE}/agents/applications/pending`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${freshJWT}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to load users");
+
+      const data = await res.json();
+      setUsers(data.data || []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error loading users");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadUsers = async () => {
-      setLoading(true);
-      setError(null);
+    fetchUsers();
+  }, []);
 
-      try {
-        const res = await fetch(`${API_BASE}/agents/applications/pending`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
-          },
-        });
-        if (!res.ok) throw new Error("Failed to load users");
-
-        const data = await res.json();
-        // backend returns { success: true, data: [...] }
-        setUsers(data.data || []);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Error loading users");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (jwt) {
-      loadUsers();
-    } else {
-      setError("No JWT token found. Please log in as admin.");
-    }
-  }, [jwt]);
-
+  /* ---------------------------------
+     Approve agent
+  ---------------------------------- */
   const approveAgent = async (userId: string) => {
     setActionLoading(userId);
     try {
+      const jwtResponse = await account.createJWT();
+      const freshJWT = jwtResponse.jwt;
+
       const res = await fetch(`${API_BASE}/agents/${userId}/approve`, {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+          Authorization: `Bearer ${freshJWT}`,
         },
         body: JSON.stringify({ reviewNotes: "Approved via Admin Panel" }),
       });
+
       if (!res.ok) throw new Error("Approval failed");
 
       setUsers((prev) =>
@@ -96,18 +101,24 @@ export default function AdminPanel() {
     }
   };
 
+  /* ---------------------------------
+     Disapprove agent
+  ---------------------------------- */
   const disapproveAgent = async (userId: string) => {
     setActionLoading(userId);
     try {
+      const jwtResponse = await account.createJWT();
+      const freshJWT = jwtResponse.jwt;
+
       const res = await fetch(`${API_BASE}/agents/${userId}/disapprove`, {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+          Authorization: `Bearer ${freshJWT}`,
         },
         body: JSON.stringify({ reviewNotes: "Disapproved via Admin Panel" }),
       });
+
       if (!res.ok) throw new Error("Disapproval failed");
 
       setUsers((prev) =>
