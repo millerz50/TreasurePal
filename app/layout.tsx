@@ -13,8 +13,8 @@ import Footer from "@/components/landing/footer/Footer";
 import { Hreflang } from "@/components/seo/Hreflang";
 import LogoLoader from "@/components/ui/LogoLoader";
 
-import AdsLoader from "@/components/ads/AdsLoader"; // Splash modal
-import AdsCarousel from "@/components/ads/AdsCarousel"; // Rotating banner showcase
+import AdsLoader from "@/components/AdsLoader"; // Splash modal
+import AdsCarousel from "@/components/AdsCarousel"; // Rotating banner showcase
 
 const poppins = Poppins({
   subsets: ["latin"],
