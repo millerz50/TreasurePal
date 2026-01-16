@@ -68,16 +68,27 @@ export default function SigninForm({
     const tId = toast.loading("Signing you in…");
 
     try {
-      // ✅ 1️⃣ Create Appwrite session (cookie-based)
+      /* ---------------------------------
+         1️⃣ Create Appwrite session
+      ---------------------------------- */
       await account.createEmailPasswordSession(
         email.toLowerCase(),
         password
       );
 
-      // ✅ 2️⃣ FORCE cookie persistence
+      /* ---------------------------------
+         2️⃣ Ensure session is active
+      ---------------------------------- */
       const user = await account.get();
 
-      // 🔐 Force phone capture if missing
+      /* ---------------------------------
+         3️⃣ Warm up JWT (CRITICAL)
+      ---------------------------------- */
+      await account.createJWT();
+
+      /* ---------------------------------
+         4️⃣ Phone required
+      ---------------------------------- */
       if (!user.phone) {
         toast.dismiss(tId);
         setPhoneModal(true);
@@ -87,7 +98,9 @@ export default function SigninForm({
       toast.success("Welcome back!");
       toast.dismiss(tId);
 
-      // ✅ 3️⃣ Refresh + redirect (backend now authorized)
+      /* ---------------------------------
+         5️⃣ Redirect
+      ---------------------------------- */
       router.refresh();
       router.push(redirectTo);
     } catch (err: any) {
