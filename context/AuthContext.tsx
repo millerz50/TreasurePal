@@ -2,29 +2,19 @@
 
 import { account } from "@/lib/appwrite";
 import type { Models } from "appwrite";
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
-/* ----------------------------------
+/* ----------------------------
    ENV
------------------------------------ */
+---------------------------- */
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
+const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
 
-const APPWRITE_ENDPOINT =
-  process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
-const APPWRITE_PROJECT_ID =
-  process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
-
-/* ----------------------------------
+/* ----------------------------
    TYPES
------------------------------------ */
+---------------------------- */
 export type UserPayload = {
   userId: string;
   email: string;
@@ -32,7 +22,6 @@ export type UserPayload = {
   surname: string;
   roles: ("user" | "agent" | "admin")[];
   status: string;
-
   phone?: string;
   avatarUrl?: string;
   country?: string;
@@ -52,9 +41,9 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-/* ----------------------------------
+/* ----------------------------
    PROVIDER
------------------------------------ */
+---------------------------- */
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,9 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     (async () => {
       try {
-        /* ---------------------------------
-           1️⃣ Check Appwrite session
-        ---------------------------------- */
+        // 1️⃣ Check Appwrite session (uses cookies)
         let appwriteUser: Models.User<any> | null = null;
         try {
           appwriteUser = await account.get();
@@ -85,39 +72,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        /* ---------------------------------
-           2️⃣ Create JWT
-        ---------------------------------- */
-        const jwt = await account.createJWT();
-
-        /* ---------------------------------
-           3️⃣ Fetch backend profile (JWT)
-        ---------------------------------- */
-        const res = await fetch(
-          `${API_BASE_URL}/api/${API_VERSION}/users/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${jwt.jwt}`,
-            },
-          }
-        );
+        // 2️⃣ Fetch backend profile using fresh JWT
+        const jwtResponse = await account.createJWT();
+        const res = await fetch(`${API_BASE_URL}/api/${API_VERSION}/users/me`, {
+          headers: { Authorization: `Bearer ${jwtResponse.jwt}` },
+        });
 
         if (!res.ok) throw new Error("Unauthorized");
-
         const profile = await res.json();
 
-        /* ---------------------------------
-           4️⃣ Avatar
-        ---------------------------------- */
+        // 3️⃣ Build avatar URL
         const avatarUrl = profile?.avatarFileId
           ? `${APPWRITE_ENDPOINT}/storage/buckets/userAvatars/files/${profile.avatarFileId}/view?project=${APPWRITE_PROJECT_ID}`
-          : `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              appwriteUser.email
-            )}`;
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(appwriteUser.email)}`;
 
-        /* ---------------------------------
-           5️⃣ Normalize
-        ---------------------------------- */
+        // 4️⃣ Set normalized user
         if (mounted.current) {
           setUser({
             userId: appwriteUser.$id,
@@ -143,15 +112,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    await account.deleteSession("current");
+    await account.deleteSession("current"); // clears Appwrite session cookie
     setUser(null);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, loading, signOut }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);
