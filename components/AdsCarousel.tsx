@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,14 +15,13 @@ const ads: Ad[] = [
   {
     clickLink:
       "https://deriv.partners/rx?ca=&strategy_node_id=256926&slink_id=0&is_ib=0&type=click&media=banner&lang=en",
-    bannerImg:
-      "https://deriv.partners/assets/image/imageoriginal/247-120x600.png",
+    bannerImg: "/d7a05900-889a-47bf-91eb-cc76ad74884f.png", // uploaded image
     impressionPixel:
       "https://deriv.partners/rx?ca=&strategy_node_id=256926&slink_id=0&is_ib=0&type=view&media=banner",
     alt: "Deriv Banner",
-    title: "Trade Now! Earn Exclusive Rewards 🔥",
+    title: "Trade Crypto & Synthetics 24/7 🚀",
   },
-  // Add more ads here
+  // add more ads here
 ];
 
 export default function AdsCarousel() {
@@ -50,7 +50,7 @@ export default function AdsCarousel() {
           <img
             src={ad.bannerImg}
             alt={ad.alt}
-            className="w-full h-auto object-contain"
+            className="w-full h-auto max-h-[400px] object-contain mx-auto"
           />
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-2 py-1 rounded-md text-xs sm:text-sm font-semibold shadow-md">
             {ad.title}
@@ -59,7 +59,6 @@ export default function AdsCarousel() {
           <img src={ad.impressionPixel} alt="" style={{ display: "none" }} />
         </a>
       ))}
-      {/* Navigation dots */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
         {ads.map((_, idx) => (
           <span
