@@ -4,15 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Query, Databases } from "node-appwrite";
 
-// Appwrite DB config
-const DB_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const USERS_COLLECTION = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION!;
-const PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
-const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
-
-// Agent type
 type Agent = {
   $id: string;
   firstName: string;
@@ -25,47 +17,25 @@ type Agent = {
   status?: string;
 };
 
-// fetch public agents
-async function fetchAgents(): Promise<Agent[]> {
-  try {
-    const client = new Databases(new (await import("node-appwrite")).Client());
-    client.setProject(PROJECT_ID);
-
-    const res = await new Databases(client)
-      .listDocuments(DB_ID, USERS_COLLECTION, [
-        Query.equal("roles", "agent"),
-      ]);
-
-    return res.documents.map((doc) => ({
-      $id: doc.$id,
-      firstName: doc.firstName,
-      surname: doc.surname,
-      email: doc.email,
-      phone: doc.phone,
-      bio: doc.bio,
-      location: doc.location,
-      profileImageId: doc.profileImageId ?? null,
-      status: doc.status ?? "",
-    }));
-  } catch (err) {
-    console.error("Failed to fetch agents:", err);
-    return [];
-  }
-}
-
 export default function AgencySection() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAgents().then((res) => {
-      setAgents(res);
-      setLoading(false);
-    });
+    fetch("/api/agents")
+      .then((res) => res.json())
+      .then((data: Agent[]) => {
+        setAgents(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setAgents([]);
+        setLoading(false);
+      });
   }, []);
 
-  // Build location filter
   const uniqueLocations = [
     "All",
     ...Array.from(new Set(agents.map((a) => a.location).filter(Boolean))),
@@ -130,7 +100,7 @@ export default function AgencySection() {
                 <figure className="relative h-48 w-full overflow-hidden bg-gray-100">
                   {agent.profileImageId ? (
                     <Image
-                      src={`https://cloud.appwrite.io/v1/storage/buckets/${BUCKET_ID}/files/${agent.profileImageId}/view?project=${PROJECT_ID}`}
+                      src={`https://cloud.appwrite.io/v1/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID}/files/${agent.profileImageId}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`}
                       alt={`${agent.firstName} ${agent.surname}`}
                       fill
                       className="object-cover"
@@ -170,3 +140,4 @@ export default function AgencySection() {
     </section>
   );
 }
+
