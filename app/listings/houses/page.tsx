@@ -1,12 +1,11 @@
-// app/listings/houses/page.tsx
-import {
-  baseAlternates,
-  defaultOpenGraph,
-  defaultTwitter,
-} from "@/app/seo/seoConfig";
+"use client";
+
+import { useEffect, useState } from "react";
+import { account } from "@/lib/appwrite";
+import Link from "next/link";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { baseAlternates, defaultOpenGraph, defaultTwitter } from "@/app/seo/seoConfig";
 
 export const metadata: Metadata = {
   title: `House Listings • ${SITE_NAME}`,
@@ -17,11 +16,11 @@ export const metadata: Metadata = {
     canonical: `${SITE_URL}/houses`,
     languages: {
       en: `${SITE_URL}/en/houses`,
-      "en-zw": "https://treasurepal.co.zw/en/houses",
+      "en-zw": `${SITE_URL}/en/houses`,
       sn: `${SITE_URL}/sn/houses`,
-      "sn-zw": "https://treasurepal.co.zw/sn/houses",
+      "sn-zw": `${SITE_URL}/sn/houses`,
       nd: `${SITE_URL}/nd/houses`,
-      "nd-zw": "https://treasurepal.co.zw/nd/houses`,
+      "nd-zw": `${SITE_URL}/nd/houses`,
       "x-default": `${SITE_URL}/houses`,
     },
   },
@@ -47,79 +46,77 @@ export const metadata: Metadata = {
   },
 };
 
-type RawRecord = Record<string, unknown>;
-
 type Property = {
   id: string;
   title: string;
   location?: string;
   price?: string;
-  size?: string | number | undefined;
+  size?: string | number;
   image?: string | null;
   slug?: string;
   summary?: string;
 };
 
-function toString(v: unknown): string {
-  return typeof v === "string" ? v : v === null ? "" : String(v);
-}
+export default function HousesPageClient() {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
 
-function toStringOrNumber(v: unknown): string | number | undefined {
-  if (typeof v === "number") return v;
-  if (typeof v === "string") {
-    const trimmed = v.trim();
-    if (trimmed === "") return undefined;
-    if (!Number.isNaN(Number(trimmed))) return Number(trimmed);
-    return trimmed;
-  }
-  return undefined;
-}
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
 
-function parseProperty(raw: RawRecord): Property {
-  return {
-    id: toString(
-      raw.id ?? raw._id ?? raw.slug ?? Math.random().toString(36).slice(2)
-    ),
-    title: toString(raw.title ?? raw.name ?? "Untitled property"),
-    location: toString(raw.location ?? raw.city ?? "Unknown"),
-    price: raw.price
-      ? toString(raw.price)
-      : toString(raw.displayPrice ?? "Contact for price"),
-    size: toStringOrNumber(raw.size ?? raw.area ?? undefined),
-    image: raw.image
-      ? toString(raw.image)
-      : raw.photo
-      ? toString(raw.photo)
-      : null,
-    slug: raw.slug ? toString(raw.slug) : raw.id ? toString(raw.id) : undefined,
-    summary: toString(raw.summary ?? raw.description ?? ""),
-  };
-}
+        // 1️⃣ Get fresh JWT
+        const jwtResponse = await account.createJWT();
 
-async function fetchByType(typePath: string): Promise<Property[]> {
-  try {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-    const url = `${API_BASE}/api/properties/${typePath}`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
-    if (!res.ok) {
-      console.error("API error", res.status, url);
-      return [];
-    }
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    return data.map((p: RawRecord) => parseProperty(p));
-  } catch (err) {
-    console.error("Fetch failed:", err);
-    return [];
-  }
-}
+        // 2️⃣ Construct API URL
+        const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
+        const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URLV2 ?? "").replace(/\/+$/, "");
+        const url = `${API_BASE_URL}/api/${API_VERSION}/properties/houses`;
 
-export default async function HousesPage() {
-  const listings = await fetchByType("houses"); // <-- fetch houses
+        // 3️⃣ Fetch properties
+        const res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${jwtResponse.jwt}`,
+          },
+        });
+
+        if (!res.ok) {
+          console.error("Failed to fetch house properties", res.status);
+          setProperties([]);
+          return;
+        }
+
+        const data: any[] = await res.json();
+
+        // 4️⃣ Map API response to Property type
+        const mapped: Property[] = data.map((raw) => ({
+          id: raw.$id ?? raw.id ?? Math.random().toString(36).slice(2),
+          title: raw.title ?? raw.name ?? "Untitled property",
+          location: raw.location ?? raw.city ?? "Unknown",
+          price: raw.price ?? raw.displayPrice ?? "Contact for price",
+          size: raw.size ?? raw.area,
+          image: raw.frontElevation ?? raw.photo ?? null,
+          slug: raw.slug ?? raw.$id,
+          summary: raw.description ?? raw.summary ?? "",
+        }));
+
+        setProperties(mapped);
+      } catch (err) {
+        console.error("Error fetching house properties:", err);
+        setProperties([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   return (
     <main className="min-h-screen bg-base-200 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
+        {/* HEADER */}
         <header className="mb-6">
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">
             Houses & Family Homes
@@ -129,7 +126,18 @@ export default async function HousesPage() {
           </p>
         </header>
 
-        {listings.length === 0 ? (
+        {/* LOADING */}
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-64 bg-gray-100 dark:bg-slate-700 animate-pulse rounded-lg"
+              />
+            ))}
+          </div>
+        ) : properties.length === 0 ? (
+          // NO LISTINGS
           <section className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-6 shadow-sm text-center">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               No houses listed
@@ -154,11 +162,12 @@ export default async function HousesPage() {
             </div>
           </section>
         ) : (
+          // PROPERTY GRID
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {listings.map((p) => (
+            {properties.map((p) => (
               <article
                 key={p.id}
-                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm"
+                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
                   {p.image ? (
@@ -183,16 +192,17 @@ export default async function HousesPage() {
                     {p.location} • {p.price}
                   </p>
 
-                  {p.size ? (
+                  {p.size && (
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                       Size: {p.size}
                     </p>
-                  ) : null}
-                  {p.summary ? (
+                  )}
+
+                  {p.summary && (
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
                       {p.summary}
                     </p>
-                  ) : null}
+                  )}
 
                   <div className="mt-3 flex items-center justify-between">
                     <Link
@@ -214,3 +224,4 @@ export default async function HousesPage() {
     </main>
   );
 }
+
