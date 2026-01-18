@@ -130,7 +130,7 @@ setEmails(emailMap);
     setActionLoading(applicationId);
     try {
       await apiRequest(
-        `${API_BASE}/agents/${applicationId}/approve`,
+        `${API_BASE}/agents/applications/${applicationId}/approve`,
         "POST",
         { reviewNotes: "Approved via Admin Panel" }
       );
