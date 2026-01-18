@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import BlogSection from "@/components/landing/Blog";
 import FaqFull from "@/components/landing/FaqFull";
 import Hero from "@/components/landing/hero/Hero.server";
-import PropertyList from "@/components/property/PropertyFilters";
+import PropertyFilters from "@/components/property/PropertyFilters"; // ✅ Correct import
 import AgencySection from "@/components/user/AgencySection";
 import JoinHero from "@/components/user/JoinHero";
 
@@ -22,8 +22,7 @@ export const metadata: Metadata = {
     canonical: "https://treasureprops.com",
     languages: {
       en: "https://treasureprops.com",
-      "en-ZW": "https://treasureprops.com",
-      sn: "https://treasureprops.com/sn",
+      "en-ZW": "https://treasureprops.com/sn",
       nd: "https://treasureprops.com/nd",
     },
   },
@@ -67,9 +66,16 @@ export default function Home() {
 
       {/* CONTENT — constrained */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20 py-16">
+        {/* Property Filters Section */}
         <PropertyFilters />
+
+        {/* Blog Section */}
         <BlogSection />
+
+        {/* FAQ Section */}
         <FaqFull includeSchema storageKey="faq.home.open" />
+
+        {/* Agency / Join Sections */}
         <AgencySection />
         <JoinHero />
       </main>
