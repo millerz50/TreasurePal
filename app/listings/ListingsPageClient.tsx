@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { account } from "@/lib/appwrite";
 import Image from "next/image";
 import Link from "next/link";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+
 
 type RawRecord = Record<string, unknown>;
 
