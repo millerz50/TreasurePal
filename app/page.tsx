@@ -64,12 +64,37 @@ export default function Home() {
     console.log("Filters changed:", filters);
   };
 
+ "use client";
+
+import React from "react";
+import type { Metadata } from "next";
+
+import Hero from "@/components/landing/hero/Hero.server";
+import BlogSection from "@/components/landing/Blog";
+import FaqFull from "@/components/landing/FaqFull";
+import PropertyFilters, { Filters } from "@/components/property/PropertyFilters";
+import AgencySection from "@/components/user/AgencySection";
+import JoinHero from "@/components/user/JoinHero";
+
+export const metadata: Metadata = {
+  title: "TreasureProps | Explore Properties Across Zimbabwe",
+  description:
+    "Discover, list, and access properties across Zimbabwe — from affordable student housing to premium estates. TreasureProps makes property discovery simple, trusted, and inclusive.",
+  metadataBase: new URL("https://treasureprops.com"),
+};
+
+export default function Home() {
+  // ✅ Client-side handler
+  const handleFilterChange = (filters: Filters) => {
+    console.log("Filters changed:", filters);
+    // You can add state or API calls here to filter properties dynamically
+  };
+
   return (
     <div className="min-h-screen bg-base-200">
-      {/* HERO — full bleed */}
+      {/* HERO — full width */}
       <Hero />
 
-      {/* CONTENT — constrained */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20 py-16">
         {/* Property Filters Section */}
         <PropertyFilters onFilterChange={handleFilterChange} />
@@ -80,7 +105,7 @@ export default function Home() {
         {/* FAQ Section */}
         <FaqFull includeSchema storageKey="faq.home.open" />
 
-        {/* Agency / Join Sections */}
+        {/* Agency & Join */}
         <AgencySection />
         <JoinHero />
       </main>
