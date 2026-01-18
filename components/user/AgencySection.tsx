@@ -4,77 +4,77 @@ import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { domainConfig } from "../landing/Navbar/ssrWrapperNav/domains";
+import { Query, Databases } from "node-appwrite";
 
+// Appwrite DB config
+const DB_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+const USERS_COLLECTION = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION!;
+const PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
+const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
+
+// Agent type
 type Agent = {
   $id: string;
-  email: string;
   firstName: string;
   surname: string;
+  email: string;
   phone?: string;
-  role: string;
-  status: string;
-  nationalId?: string;
   bio?: string;
-  metadata?: string[];
-  accountid: string;
-  imageFileId?: string | null;
   location?: string;
+  profileImageId?: string | null;
+  status?: string;
 };
+
+// fetch public agents
+async function fetchAgents(): Promise<Agent[]> {
+  try {
+    const client = new Databases(new (await import("node-appwrite")).Client());
+    client.setProject(PROJECT_ID);
+
+    const res = await new Databases(client)
+      .listDocuments(DB_ID, USERS_COLLECTION, [
+        Query.equal("roles", "agent"),
+      ]);
+
+    return res.documents.map((doc) => ({
+      $id: doc.$id,
+      firstName: doc.firstName,
+      surname: doc.surname,
+      email: doc.email,
+      phone: doc.phone,
+      bio: doc.bio,
+      location: doc.location,
+      profileImageId: doc.profileImageId ?? null,
+      status: doc.status ?? "",
+    }));
+  } catch (err) {
+    console.error("Failed to fetch agents:", err);
+    return [];
+  }
+}
 
 export default function AgencySection() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [loading, setLoading] = useState(true);
 
-  // 🔑 Domain-based branding
-  const [brand, setBrand] = useState(domainConfig["default"]);
   useEffect(() => {
-    const host = window.location.hostname;
-    setBrand(domainConfig[host] || domainConfig["default"]);
-  }, []);
-  useEffect(() => {
-    const fetchAgents = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/users/agents`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch agents: ${res.status}`);
-        }
-
-        const data = await res.json();
-        setAgents(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("❌ Error fetching agents:", error);
-        setAgents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAgents();
+    fetchAgents().then((res) => {
+      setAgents(res);
+      setLoading(false);
+    });
   }, []);
 
-  // 🔍 Build dynamic location list from agents
+  // Build location filter
   const uniqueLocations = [
     "All",
-    ...Array.from(
-      new Set(agents.map((agent) => agent.location).filter(Boolean))
-    ),
+    ...Array.from(new Set(agents.map((a) => a.location).filter(Boolean))),
   ];
 
   const filteredAgents =
     selectedLocation === "All"
       ? agents
-      : agents.filter((agent) => agent.location === selectedLocation);
+      : agents.filter((a) => a.location === selectedLocation);
 
   return (
     <section className="py-16 px-4 sm:px-8 max-w-screen-xl mx-auto">
@@ -82,11 +82,12 @@ export default function AgencySection() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-4xl font-bold text-center text-blue-700 mb-2">
-        Meet {brand.name} Agents
+        className="text-4xl font-bold text-center text-blue-700 mb-2"
+      >
+        Meet Our Agents
       </motion.h2>
       <p className="text-center text-sm text-gray-500 mb-6">
-        {brand.description}
+        Trusted real estate professionals across Zimbabwe
       </p>
 
       <div className="flex justify-center mb-10">
@@ -94,7 +95,8 @@ export default function AgencySection() {
           id="location"
           value={selectedLocation}
           onChange={(e) => setSelectedLocation(e.target.value)}
-          className="select select-bordered w-full max-w-xs text-sm">
+          className="select select-bordered w-full max-w-xs text-sm"
+        >
           {uniqueLocations.map((loc) => (
             <option key={loc} value={loc}>
               {loc}
@@ -110,9 +112,7 @@ export default function AgencySection() {
       ) : filteredAgents.length === 0 ? (
         <div className="text-center py-12 text-base-content/70">
           <h2 className="text-lg font-semibold">No agents found</h2>
-          <p className="text-sm">
-            Try adjusting your filters or check back later.
-          </p>
+          <p className="text-sm">Try another location or check back later.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -125,11 +125,12 @@ export default function AgencySection() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 whileHover={{ scale: 1.03 }}
-                className="card bg-white shadow-lg border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300">
+                className="card bg-white shadow-lg border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300"
+              >
                 <figure className="relative h-48 w-full overflow-hidden bg-gray-100">
-                  {agent.imageFileId ? (
+                  {agent.profileImageId ? (
                     <Image
-                      src={`https://cloud.appwrite.io/v1/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID}/files/${agent.imageFileId}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`}
+                      src={`https://cloud.appwrite.io/v1/storage/buckets/${BUCKET_ID}/files/${agent.profileImageId}/view?project=${PROJECT_ID}`}
                       alt={`${agent.firstName} ${agent.surname}`}
                       fill
                       className="object-cover"
@@ -141,7 +142,7 @@ export default function AgencySection() {
                   )}
                 </figure>
 
-                <div className="card-body space-y-3">
+                <div className="card-body space-y-3 p-4">
                   <h3 className="text-xl font-semibold text-blue-700">
                     {agent.firstName} {agent.surname}
                   </h3>
@@ -155,7 +156,8 @@ export default function AgencySection() {
                   <div className="pt-4">
                     <Button
                       type="button"
-                      className="w-full text-sm bg-blue-600 text-white hover:bg-blue-700">
+                      className="w-full text-sm bg-blue-600 text-white hover:bg-blue-700"
+                    >
                       Hire Agent
                     </Button>
                   </div>
