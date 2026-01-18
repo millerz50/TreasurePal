@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import BlogSection from "@/components/landing/Blog";
 import FaqFull from "@/components/landing/FaqFull";
 import Hero from "@/components/landing/hero/Hero.server";
-import PropertyList from "@/components/property/PropertyList";
+import PropertyList from "@/components/property/PropertyFilters";
 import AgencySection from "@/components/user/AgencySection";
 import JoinHero from "@/components/user/JoinHero";
 
@@ -67,7 +67,7 @@ export default function Home() {
 
       {/* CONTENT — constrained */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20 py-16">
-        <PropertyList />
+        <PropertyFilters />
         <BlogSection />
         <FaqFull includeSchema storageKey="faq.home.open" />
         <AgencySection />
