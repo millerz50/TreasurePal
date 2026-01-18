@@ -59,6 +59,11 @@ export const metadata: Metadata = {
 ---------------------------- */
 
 export default function Home() {
+  // Dummy handler for filters
+  const handleFilterChange = (filters: Record<string, any>) => {
+    console.log("Filters changed:", filters);
+  };
+
   return (
     <div className="min-h-screen bg-base-200">
       {/* HERO — full bleed */}
@@ -67,7 +72,7 @@ export default function Home() {
       {/* CONTENT — constrained */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20 py-16">
         {/* Property Filters Section */}
-        <PropertyFilters />
+        <PropertyFilters onFilterChange={handleFilterChange} />
 
         {/* Blog Section */}
         <BlogSection />
