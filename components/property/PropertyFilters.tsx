@@ -2,10 +2,6 @@
 
 import React, { useState } from "react";
 
-interface PropertyFiltersProps {
-  onFilterChange: (filters: Filters) => void;
-}
-
 export interface Filters {
   location?: string;
   type?: string;
@@ -14,9 +10,11 @@ export interface Filters {
   rooms?: number;
 }
 
-const PropertyFilters: React.FC<PropertyFiltersProps> = ({
-  onFilterChange,
-}) => {
+interface PropertyFiltersProps {
+  onFilterChange: (filters: Filters) => void;
+}
+
+const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange }) => {
   const [filters, setFilters] = useState<Filters>({});
 
   const handleChange = (key: keyof Filters, value: any) => {
@@ -35,6 +33,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
           className="input input-bordered w-full"
           onChange={(e) => handleChange("location", e.target.value)}
         />
+
         <select
           className="select select-bordered w-full"
           onChange={(e) => handleChange("type", e.target.value)}
@@ -44,22 +43,21 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
           <option value="apartment">Apartment</option>
           <option value="land">Land</option>
         </select>
+
         <input
           type="number"
           placeholder="Min Price"
           className="input input-bordered w-full"
-          onChange={(e) =>
-            handleChange("minPrice", Number(e.target.value))
-          }
+          onChange={(e) => handleChange("minPrice", Number(e.target.value))}
         />
+
         <input
           type="number"
           placeholder="Max Price"
           className="input input-bordered w-full"
-          onChange={(e) =>
-            handleChange("maxPrice", Number(e.target.value))
-          }
+          onChange={(e) => handleChange("maxPrice", Number(e.target.value))}
         />
+
         <select
           className="select select-bordered w-full"
           onChange={(e) => handleChange("rooms", Number(e.target.value))}
