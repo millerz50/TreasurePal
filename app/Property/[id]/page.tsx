@@ -1,6 +1,11 @@
 // app/property/[id]/page.tsx
 import PropertyDetails from "@/components/property/PropertyDetails";
-import { account } from "@/services/lib/appwrite"; // import your Appwrite account instance
+import { account } from "@/services/lib/env"; // your Appwrite account instance
+
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
+const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
 
 type Property = {
   $id: string;
@@ -36,22 +41,28 @@ export default async function PropertyPage({ params }: { params: { id?: string }
   }
 
   try {
-    // 1️⃣ Get JWT token from Appwrite account
+    // 1️⃣ Get a fresh JWT from Appwrite
     const jwtResponse = await account.createJWT();
 
-    // 2️⃣ Build API URL
-    const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-    const url = `${base}/api/properties/${encodeURIComponent(id)}`;
-
-    // 3️⃣ Fetch property securely using JWT
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${jwtResponse.jwt}`,
-      },
+    // 2️⃣ Fetch the user profile to verify authentication
+    const profileRes = await fetch(`${API_BASE_URL}/api/${API_VERSION}/users/me`, {
+      headers: { Authorization: `Bearer ${jwtResponse.jwt}` },
       cache: "no-store",
     });
 
-    if (!res.ok) {
+    if (!profileRes.ok) {
+      throw new Error("Unauthorized");
+    }
+
+    const profile = await profileRes.json();
+
+    // 3️⃣ Fetch property details securely
+    const propertyRes = await fetch(`${API_BASE_URL}/api/${API_VERSION}/properties/${encodeURIComponent(id)}`, {
+      headers: { Authorization: `Bearer ${jwtResponse.jwt}` },
+      cache: "no-store",
+    });
+
+    if (!propertyRes.ok) {
       return (
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
           <h2 className="text-2xl font-bold text-red-500">Property not found</h2>
@@ -62,7 +73,7 @@ export default async function PropertyPage({ params }: { params: { id?: string }
       );
     }
 
-    const property: Property = await res.json();
+    const property: Property = await propertyRes.json();
 
     // Safely map coordinates into a tuple [lng, lat]
     const coords: [number, number] | undefined =
@@ -107,3 +118,4 @@ export default async function PropertyPage({ params }: { params: { id?: string }
     );
   }
 }
+
