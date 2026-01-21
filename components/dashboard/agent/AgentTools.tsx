@@ -1,16 +1,14 @@
 // components/dashboard/agent/AgentTools.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 /* ----------------------------
    TYPES
 ---------------------------- */
 export type AgentMetrics = {
-  /** Appwrite account id (users.accountid) */
   accountId: string;
-
-  /** Metrics */
   propertiesCount?: number;
   historicalMetricRecords?: number;
   averagePropertyRating?: number | null;
@@ -19,10 +17,10 @@ export type AgentMetrics = {
 };
 
 type Props = {
-  /** Metrics already resolved by parent */
-  metrics: AgentMetrics | null;
-  /** Loading state from parent */
-  loading: boolean;
+  /** Metrics already resolved by parent (optional) */
+  metrics?: AgentMetrics | null;
+  /** Loading state from parent (optional) */
+  loading?: boolean;
   /** Optional error message */
   error?: string | null;
 };
@@ -30,7 +28,74 @@ type Props = {
 /* ----------------------------
    COMPONENT
 ---------------------------- */
-export default function AgentTools({ metrics, loading, error }: Props) {
+export default function AgentTools({ metrics: parentMetrics, loading: parentLoading, error: parentError }: Props) {
+  const { user, loading: loadingUser } = useAuth();
+
+  const [metrics, setMetrics] = useState<AgentMetrics | null>(parentMetrics ?? null);
+  const [loading, setLoading] = useState(parentLoading ?? true);
+  const [error, setError] = useState<string | null>(parentError ?? null);
+
+  const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+
+  useEffect(() => {
+    if (!user?.userId) return;
+
+    const fetchMetrics = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        console.log("[AgentTools] Fetching metrics for user:", user.userId);
+
+        // 1️⃣ Generate JWT via Appwrite (already handled in AuthProvider)
+        const jwtResponse = await fetch(`${API_BASE_URL}/api/${API_VERSION}/auth/jwt`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accountId: user.userId }),
+        });
+
+        if (!jwtResponse.ok) throw new Error(`Failed to generate JWT (${jwtResponse.status})`);
+        const { jwt } = await jwtResponse.json();
+        console.log("[AgentTools] Received JWT:", jwt);
+
+        // 2️⃣ Fetch metrics from the correct backend route
+        const res = await fetch(`${API_BASE_URL}/api/${API_VERSION}/dashboard/agent/metrics`, {
+          headers: { Authorization: `Bearer ${jwt}` },
+        });
+
+        console.log("[AgentTools] Metrics fetch response status:", res.status);
+
+        if (!res.ok) {
+          if (res.status === 404) throw new Error("Agent metrics not found");
+          throw new Error(`Failed to load metrics (${res.status})`);
+        }
+
+        const data = await res.json();
+        console.log("[AgentTools] Metrics data:", data);
+
+        setMetrics({
+          accountId: user.userId,
+          propertiesCount: data.propertiesCount,
+          averagePropertyRating: data.averagePropertyRating,
+          historicalMetricRecords: data.historicalMetricRecords,
+          leadsCount: data.leadsCount,
+          conversionRate: data.conversionRate,
+        });
+      } catch (err: any) {
+        console.error("[AgentTools] Failed to load agent metrics:", err);
+        setError(err.message || "Unexpected error");
+        setMetrics(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+  }, [user?.userId]);
+
+  if (loadingUser) return <div>Loading user info…</div>;
+
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-lg shadow-sm space-y-4">
       <h2 className="text-xl font-semibold text-primary">Agent Tools</h2>
@@ -51,7 +116,7 @@ export default function AgentTools({ metrics, loading, error }: Props) {
         {loading ? (
           <div className="text-sm text-gray-500">Loading metrics…</div>
         ) : error ? (
-          <div className="text-sm text-error">{error}</div>
+          <div className="text-sm text-error">Error: {error}</div>
         ) : !metrics ? (
           <div className="text-sm text-gray-400">No metrics available</div>
         ) : (
@@ -72,4 +137,5 @@ export default function AgentTools({ metrics, loading, error }: Props) {
     </section>
   );
 }
+
 
