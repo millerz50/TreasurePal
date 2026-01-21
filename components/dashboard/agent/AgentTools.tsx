@@ -1,8 +1,11 @@
 // components/dashboard/agent/AgentTools.tsx
 "use client";
 
-type Metrics = {
-  agentId?: string;
+type AgentMetrics = {
+  /** Appwrite account id (users.accountid) */
+  accountId: string;
+
+  /** Metrics */
   propertiesCount?: number;
   historicalMetricRecords?: number;
   averagePropertyRating?: number | null;
@@ -11,7 +14,8 @@ type Metrics = {
 };
 
 type Props = {
-  metrics: Metrics | null;
+  /** Metrics already resolved by parent using accountId → agent_profiles */
+  metrics: AgentMetrics | null;
   loading: boolean;
 };
 
@@ -37,15 +41,19 @@ export default function AgentTools({ metrics, loading }: Props) {
 
         {loading ? (
           <div className="text-sm text-gray-500">Loading metrics…</div>
+        ) : !metrics ? (
+          <div className="text-sm text-gray-400">
+            No metrics available
+          </div>
         ) : (
           <div className="text-sm text-gray-700 space-y-1 mt-2">
-            <div>Properties: {metrics?.propertiesCount ?? "—"}</div>
-            <div>Avg rating: {metrics?.averagePropertyRating ?? "—"}</div>
-            <div>Records: {metrics?.historicalMetricRecords ?? "—"}</div>
-            <div>Leads: {metrics?.leadsCount ?? "—"}</div>
+            <div>Properties: {metrics.propertiesCount ?? "—"}</div>
+            <div>Avg rating: {metrics.averagePropertyRating ?? "—"}</div>
+            <div>Records: {metrics.historicalMetricRecords ?? "—"}</div>
+            <div>Leads: {metrics.leadsCount ?? "—"}</div>
             <div>
               Conversion:{" "}
-              {metrics?.conversionRate == null
+              {metrics.conversionRate == null
                 ? "—"
                 : `${Math.round(metrics.conversionRate * 10000) / 100}%`}
             </div>
