@@ -1,8 +1,6 @@
 // components/dashboard/agent/AgentTools.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-
 type Metrics = {
   agentId?: string;
   propertiesCount?: number;
@@ -12,62 +10,12 @@ type Metrics = {
   conversionRate?: number | null;
 };
 
-export default function AgentTools() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type Props = {
+  metrics: Metrics | null;
+  loading: boolean;
+};
 
-  useEffect(() => {
-    let mounted = true;
-
-    const fetchMetrics = async () => {
-      try {
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("token")
-            : null;
-
-        if (!token) {
-          throw new Error("Authentication required");
-        }
-
-        const res = await fetch(
-          "https://treasurepalapi.onrender.com/api/agents/metrics",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data?.message || "Failed to load metrics");
-        }
-
-        if (mounted) {
-          setMetrics(data);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(err instanceof Error ? err.message : "Unexpected error");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchMetrics();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
+export default function AgentTools({ metrics, loading }: Props) {
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-lg shadow-sm space-y-4">
       <h2 className="text-xl font-semibold text-primary">Agent Tools</h2>
@@ -87,15 +35,9 @@ export default function AgentTools() {
       <div className="pt-4">
         <h3 className="text-sm font-medium text-gray-700">Snapshot</h3>
 
-        {loading && (
+        {loading ? (
           <div className="text-sm text-gray-500">Loading metrics…</div>
-        )}
-
-        {!loading && error && (
-          <div className="text-sm text-error">{error}</div>
-        )}
-
-        {!loading && !error && (
+        ) : (
           <div className="text-sm text-gray-700 space-y-1 mt-2">
             <div>Properties: {metrics?.propertiesCount ?? "—"}</div>
             <div>Avg rating: {metrics?.averagePropertyRating ?? "—"}</div>
@@ -113,4 +55,5 @@ export default function AgentTools() {
     </section>
   );
 }
+
 
