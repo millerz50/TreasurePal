@@ -2,21 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { account } from "@/lib/appwrite";
-import Link from "next/link";
-
-type Property = {
-  id: string;
-  title: string;
-  location?: string;
-  price?: string;
-  size?: string | number;
-  image?: string | null;
-  slug?: string;
-  summary?: string;
-};
+import PropertyCard, { type Property as PropertyType } from "@/components/property/PropertyCard";
 
 export default function IndustrialPageClient() {
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<PropertyType[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,16 +36,23 @@ export default function IndustrialPageClient() {
 
         const data: any[] = await res.json();
 
-        // 4️⃣ Map API response to Property type
-        const mapped: Property[] = data.map((raw) => ({
+        // 4️⃣ Map API response to PropertyType (matches PropertyCard props)
+        const mapped: PropertyType[] = data.map((raw) => ({
           id: raw.$id ?? raw.id ?? Math.random().toString(36).slice(2),
           title: raw.title ?? raw.name ?? "Untitled property",
+          description: raw.description ?? raw.summary ?? "",
+          price: raw.price ?? "Contact for price",
+          type: raw.type ?? "industrial",
           location: raw.location ?? raw.city ?? "Unknown",
-          price: raw.price ?? raw.displayPrice ?? "Contact for price",
-          size: raw.size ?? raw.area,
-          image: raw.frontElevation ?? raw.photo ?? null,
-          slug: raw.slug ?? raw.$id,
-          summary: raw.description ?? raw.summary ?? "",
+          rooms: raw.rooms ?? 0,
+          amenities: Array.isArray(raw.amenities) ? raw.amenities : [],
+          images: {
+            frontElevation: raw.frontElevation ?? null,
+            southView: raw.southView ?? null,
+            westView: raw.westView ?? null,
+            eastView: raw.eastView ?? null,
+            floorPlan: raw.floorPlan ?? null,
+          },
         }));
 
         setProperties(mapped);
@@ -105,76 +101,25 @@ export default function IndustrialPageClient() {
             </p>
 
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
+              <a
                 href="/sell/new"
                 className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm"
               >
                 List commercial space
-              </Link>
-              <Link
+              </a>
+              <a
                 href="/support"
                 className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm"
               >
                 Need help listing?
-              </Link>
+              </a>
             </div>
           </section>
         ) : (
           // PROPERTY GRID
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {properties.map((p) => (
-              <article
-                key={p.id}
-                className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="h-40 bg-gray-100 dark:bg-slate-700 relative">
-                  {p.image ? (
-                    <img
-                      src={p.image}
-                      alt={p.title}
-                      className="object-cover w-full h-full"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-sm text-slate-500">
-                      No photo
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
-                    {p.title}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                    {p.location} • {p.price}
-                  </p>
-
-                  {p.size && (
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                      Size: {p.size}
-                    </p>
-                  )}
-
-                  {p.summary && (
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
-                      {p.summary}
-                    </p>
-                  )}
-
-                  <div className="mt-3 flex items-center justify-between">
-                    <Link
-                      href={p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`}
-                      className="text-sm text-blue-600 dark:text-blue-400 underline"
-                    >
-                      View
-                    </Link>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {p.size ?? "-"}
-                    </span>
-                  </div>
-                </div>
-              </article>
+              <PropertyCard key={p.id} property={p} />
             ))}
           </section>
         )}
