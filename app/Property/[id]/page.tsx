@@ -1,11 +1,9 @@
 // app/property/[id]/page.tsx
 import PropertyDetails from "@/components/property/PropertyDetails";
-import { account } from "@/services/lib/env"; // your Appwrite account instance
+import { cookies } from "next/headers";
 
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
-const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
 
 type Property = {
   $id: string;
@@ -41,24 +39,29 @@ export default async function PropertyPage({ params }: { params: { id?: string }
   }
 
   try {
-    // 1️⃣ Get a fresh JWT from Appwrite
-    const jwtResponse = await account.createJWT();
+    // 1️⃣ Get JWT from cookies
+    const cookieStore = cookies();
+    const jwt = cookieStore.get("jwt")?.value;
+
+    if (!jwt) {
+      throw new Error("Unauthorized: No token found");
+    }
 
     // 2️⃣ Fetch the user profile to verify authentication
     const profileRes = await fetch(`${API_BASE_URL}/api/${API_VERSION}/users/me`, {
-      headers: { Authorization: `Bearer ${jwtResponse.jwt}` },
+      headers: { Authorization: `Bearer ${jwt}` },
       cache: "no-store",
     });
 
     if (!profileRes.ok) {
-      throw new Error("Unauthorized");
+      throw new Error("Unauthorized: Invalid token");
     }
 
     const profile = await profileRes.json();
 
     // 3️⃣ Fetch property details securely
     const propertyRes = await fetch(`${API_BASE_URL}/api/${API_VERSION}/properties/${encodeURIComponent(id)}`, {
-      headers: { Authorization: `Bearer ${jwtResponse.jwt}` },
+      headers: { Authorization: `Bearer ${jwt}` },
       cache: "no-store",
     });
 
@@ -118,4 +121,5 @@ export default async function PropertyPage({ params }: { params: { id?: string }
     );
   }
 }
+
 
