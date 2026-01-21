@@ -26,14 +26,20 @@ type Property = {
   floorPlan?: string | null;
 };
 
-export default async function PropertyPage({ params }: { params: { id?: string } }) {
+export default async function PropertyPage({
+  params,
+}: {
+  params: { id?: string };
+}) {
   const id = params?.id;
 
   if (!id) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
         <h2 className="text-2xl font-bold text-red-500">Invalid request</h2>
-        <p className="text-muted-foreground mt-2">No property id provided.</p>
+        <p className="text-muted-foreground mt-2">
+          No property id provided.
+        </p>
       </div>
     );
   }
@@ -47,30 +53,36 @@ export default async function PropertyPage({ params }: { params: { id?: string }
       throw new Error("Unauthorized: No token found");
     }
 
-    // 2️⃣ Fetch the user profile to verify authentication
-    const profileRes = await fetch(`${API_BASE_URL}/api/${API_VERSION}/users/me`, {
-      headers: { Authorization: `Bearer ${jwt}` },
-      cache: "no-store",
-    });
+    // 2️⃣ Verify authentication (no unused variables)
+    const profileRes = await fetch(
+      `${API_BASE_URL}/api/${API_VERSION}/users/me`,
+      {
+        headers: { Authorization: `Bearer ${jwt}` },
+        cache: "no-store",
+      }
+    );
 
     if (!profileRes.ok) {
       throw new Error("Unauthorized: Invalid token");
     }
 
-    const profile = await profileRes.json();
-
-    // 3️⃣ Fetch property details securely
-    const propertyRes = await fetch(`${API_BASE_URL}/api/${API_VERSION}/properties/${encodeURIComponent(id)}`, {
-      headers: { Authorization: `Bearer ${jwt}` },
-      cache: "no-store",
-    });
+    // 3️⃣ Fetch property details
+    const propertyRes = await fetch(
+      `${API_BASE_URL}/api/${API_VERSION}/properties/${encodeURIComponent(id)}`,
+      {
+        headers: { Authorization: `Bearer ${jwt}` },
+        cache: "no-store",
+      }
+    );
 
     if (!propertyRes.ok) {
       return (
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <h2 className="text-2xl font-bold text-red-500">Property not found</h2>
+          <h2 className="text-2xl font-bold text-red-500">
+            Property not found
+          </h2>
           <p className="text-muted-foreground mt-2">
-            The property you are looking for does not exist or has been removed in our database.
+            The property you are looking for does not exist or has been removed.
           </p>
         </div>
       );
@@ -78,7 +90,6 @@ export default async function PropertyPage({ params }: { params: { id?: string }
 
     const property: Property = await propertyRes.json();
 
-    // Safely map coordinates into a tuple [lng, lat]
     const coords: [number, number] | undefined =
       property.coordinates &&
       typeof property.coordinates.lng === "number" &&
@@ -86,7 +97,6 @@ export default async function PropertyPage({ params }: { params: { id?: string }
         ? [property.coordinates.lng, property.coordinates.lat]
         : undefined;
 
-    // Map raw API response into the shape PropertyDetails expects
     const mapped = {
       id: property.$id,
       title: property.title,
@@ -99,7 +109,9 @@ export default async function PropertyPage({ params }: { params: { id?: string }
       rooms: property.rooms,
       country: property.country,
       agentId: property.agentId ?? null,
-      amenities: Array.isArray(property.amenities) ? property.amenities : [],
+      amenities: Array.isArray(property.amenities)
+        ? property.amenities
+        : [],
       coordinates: coords,
       images: {
         frontElevation: property.frontElevation ?? null,
