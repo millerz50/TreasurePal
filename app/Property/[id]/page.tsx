@@ -1,6 +1,6 @@
 // app/property/[id]/page.tsx
 import PropertyDetails from "@/components/property/PropertyDetails";
-import { account } from "@/services/lib/env"; // import your Appwrite account instance
+import { account } from "@/services/lib/appwrite"; // import your Appwrite account instance
 
 type Property = {
   $id: string;
