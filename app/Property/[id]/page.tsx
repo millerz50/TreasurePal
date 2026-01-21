@@ -42,8 +42,8 @@ export default async function PropertyPage({ params }: any) {
   }
 
   try {
-    // 1️⃣ Get JWT from cookies
-    const cookieStore = cookies();
+    // 1️⃣ Get JWT from cookies (ASYNC ✅)
+    const cookieStore = await cookies();
     const jwt = cookieStore.get("jwt")?.value;
 
     if (!jwt) {
@@ -130,5 +130,3 @@ export default async function PropertyPage({ params }: any) {
     );
   }
 }
-
-
