@@ -1,4 +1,4 @@
-import AgencySection from "@/components/agency/AgencySection";
+import AgencySection from "@/components/user/AgencySection";
 
 export const metadata = {
   title: "Our Agents | TreasurePal",
