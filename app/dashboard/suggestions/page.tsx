@@ -52,7 +52,7 @@ export default function SuggestionsPage() {
         const propsData = await propsRes.json();
 
         // Suggested agents
-        const agentsRes = await fetch(`${API_BASE_URL}/api/${API_VERSION}/agent/all`);
+        const agentsRes = await fetch(`${API_BASE_URL}/api/${API_VERSION}/agents`);
         if (!agentsRes.ok) throw new Error("Failed to fetch agents");
         const agentsData = await agentsRes.json();
 
