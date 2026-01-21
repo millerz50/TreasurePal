@@ -1,4 +1,3 @@
-// components/dashboard/agent/AgentTools.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -17,18 +16,19 @@ export type AgentMetrics = {
 };
 
 type Props = {
-  /** Metrics already resolved by parent (optional) */
   metrics?: AgentMetrics | null;
-  /** Loading state from parent (optional) */
   loading?: boolean;
-  /** Optional error message */
   error?: string | null;
 };
 
 /* ----------------------------
    COMPONENT
 ---------------------------- */
-export default function AgentTools({ metrics: parentMetrics, loading: parentLoading, error: parentError }: Props) {
+export default function AgentTools({
+  metrics: parentMetrics,
+  loading: parentLoading,
+  error: parentError,
+}: Props) {
   const { user, loading: loadingUser } = useAuth();
 
   const [metrics, setMetrics] = useState<AgentMetrics | null>(parentMetrics ?? null);
@@ -48,23 +48,24 @@ export default function AgentTools({ metrics: parentMetrics, loading: parentLoad
       try {
         console.log("[AgentTools] Fetching metrics for user:", user.userId);
 
-        // 1️⃣ Generate JWT via Appwrite (already handled in AuthProvider)
+        // 1️⃣ Generate JWT via backend endpoint
         const jwtResponse = await fetch(`${API_BASE_URL}/api/${API_VERSION}/auth/jwt`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accountId: user.userId }),
         });
 
-        if (!jwtResponse.ok) throw new Error(`Failed to generate JWT (${jwtResponse.status})`);
+        if (!jwtResponse.ok)
+          throw new Error(`Failed to generate JWT (${jwtResponse.status})`);
         const { jwt } = await jwtResponse.json();
         console.log("[AgentTools] Received JWT:", jwt);
 
-        // 2️⃣ Fetch metrics from the correct backend route
+        // 2️⃣ Fetch metrics from correct backend route (no userId in URL)
         const res = await fetch(`${API_BASE_URL}/api/${API_VERSION}/dashboard/agent/metrics`, {
           headers: { Authorization: `Bearer ${jwt}` },
         });
 
-        console.log("[AgentTools] Metrics fetch response status:", res.status);
+        console.log("[AgentTools] Metrics fetch status:", res.status);
 
         if (!res.ok) {
           if (res.status === 404) throw new Error("Agent metrics not found");
@@ -76,11 +77,11 @@ export default function AgentTools({ metrics: parentMetrics, loading: parentLoad
 
         setMetrics({
           accountId: user.userId,
-          propertiesCount: data.propertiesCount,
-          averagePropertyRating: data.averagePropertyRating,
-          historicalMetricRecords: data.historicalMetricRecords,
-          leadsCount: data.leadsCount,
-          conversionRate: data.conversionRate,
+          propertiesCount: data.metrics?.propertiesCount ?? 0,
+          averagePropertyRating: data.metrics?.averagePropertyRating ?? null,
+          historicalMetricRecords: data.metrics?.historicalMetricRecords ?? 0,
+          leadsCount: data.metrics?.leadsCount ?? 0,
+          conversionRate: data.metrics?.conversionRate ?? null,
         });
       } catch (err: any) {
         console.error("[AgentTools] Failed to load agent metrics:", err);
