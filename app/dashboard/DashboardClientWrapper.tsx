@@ -14,8 +14,9 @@ import React, { useEffect, useMemo, useState } from "react";
    TYPES
 ----------------------------------- */
 export type Metrics = {
-   accountId?:string;
-   
+  /** Must always exist for AgentTools */
+  accountId?: string;
+
   agentId?: string;
   propertiesCount?: number;
   historicalMetricRecords?: number;
@@ -28,6 +29,9 @@ export type Metrics = {
   lastComputedAt?: string;
   [key: string]: any;
 };
+
+/** AgentMetrics for AgentTools (accountId is required) */
+export type AgentMetrics = Omit<Metrics, "accountId"> & { accountId: string };
 
 const DashboardClientWrapper: React.FC = () => {
   const { user, loading } = useAuth();
@@ -77,6 +81,12 @@ const DashboardClientWrapper: React.FC = () => {
       try {
         const res = await fetchAgentMetrics(user.userId);
         const data = res?.metrics ?? res;
+
+        if (!data?.accountId) {
+          // fallback to user.userId if accountId missing
+          data.accountId = user.userId;
+        }
+
         setMetrics(data ?? null);
       } catch (err: any) {
         console.error("Failed to load agent metrics:", err);
@@ -112,8 +122,11 @@ const DashboardClientWrapper: React.FC = () => {
 
       {error && <div className="text-sm text-red-600">{error}</div>}
 
-      {primaryRole === "agent" && (
-        <AgentTools metrics={metrics} loading={loadingMetrics} />
+      {primaryRole === "agent" && metrics && metrics.accountId && (
+        <AgentTools
+          metrics={metrics as AgentMetrics} // now accountId is guaranteed
+          loading={loadingMetrics}
+        />
       )}
 
       {primaryRole === "user" && <UserFavorites />}
@@ -129,3 +142,4 @@ const DashboardClientWrapper: React.FC = () => {
 };
 
 export default DashboardClientWrapper;
+
