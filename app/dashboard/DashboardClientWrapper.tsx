@@ -14,6 +14,8 @@ import React, { useEffect, useMemo, useState } from "react";
    TYPES
 ----------------------------------- */
 export type Metrics = {
+   accountId?:string;
+   
   agentId?: string;
   propertiesCount?: number;
   historicalMetricRecords?: number;
