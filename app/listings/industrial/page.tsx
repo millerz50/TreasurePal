@@ -9,15 +9,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   alternates: {
     ...baseAlternates,
-    canonical: `${SITE_URL}/industrial`,
+    canonical: `${SITE_URL}/type/industrial`,
     languages: {
-      en: `${SITE_URL}/en/industrial`,
-      "en-zw": `${SITE_URL}/en/industrial`,
-      sn: `${SITE_URL}/sn/industrial`,
-      "sn-zw": `${SITE_URL}/sn/industrial`,
-      nd: `${SITE_URL}/nd/industrial`,
-      "nd-zw": `${SITE_URL}/nd/industrial`,
-      "x-default": `${SITE_URL}/industrial`,
+      en: `${SITE_URL}/en/type/industrial`,
+      "en-zw": `${SITE_URL}/en/type/industrial`,
+      sn: `${SITE_URL}/sn/type/industrial`,
+      "sn-zw": `${SITE_URL}/sn/type/industrial`,
+      nd: `${SITE_URL}/nd/type/industrial`,
+      "nd-zw": `${SITE_URL}/nd/type/industrial`,
+      "x-default": `${SITE_URL}/type/industrial`,
     },
   },
   openGraph: {
