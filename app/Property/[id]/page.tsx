@@ -61,15 +61,6 @@ export default async function PropertyPage({ params }: any) {
 
     const property: Property = await res.json();
 
-    // ✅ Build IMAGE ARRAY (THIS FIXES THE SLIDER)
-    const images = [
-      property.frontElevation,
-      property.southView,
-      property.westView,
-      property.eastView,
-      property.floorPlan,
-    ].filter(Boolean) as string[];
-
     const coords: [number, number] | undefined =
       property.coordinates &&
       typeof property.coordinates.lng === "number" &&
@@ -93,7 +84,13 @@ export default async function PropertyPage({ params }: any) {
         ? property.amenities
         : [],
       coordinates: coords,
-      images, // ✅ ARRAY → SLIDER WORKS
+      images: {
+        frontElevation: property.frontElevation ?? null,
+        southView: property.southView ?? null,
+        westView: property.westView ?? null,
+        eastView: property.eastView ?? null,
+        floorPlan: property.floorPlan ?? null,
+      },
     };
 
     return <PropertyDetails property={mapped} />;
@@ -107,4 +104,5 @@ export default async function PropertyPage({ params }: any) {
     );
   }
 }
+
 
