@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import PropertyCard, { type Property } from "components/property/PropertyCard.tsx";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
