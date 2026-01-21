@@ -1,13 +1,16 @@
+// components/dashboard/agent/AgentTools.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import React from "react";
 
 /* ----------------------------
    TYPES
 ---------------------------- */
 export type AgentMetrics = {
+  /** Appwrite account id (users.accountid) */
   accountId: string;
+
+  /** Metrics */
   propertiesCount?: number;
   historicalMetricRecords?: number;
   averagePropertyRating?: number | null;
@@ -15,72 +18,19 @@ export type AgentMetrics = {
   conversionRate?: number | null;
 };
 
-export default function AgentTools() {
-  const { user, loading: loadingUser } = useAuth();
-  const [metrics, setMetrics] = useState<AgentMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type Props = {
+  /** Metrics already resolved by parent */
+  metrics: AgentMetrics | null;
+  /** Loading state from parent */
+  loading: boolean;
+  /** Optional error message */
+  error?: string | null;
+};
 
-  const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-
-  useEffect(() => {
-    if (!user?.userId) return;
-
-    const fetchMetrics = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // 1️⃣ Generate JWT via backend auth endpoint (if you have it)
-        // Or you can directly pass Appwrite JWT from AuthProvider
-        const jwtResponse = await fetch(
-          `${API_BASE_URL}/api/${API_VERSION}/auth/jwt`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ accountId: user.userId }),
-          }
-        );
-
-        if (!jwtResponse.ok) throw new Error("Failed to generate JWT");
-        const { jwt } = await jwtResponse.json();
-
-        // 2️⃣ Call the **existing metrics route**
-        const res = await fetch(`${API_BASE_URL}/api/${API_VERSION}/agents/metrics`, {
-          headers: { Authorization: `Bearer ${jwt}` },
-        });
-
-        if (!res.ok) {
-          if (res.status === 404) throw new Error("Metrics not found");
-          throw new Error("Failed to load metrics");
-        }
-
-        const data = await res.json();
-
-        setMetrics({
-          accountId: user.userId,
-          propertiesCount: data.propertiesCount,
-          averagePropertyRating: data.averagePropertyRating,
-          historicalMetricRecords: data.historicalMetricRecords,
-          leadsCount: data.leadsCount,
-          conversionRate: data.conversionRate,
-        });
-      } catch (err: any) {
-        console.error("Failed to load agent metrics:", err);
-        setError(err.message || "Unexpected error");
-        setMetrics(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMetrics();
-  }, [user?.userId]);
-
-  if (loadingUser) return <div>Loading user info…</div>;
-
+/* ----------------------------
+   COMPONENT
+---------------------------- */
+export default function AgentTools({ metrics, loading, error }: Props) {
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-lg shadow-sm space-y-4">
       <h2 className="text-xl font-semibold text-primary">Agent Tools</h2>
@@ -122,3 +72,4 @@ export default function AgentTools() {
     </section>
   );
 }
+
