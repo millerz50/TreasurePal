@@ -1,6 +1,5 @@
 // app/property/[id]/page.tsx
 import PropertyDetails from "@/components/property/PropertyDetails";
-import { cookies } from "next/headers";
 
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
 const API_BASE_URL =
@@ -42,37 +41,15 @@ export default async function PropertyPage({ params }: any) {
   }
 
   try {
-    // 1️⃣ Get JWT from cookies (ASYNC ✅)
-    const cookieStore = await cookies();
-    const jwt = cookieStore.get("jwt")?.value;
-
-    if (!jwt) {
-      throw new Error("Unauthorized: No token found");
-    }
-
-    // 2️⃣ Verify authentication
-    const authRes = await fetch(
-      `${API_BASE_URL}/api/${API_VERSION}/users/me`,
-      {
-        headers: { Authorization: `Bearer ${jwt}` },
-        cache: "no-store",
-      }
-    );
-
-    if (!authRes.ok) {
-      throw new Error("Unauthorized: Invalid token");
-    }
-
-    // 3️⃣ Fetch property details
-    const propertyRes = await fetch(
+    // ✅ Public property fetch (NO AUTH)
+    const res = await fetch(
       `${API_BASE_URL}/api/${API_VERSION}/properties/${encodeURIComponent(id)}`,
       {
-        headers: { Authorization: `Bearer ${jwt}` },
         cache: "no-store",
       }
     );
 
-    if (!propertyRes.ok) {
+    if (!res.ok) {
       return (
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
           <h2 className="text-2xl font-bold text-red-500">
@@ -85,7 +62,7 @@ export default async function PropertyPage({ params }: any) {
       );
     }
 
-    const property: Property = await propertyRes.json();
+    const property: Property = await res.json();
 
     const coords: [number, number] | undefined =
       property.coordinates &&
@@ -130,3 +107,4 @@ export default async function PropertyPage({ params }: any) {
     );
   }
 }
+
