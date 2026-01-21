@@ -41,12 +41,9 @@ export default async function PropertyPage({ params }: any) {
   }
 
   try {
-    // ✅ Public property fetch (NO AUTH)
     const res = await fetch(
       `${API_BASE_URL}/api/${API_VERSION}/properties/${encodeURIComponent(id)}`,
-      {
-        cache: "no-store",
-      }
+      { cache: "no-store" }
     );
 
     if (!res.ok) {
@@ -63,6 +60,15 @@ export default async function PropertyPage({ params }: any) {
     }
 
     const property: Property = await res.json();
+
+    // ✅ Build IMAGE ARRAY (THIS FIXES THE SLIDER)
+    const images = [
+      property.frontElevation,
+      property.southView,
+      property.westView,
+      property.eastView,
+      property.floorPlan,
+    ].filter(Boolean) as string[];
 
     const coords: [number, number] | undefined =
       property.coordinates &&
@@ -87,13 +93,7 @@ export default async function PropertyPage({ params }: any) {
         ? property.amenities
         : [],
       coordinates: coords,
-      images: {
-        frontElevation: property.frontElevation ?? null,
-        southView: property.southView ?? null,
-        westView: property.westView ?? null,
-        eastView: property.eastView ?? null,
-        floorPlan: property.floorPlan ?? null,
-      },
+      images, // ✅ ARRAY → SLIDER WORKS
     };
 
     return <PropertyDetails property={mapped} />;
