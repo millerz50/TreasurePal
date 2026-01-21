@@ -30,7 +30,7 @@ export default function IndustrialPageClient() {
         // 2️⃣ Construct API URL
         const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
         const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URLV2 ?? "").replace(/\/+$/, "");
-        const url = `${API_BASE_URL}/api/${API_VERSION}/properties/industrial`;
+        const url = `${API_BASE_URL}/api/${API_VERSION}/properties/type/industrial`;
 
         // 3️⃣ Fetch properties
         const res = await fetch(url, {
