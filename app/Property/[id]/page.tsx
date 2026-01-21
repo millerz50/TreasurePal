@@ -3,7 +3,8 @@ import PropertyDetails from "@/components/property/PropertyDetails";
 import { cookies } from "next/headers";
 
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
 
 type Property = {
   $id: string;
@@ -26,12 +27,8 @@ type Property = {
   floorPlan?: string | null;
 };
 
-export default async function PropertyPage({
-  params,
-}: {
-  params: { id?: string };
-}) {
-  const id = params?.id;
+export default async function PropertyPage({ params }: any) {
+  const id = params?.id as string | undefined;
 
   if (!id) {
     return (
@@ -53,8 +50,8 @@ export default async function PropertyPage({
       throw new Error("Unauthorized: No token found");
     }
 
-    // 2️⃣ Verify authentication (no unused variables)
-    const profileRes = await fetch(
+    // 2️⃣ Verify authentication
+    const authRes = await fetch(
       `${API_BASE_URL}/api/${API_VERSION}/users/me`,
       {
         headers: { Authorization: `Bearer ${jwt}` },
@@ -62,7 +59,7 @@ export default async function PropertyPage({
       }
     );
 
-    if (!profileRes.ok) {
+    if (!authRes.ok) {
       throw new Error("Unauthorized: Invalid token");
     }
 
