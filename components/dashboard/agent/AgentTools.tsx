@@ -18,10 +18,18 @@ export default function AgentTools() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchMetrics = async () => {
       try {
-        const token = localStorage.getItem("token"); // or cookie/session
-        if (!token) throw new Error("Not authenticated");
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("token")
+            : null;
+
+        if (!token) {
+          throw new Error("Authentication required");
+        }
 
         const res = await fetch(
           "https://treasurepalapi.onrender.com/api/agents/metrics",
@@ -33,26 +41,37 @@ export default function AgentTools() {
           }
         );
 
+        const data = await res.json();
+
         if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || "Failed to load metrics");
+          throw new Error(data?.message || "Failed to load metrics");
         }
 
-        const data = await res.json();
-        setMetrics(data);
-      } catch (err: any) {
-        setError(err.message);
+        if (mounted) {
+          setMetrics(data);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err instanceof Error ? err.message : "Unexpected error");
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMetrics();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
     <section className="p-6 bg-base-100 border border-base-300 rounded-lg shadow-sm space-y-4">
       <h2 className="text-xl font-semibold text-primary">Agent Tools</h2>
+
       <p className="text-sm text-muted-foreground">
         Add new properties, manage listings, and track your portfolio
         performance.
@@ -72,7 +91,7 @@ export default function AgentTools() {
           <div className="text-sm text-gray-500">Loading metrics…</div>
         )}
 
-        {error && (
+        {!loading && error && (
           <div className="text-sm text-error">{error}</div>
         )}
 
