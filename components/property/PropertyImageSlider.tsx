@@ -30,12 +30,14 @@ export default function PropertyImageSlider({
     () => setIndex((i) => (i + 1) % slidesCount),
     [slidesCount],
   );
+
+  // goTo for thumbnails
   const goTo = useCallback(
     (i: number) => setIndex(Math.max(0, Math.min(i, slidesCount - 1))),
     [slidesCount],
   );
 
-  // Keyboard nav
+  // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") prev();
@@ -45,7 +47,7 @@ export default function PropertyImageSlider({
     return () => window.removeEventListener("keydown", onKey);
   }, [prev, next]);
 
-  // Swipe
+  // Swipe / pointer navigation
   useEffect(() => {
     const el = sliderRef.current;
     if (!el) return;
@@ -58,11 +60,13 @@ export default function PropertyImageSlider({
         (ev.target as Element).setPointerCapture?.((ev as any).pointerId);
       } catch {}
     };
+
     const onPointerMove = (ev: PointerEvent) => {
       if (!isPointerDown.current || pointerStartX.current === null) return;
       pointerDeltaX.current = ev.clientX - pointerStartX.current;
       el.style.setProperty("--drag-x", `${pointerDeltaX.current}px`);
     };
+
     const onPointerUp = () => {
       if (!isPointerDown.current || pointerStartX.current === null) return;
       const delta = pointerDeltaX.current;
@@ -74,10 +78,6 @@ export default function PropertyImageSlider({
       pointerStartX.current = null;
       pointerDeltaX.current = 0;
     };
-
-    el.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
 
     // Touch fallback
     let touchStartX: number | null = null;
@@ -99,6 +99,9 @@ export default function PropertyImageSlider({
       pointerDeltaX.current = 0;
     };
 
+    el.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: true });
     el.addEventListener("touchend", onTouchEnd);
@@ -115,7 +118,7 @@ export default function PropertyImageSlider({
 
   return (
     <div className="rounded-xl overflow-hidden shadow-lg relative">
-      {/* Prev / Next */}
+      {/* Prev / Next buttons */}
       <button
         onClick={prev}
         className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white rounded-full p-2 shadow ring-1 ring-gray-200"
@@ -131,6 +134,7 @@ export default function PropertyImageSlider({
         ›
       </button>
 
+      {/* Slider */}
       <div
         ref={sliderRef}
         className="relative h-96 w-full overflow-hidden"
@@ -188,9 +192,13 @@ export default function PropertyImageSlider({
           {images.map((src, i) => (
             <button
               key={i}
-              onClick={() => setIndex(i)}
+              onClick={() => goTo(i)} // <-- use goTo to fix ESLint
               aria-label={`View image ${i + 1}`}
-              className={`w-20 h-12 overflow-hidden rounded-md ring-1 transition-transform ${index === i ? "ring-green-400 scale-105" : "ring-base-300 hover:scale-105"}`}
+              className={`w-20 h-12 overflow-hidden rounded-md ring-1 transition-transform ${
+                index === i
+                  ? "ring-green-400 scale-105"
+                  : "ring-base-300 hover:scale-105"
+              }`}
             >
               <Image
                 src={src}
