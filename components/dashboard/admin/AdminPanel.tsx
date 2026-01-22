@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, UserCheck } from "lucide-react";
+import { ShieldCheck, UserCheck, CheckSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { account } from "@/lib/appwrite";
 
@@ -13,10 +13,29 @@ type AgentApplication = {
   fullname: string;
   message: string;
   verified: boolean;
-   accountid:string;
+  accountid: string;
+};
+
+type Property = {
+  $id: string;
+  title: string;
+  status: string;
+  published: boolean;
+  agentId: string;
 };
 
 type UserMap = Record<string, string>; // accountid -> email
+
+/* ----------------------------------
+   CONSTANTS
+----------------------------------- */
+const ALLOWED_ROLES = new Set(["user", "agent", "admin"]);
+const ALLOWED_STATUS = new Set([
+  "Not Verified",
+  "Pending",
+  "Active",
+  "Suspended",
+]);
 
 /* =========================
    API ENV
@@ -32,8 +51,12 @@ const API_BASE =
     ? `${API_BASE_V2}/api/v2`
     : `${API_BASE_V1}/api/v1`;
 
+/* =========================
+   COMPONENT
+========================= */
 export default function AdminPanel() {
   const [applications, setApplications] = useState<AgentApplication[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [emails, setEmails] = useState<UserMap>({});
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -45,7 +68,7 @@ export default function AdminPanel() {
   const apiRequest = async (
     url: string,
     method: "GET" | "POST" = "GET",
-    body?: any
+    body?: any,
   ) => {
     const jwtResponse = await account.createJWT();
 
@@ -66,7 +89,7 @@ export default function AdminPanel() {
   };
 
   /* =========================
-     FETCH PENDING APPLICATIONS
+     FETCH PENDING AGENTS & PROPERTIES
   ========================= */
   const fetchApplications = async () => {
     setLoading(true);
@@ -74,44 +97,33 @@ export default function AdminPanel() {
 
     try {
       // 1️⃣ Get pending agent applications
-      const res = await apiRequest(
-        `${API_BASE}/agents/applications/pending`
-      );
-
+      const res = await apiRequest(`${API_BASE}/agents/applications/pending`);
       const apps: AgentApplication[] = res.data || [];
       setApplications(apps);
 
       // 2️⃣ Fetch user emails for each accountid
-const emailMap: UserMap = {};
-
-await Promise.all(
-  apps.map(async (app) => {
-    // ✅ agent_profiles uses userId (Appwrite account ID)
-    const accountId = app.userId;
-
-    if (!accountId) {
-      console.warn("Missing userId in agent profile:", app);
-      return;
-    }
-
-    try {
-      // ✅ matches: router.get("/:id", verifyTokenAndAdmin)
-      const userRes = await apiRequest(
-        `${API_BASE}/users/${accountId}`
+      const emailMap: UserMap = {};
+      await Promise.all(
+        apps.map(async (app) => {
+          const accountId = app.userId;
+          if (!accountId) return;
+          try {
+            const userRes = await apiRequest(`${API_BASE}/users/${accountId}`);
+            emailMap[accountId] = userRes.data?.email ?? "—";
+          } catch {
+            emailMap[accountId] = "—";
+          }
+        }),
       );
+      setEmails(emailMap);
 
-      emailMap[accountId] = userRes.data?.email ?? "—";
-    } catch (err) {
-      console.error("Failed to fetch user for agent:", accountId, err);
-      emailMap[accountId] = "—";
-    }
-  })
-);
-
-setEmails(emailMap);
-
-
-
+      // 3️⃣ Fetch pending properties
+      const propRes = await apiRequest(`${API_BASE}/properties/pending`);
+      // Only include properties that are not published yet
+      const pendingProps: Property[] = (propRes.data || []).filter(
+        (p: Property) => !p.published || p.status === "pending",
+      );
+      setProperties(pendingProps);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -132,13 +144,14 @@ setEmails(emailMap);
       await apiRequest(
         `${API_BASE}/agents/applications/${applicationId}/approve`,
         "POST",
-        { reviewNotes: "Approved via Admin Panel" }
+        {
+          reviewNotes: "Approved via Admin Panel",
+        },
       );
-
       setApplications((prev) =>
         prev.map((a) =>
-          a.$id === applicationId ? { ...a, verified: true } : a
-        )
+          a.$id === applicationId ? { ...a, verified: true } : a,
+        ),
       );
     } catch {
       alert("❌ Failed to approve agent");
@@ -151,18 +164,37 @@ setEmails(emailMap);
     setActionLoading(applicationId);
     try {
       await apiRequest(
-        `${API_BASE}/agents/${applicationId}/reject`,
+        `${API_BASE}/agents/applications/${applicationId}/reject`,
         "POST",
-        { reviewNotes: "Rejected via Admin Panel" }
+        {
+          reviewNotes: "Rejected via Admin Panel",
+        },
       );
-
       setApplications((prev) =>
         prev.map((a) =>
-          a.$id === applicationId ? { ...a, verified: false } : a
-        )
+          a.$id === applicationId ? { ...a, verified: false } : a,
+        ),
       );
     } catch {
       alert("❌ Failed to reject agent");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const approveProperty = async (propertyId: string) => {
+    setActionLoading(propertyId);
+    try {
+      await apiRequest(`${API_BASE}/admin/approve/${propertyId}`, "POST");
+      setProperties((prev) =>
+        prev.map((p) =>
+          p.$id === propertyId
+            ? { ...p, status: "Active", published: true }
+            : p,
+        ),
+      );
+    } catch {
+      alert("❌ Failed to approve property");
     } finally {
       setActionLoading(null);
     }
@@ -179,18 +211,16 @@ setEmails(emailMap);
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Review and approve agent applications.
+        Review and approve agent applications and properties.
       </p>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
-      {loading && (
-        <div className="text-sm text-muted-foreground">
-          Loading applications…
-        </div>
-      )}
+      {loading && <div className="text-sm text-muted-foreground">Loading…</div>}
 
+      {/* -------------------- AGENT APPLICATIONS -------------------- */}
       {!loading && applications.length > 0 && (
         <div className="overflow-x-auto">
+          <h3 className="text-sm font-medium mb-2">Agent Applications</h3>
           <table className="table table-sm">
             <thead>
               <tr className="text-xs uppercase text-muted-foreground">
@@ -204,12 +234,8 @@ setEmails(emailMap);
               {applications.map((app) => (
                 <tr key={app.$id}>
                   <td className="font-medium">{app.fullname}</td>
-                  <td className="text-xs">
-                    {emails[app.accountid] ?? "—"}
-                  </td>
-                  <td className="text-xs">
-                    {app.verified ? "Yes" : "No"}
-                  </td>
+                  <td className="text-xs">{emails[app.accountid] ?? "—"}</td>
+                  <td className="text-xs">{app.verified ? "Yes" : "No"}</td>
                   <td className="text-right space-x-2">
                     {!app.verified && (
                       <button
@@ -238,13 +264,50 @@ setEmails(emailMap);
         </div>
       )}
 
-      {!loading && applications.length === 0 && !error && (
-        <div className="text-sm text-muted-foreground">
-          No pending applications.
+      {/* -------------------- PROPERTIES -------------------- */}
+      {!loading && properties.length > 0 && (
+        <div className="overflow-x-auto mt-4">
+          <h3 className="text-sm font-medium mb-2">Pending Properties</h3>
+          <table className="table table-sm">
+            <thead>
+              <tr className="text-xs uppercase text-muted-foreground">
+                <th>Title</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {properties.map((prop) => (
+                <tr key={prop.$id}>
+                  <td className="font-medium">{prop.title}</td>
+                  <td className="text-xs">{prop.status}</td>
+                  <td className="text-right">
+                    {!prop.published && (
+                      <button
+                        onClick={() => approveProperty(prop.$id)}
+                        disabled={actionLoading === prop.$id}
+                        className="btn btn-xs btn-outline btn-primary"
+                      >
+                        <CheckSquare className="h-4 w-4 mr-1" />
+                        Approve
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
+
+      {!loading &&
+        applications.length === 0 &&
+        properties.length === 0 &&
+        !error && (
+          <div className="text-sm text-muted-foreground">
+            No pending applications or properties.
+          </div>
+        )}
     </section>
   );
 }
-
-
