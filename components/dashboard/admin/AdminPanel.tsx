@@ -1,7 +1,7 @@
 "use client";
 
 import { ShieldCheck, UserCheck, CheckSquare } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { account } from "@/lib/appwrite";
 
 /* =========================
@@ -25,17 +25,6 @@ type Property = {
 };
 
 type UserMap = Record<string, string>; // accountid -> email
-
-/* ----------------------------------
-   CONSTANTS
------------------------------------ */
-const ALLOWED_ROLES = new Set(["user", "agent", "admin"]);
-const ALLOWED_STATUS = new Set([
-  "Not Verified",
-  "Pending",
-  "Active",
-  "Suspended",
-]);
 
 /* =========================
    API ENV
@@ -91,7 +80,7 @@ export default function AdminPanel() {
   /* =========================
      FETCH PENDING AGENTS & PROPERTIES
   ========================= */
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -119,7 +108,6 @@ export default function AdminPanel() {
 
       // 3️⃣ Fetch pending properties
       const propRes = await apiRequest(`${API_BASE}/properties/pending`);
-      // Only include properties that are not published yet
       const pendingProps: Property[] = (propRes.data || []).filter(
         (p: Property) => !p.published || p.status === "pending",
       );
@@ -129,11 +117,11 @@ export default function AdminPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchApplications();
-  }, []);
+  }, [fetchApplications]);
 
   /* =========================
      ACTIONS
