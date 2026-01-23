@@ -107,7 +107,7 @@ export default function AdminPanel() {
       setEmails(emailMap);
 
       // 3️⃣ Fetch pending properties
-      const propRes = await apiRequest(`${API_BASE}/properties/pending`);
+      const propRes = await apiRequest(`${API_BASE}/properties/status/pending`);
       const pendingProps: Property[] = (propRes.data || []).filter(
         (p: Property) => !p.published || p.status === "pending",
       );
