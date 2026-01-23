@@ -13,8 +13,8 @@ import Footer from "@/components/landing/footer/Footer";
 import { Hreflang } from "@/components/seo/Hreflang";
 import LogoLoader from "@/components/ui/LogoLoader";
 
-import AdsLoader from "@/components/AdsLoader"; // Splash modal
-import AdsCarousel from "@/components/AdsCarousel"; // Rotating banner showcase
+import AdsLoader from "@/components/AdsLoader";
+import AdsCarousel from "@/components/AdsCarousel";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,7 +29,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "TreasurePal | Explore Zimbabwe’s Treasures for Everyone",
   description:
-    "Discover, list, and access properties and opportunities across Zimbabwe — from affordable student housing to premium estates. TreasurePal empowers communities across Zimbabwe.",
+    "Discover, list, and access properties and opportunities across Zimbabwe — from affordable student housing to premium estates.",
   metadataBase: new URL("https://treasurepal.co.zw"),
 
   alternates: {
@@ -38,8 +38,6 @@ export const metadata: Metadata = {
       en: "https://treasurepal.co.zw/en",
       sn: "https://treasurepal.co.zw/sn",
       nd: "https://treasurepal.co.zw/nd",
-
-      // International / product site
       "en-int": "https://treasureprops.com",
     },
   },
@@ -77,27 +75,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="light" className={poppins.variable}>
+    <html
+      lang="en"
+      data-theme="light"
+      className={poppins.variable}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="icon" type="image/svg+xml" href="/logo/TREASURE.svg" />
         <Hreflang path="" />
       </head>
 
       <body className="bg-base-100 text-base-content font-sans">
-        {/* Loading animation/logo */}
+        {/* Global loader */}
         <LogoLoader />
 
-        {/* Splash Ad Loader */}
-        <AdsLoader />
-
         <Providers>
+          {/* Splash ad (once per session) */}
+          <AdsLoader />
+
           <Navbar />
 
-          {/* Main content */}
           <main className="min-h-screen pt-20">
             {children}
 
-            {/* Rotating banner ad showcase */}
+            {/* Inline rotating ad */}
             <div className="my-8">
               <AdsCarousel />
             </div>

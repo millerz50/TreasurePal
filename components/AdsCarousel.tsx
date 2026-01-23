@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Ad = {
   clickLink: string;
@@ -15,61 +14,66 @@ const ads: Ad[] = [
   {
     clickLink:
       "https://deriv.partners/rx?ca=&strategy_node_id=256926&slink_id=0&is_ib=0&type=click&media=banner&lang=en",
-    bannerImg: "/d7a05900-889a-47bf-91eb-cc76ad74884f.png", // uploaded image
+    bannerImg: "/d7a05900-889a-47bf-91eb-cc76ad74884f.png",
     impressionPixel:
       "https://deriv.partners/rx?ca=&strategy_node_id=256926&slink_id=0&is_ib=0&type=view&media=banner",
     alt: "Deriv Banner",
     title: "Trade Crypto & Synthetics 24/7 🚀",
   },
-  // add more ads here
 ];
 
 export default function AdsCarousel() {
   const [current, setCurrent] = useState(0);
+  const fired = useRef(false);
 
   useEffect(() => {
-    const interval = setInterval(
-      () => setCurrent((prev) => (prev + 1) % ads.length),
-      5000
-    );
+    if (ads.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % ads.length);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
+  // Fire impression once
+  useEffect(() => {
+    if (fired.current) return;
+    const img = new Image();
+    img.src = ads[current].impressionPixel;
+    fired.current = true;
+  }, [current]);
+
+  const ad = ads[current];
+
   return (
-    <div className="relative w-full max-w-xs sm:max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg">
-      {ads.map((ad, idx) => (
-        <a
-          key={idx}
-          href={ad.clickLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`transition-opacity duration-1000 ${
-            idx === current ? "opacity-100 relative" : "opacity-0 absolute inset-0"
-          }`}
-        >
-          <img
-            src={ad.bannerImg}
-            alt={ad.alt}
-            className="w-full h-auto max-h-[400px] object-contain mx-auto"
-          />
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-2 py-1 rounded-md text-xs sm:text-sm font-semibold shadow-md">
-            {ad.title}
-          </div>
-          {/* Hidden impression pixel */}
-          <img src={ad.impressionPixel} alt="" style={{ display: "none" }} />
-        </a>
-      ))}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
-        {ads.map((_, idx) => (
-          <span
-            key={idx}
-            className={`w-3 h-3 rounded-full transition ${
-              idx === current ? "bg-blue-500" : "bg-gray-300"
-            }`}
-          />
-        ))}
-      </div>
+    <div className="relative w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg">
+      <a
+        href={ad.clickLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+      >
+        <img
+          src={ad.bannerImg}
+          alt={ad.alt}
+          className="w-full h-auto max-h-[400px] object-contain"
+        />
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-md text-xs sm:text-sm font-semibold shadow-md">
+          {ad.title}
+        </div>
+      </a>
+
+      {ads.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+          {ads.map((_, idx) => (
+            <span
+              key={idx}
+              className={`w-2.5 h-2.5 rounded-full ${
+                idx === current ? "bg-blue-500" : "bg-gray-300"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
-
