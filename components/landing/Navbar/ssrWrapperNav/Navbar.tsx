@@ -16,7 +16,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur bg-background/80 border-b">
       <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
-        <NavbarBrand name={brand.name} description={brand.description} />
+        <NavbarBrand />
         <NavbarDesktopActions />
         <NavbarMobileMenu />
       </div>
