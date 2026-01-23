@@ -87,7 +87,6 @@ export default function AddPropertyWizard() {
     depositAvailable: false,
     depositOption: "none",
     depositPercentage: "",
-    // file fields intentionally omitted here (they will be set by image step)
   });
 
   // Inject agentId from authenticated user
@@ -131,31 +130,26 @@ export default function AddPropertyWizard() {
 
       if (!token)
         throw new Error(
-          "Authentication token unavailable. Please sign in again."
+          "Authentication token unavailable. Please sign in again.",
         );
 
       // Build FormData
       const fd = new FormData();
 
-      // Helper to append values safely
       const appendValue = (key: string, value: any) => {
         if (value === undefined || value === null) return;
-        // Files
         if (typeof File !== "undefined" && value instanceof File) {
           fd.append(key, value);
           return;
         }
-        // Arrays: append each item separately
         if (Array.isArray(value)) {
           value.forEach((v) => fd.append(key, String(v)));
           return;
         }
-        // Booleans and numbers -> string
         if (typeof value === "boolean" || typeof value === "number") {
           fd.append(key, String(value));
           return;
         }
-        // Strings
         fd.append(key, String(value));
       };
 
@@ -163,13 +157,10 @@ export default function AddPropertyWizard() {
         appendValue(key, value);
       });
 
-      // Ensure agentId present
       if (!fd.get("agentId") && user?.userId) fd.append("agentId", user.userId);
 
-      // Build endpoint (version-aware)
       const endpoint = `${API_BASE}/api/${API_VERSION}/properties/add`;
 
-      // Submit (do NOT set Content-Type header when sending FormData)
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -193,23 +184,34 @@ export default function AddPropertyWizard() {
       const result = await res.json();
       console.log("✅ Property submitted successfully:", result);
 
-      // Optionally advance or reset UI after success
-      setStep(1);
-      setFormData((prev) => ({
-        ...prev,
-        title: "",
-        price: "",
-        location: "",
-        address: "",
-        rooms: 0,
-        description: "",
-        amenities: [],
-        locationLat: null,
-        locationLng: null,
-        depositAvailable: false,
-        depositOption: "none",
-        depositPercentage: "",
-      }));
+      // Show confirmation dialog
+      if (
+        window.confirm("Property created successfully! Add another property?")
+      ) {
+        // Reset form and stay on step 1
+        setStep(1);
+        setFormData({
+          title: "",
+          price: "",
+          location: "",
+          address: "",
+          rooms: 0,
+          description: "",
+          type: "House",
+          status: "Available",
+          country: "Zimbabwe",
+          amenities: [],
+          locationLat: null,
+          locationLng: null,
+          agentId: user?.userId || "",
+          depositAvailable: false,
+          depositOption: "none",
+          depositPercentage: "",
+        });
+      } else {
+        // Optional: redirect or close wizard
+        console.log("User chose not to add another property.");
+      }
     } catch (err: any) {
       setError(err?.message || "An unexpected error occurred");
       console.error("AddPropertyWizard submit error:", err);
