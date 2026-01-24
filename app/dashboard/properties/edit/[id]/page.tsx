@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { account } from "@/lib/appwrite";
 
 /* =========================
    TYPES
@@ -50,13 +51,15 @@ export default function EditListingPage() {
 
     const fetchProperty = async () => {
       setLoading(true);
+      setError(null);
+
       try {
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("Not authenticated");
+        // 🔐 ALWAYS generate fresh JWT
+        const { jwt } = await account.createJWT();
 
         const res = await fetch(`${API_BASE}/properties/${id}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${jwt}`,
           },
         });
 
@@ -99,19 +102,21 @@ export default function EditListingPage() {
     setError(null);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Not authenticated");
+      // 🔐 fresh JWT again
+      const { jwt } = await account.createJWT();
 
       const res = await fetch(`${API_BASE}/properties/${property.$id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${jwt}`,
         },
         body: JSON.stringify(property),
       });
 
-      if (!res.ok) throw new Error("Failed to update property");
+      if (!res.ok) {
+        throw new Error("Failed to update property");
+      }
 
       router.push("/agent/listings");
     } catch (err: any) {
@@ -155,45 +160,26 @@ export default function EditListingPage() {
       <Separator />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          name="title"
-          placeholder="Title"
-          value={property.title}
-          onChange={handleChange}
-        />
-
-        <Input
-          name="price"
-          placeholder="Price"
-          value={property.price}
-          onChange={handleChange}
-        />
-
+        <Input name="title" value={property.title} onChange={handleChange} />
+        <Input name="price" value={property.price} onChange={handleChange} />
         <Input
           name="location"
-          placeholder="Location"
           value={property.location}
           onChange={handleChange}
         />
-
         <Input
           name="address"
-          placeholder="Address"
           value={property.address}
           onChange={handleChange}
         />
-
         <Input
           name="rooms"
-          placeholder="Rooms"
           type="number"
           value={property.rooms}
           onChange={handleChange}
         />
-
         <Input
           name="country"
-          placeholder="Country"
           value={property.country}
           onChange={handleChange}
         />
@@ -201,7 +187,6 @@ export default function EditListingPage() {
 
       <textarea
         name="description"
-        placeholder="Description"
         value={property.description}
         onChange={handleChange}
         className="w-full min-h-[120px] rounded-md border px-3 py-2 text-sm"
