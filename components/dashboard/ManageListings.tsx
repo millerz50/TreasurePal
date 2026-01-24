@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
 import { useCallback, useEffect, useState } from "react";
 
-// Full property type aligned with backend schema
+/* =========================
+   TYPES
+========================= */
 type Property = {
-  _id: string;
+  $id: string;
   title: string;
-  price: string;
+  price: number | string;
   location: string;
   address: string;
   rooms: number;
@@ -17,7 +19,7 @@ type Property = {
   type: string;
   status: string;
   country: string;
-  amenities: string[];
+  amenities?: string[];
   locationLat?: number | null;
   locationLng?: number | null;
   agentId?: string | null;
@@ -33,22 +35,34 @@ type Property = {
   $updatedAt?: string;
 };
 
+/* =========================
+   COMPONENT
+========================= */
 export default function ManageListings() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+  /* =========================
+     API CONFIG
+  ========================= */
+  const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
 
-  // ✅ Memoize fetchListings so ESLint is happy
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+
+  const API_BASE = `${API_BASE_URL}/api/${API_VERSION}`;
+
+  /* =========================
+     FETCH LISTINGS
+  ========================= */
   const fetchListings = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`${API_BASE}/api/properties`, {
+      const res = await fetch(`${API_BASE}/properties/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -59,48 +73,61 @@ export default function ManageListings() {
       }
 
       const data = await res.json();
-      setProperties(data);
+      setProperties(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("❌ Failed to fetch listings", err);
+      setProperties([]);
     } finally {
       setLoading(false);
     }
   }, [API_BASE]);
 
+  /* =========================
+     DELETE PROPERTY
+  ========================= */
   const handleDelete = async (id: string) => {
     try {
       const token = localStorage.getItem("token");
-
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`${API_BASE}/api/properties/${id}`, {
+      const res = await fetch(`${API_BASE}/properties/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (res.ok) {
-        setProperties((prev) => prev.filter((p) => p._id !== id));
-      } else {
-        console.error("❌ Failed to delete property");
+      if (!res.ok) {
+        throw new Error("Failed to delete property");
       }
+
+      setProperties((prev) => prev.filter((p) => p.$id !== id));
     } catch (err) {
       console.error("❌ Delete error", err);
     }
   };
 
+  /* =========================
+     EFFECT
+  ========================= */
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
 
+  /* =========================
+     FILTER
+  ========================= */
   const filtered = properties.filter((p) =>
-    p.title.toLowerCase().includes(search.toLowerCase())
+    p.title?.toLowerCase().includes(search.toLowerCase()),
   );
 
+  /* =========================
+     RENDER
+  ========================= */
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 md:p-8 space-y-6 font-sans">
       <h1 className="text-2xl font-bold text-primary">Manage Listings</h1>
+
       <Separator />
 
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
@@ -110,6 +137,7 @@ export default function ManageListings() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full sm:w-1/2"
         />
+
         <Button onClick={fetchListings} disabled={loading}>
           {loading ? "Refreshing..." : "Refresh"}
         </Button>
@@ -134,19 +162,22 @@ export default function ManageListings() {
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {filtered.map((property) => (
-                <tr key={property._id}>
+                <tr key={property.$id}>
                   <td>{property.title}</td>
                   <td>{property.location}</td>
                   <td>${property.price}</td>
                   <td>
                     <span
                       className={`badge ${
+                        property.status === "approved" ||
                         property.status === "Available"
                           ? "badge-success"
                           : "badge-warning"
-                      }`}>
+                      }`}
+                    >
                       {property.status}
                     </span>
                   </td>
@@ -157,14 +188,16 @@ export default function ManageListings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => console.warn("Edit", property._id)}>
+                      onClick={() => console.warn("Edit", property.$id)}
+                    >
                       Edit
                     </Button>
 
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDelete(property._id)}>
+                      onClick={() => handleDelete(property.$id)}
+                    >
                       Delete
                     </Button>
                   </td>
