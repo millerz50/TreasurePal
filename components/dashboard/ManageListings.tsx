@@ -218,7 +218,9 @@ export default function ManageListings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => router.push(`/dashboard/edit/${p.$id}`)}
+                      onClick={() =>
+                        router.push(`/dashboard/properties/edit/${p.$id}`)
+                      }
                     >
                       Edit
                     </Button>
