@@ -118,7 +118,7 @@ export default function EditListingPage() {
         throw new Error("Failed to update property");
       }
 
-      router.push("/dashboard/properties");
+      router.push("/dashboard");
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Update failed");
