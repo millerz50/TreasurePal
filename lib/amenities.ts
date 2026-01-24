@@ -235,3 +235,6 @@ export const AMENITIES: AmenityMap = {
     ],
   },
 };
+export const PROPERTY_TYPES = Object.keys(AMENITIES) as Array<
+  keyof typeof AMENITIES
+>;

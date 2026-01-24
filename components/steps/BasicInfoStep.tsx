@@ -38,12 +38,13 @@ const BasicInfoStep: React.FC<Props> = ({
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "rooms" ? Number(value) : value,
+      [name]: value, // 👈 keep EVERYTHING as string in UI
     }));
   };
 
@@ -53,8 +54,12 @@ const BasicInfoStep: React.FC<Props> = ({
     if (isNaN(Number(formData.price))) return "Price must be a number.";
     if (!formData.location.trim()) return "Location is required.";
     if (!formData.address.trim()) return "Address is required.";
-    if (formData.rooms <= 0) return "Rooms must be at least 1.";
+
+    const rooms = Number(formData.rooms);
+    if (!rooms || rooms < 1) return "Rooms must be at least 1.";
+
     if (!formData.country.trim()) return "Country is required.";
+
     if (
       formData.depositOption === "required" &&
       (!String(formData.depositPercentage || "").trim() ||
@@ -64,6 +69,7 @@ const BasicInfoStep: React.FC<Props> = ({
     ) {
       return "Deposit percentage must be between 1 and 100.";
     }
+
     return null;
   };
 
@@ -86,6 +92,7 @@ const BasicInfoStep: React.FC<Props> = ({
         <FaDollarSign className="text-primary" />
         <Input
           name="price"
+          inputMode="numeric"
           placeholder="Price (USD)"
           value={formData.price}
           onChange={handleChange}
@@ -128,13 +135,16 @@ const BasicInfoStep: React.FC<Props> = ({
             setFormData((prev) => ({ ...prev, country: val }))
           }
         />
+
         <div className="flex items-center gap-2">
           <FaBed className="text-primary" />
           <Input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             name="rooms"
             placeholder="Rooms"
-            value={formData.rooms}
+            value={formData.rooms || ""}
             onChange={handleChange}
             className="w-24"
           />
@@ -143,14 +153,18 @@ const BasicInfoStep: React.FC<Props> = ({
       </div>
 
       {/* Property type */}
+      {/* Property type */}
       <select
         name="type"
         value={formData.type}
         onChange={handleChange}
-        className="select select-bordered w-full">
+        className="select select-bordered w-full"
+      >
+        <option value="">Select property type</option>
+
         {PROPERTY_TYPES.map((type) => (
           <option key={type} value={type}>
-            {type}
+            {type === "BookingHouse" ? "Booking House" : type}
           </option>
         ))}
       </select>
@@ -164,11 +178,12 @@ const BasicInfoStep: React.FC<Props> = ({
         className="w-full"
       />
 
-      {/* Deposit select + conditional percentage input */}
+      {/* Deposit */}
       <div className="space-y-3 border rounded-lg p-3">
         <label className="block text-sm font-medium mb-1">
           Deposit Availability
         </label>
+
         <select
           name="depositOption"
           value={formData.depositOption || "none"}
@@ -176,10 +191,11 @@ const BasicInfoStep: React.FC<Props> = ({
             setFormData((prev) => ({
               ...prev,
               depositOption: e.target.value as "none" | "required",
-              depositAvailable: e.target.value === "required", // keep boolean in sync
+              depositAvailable: e.target.value === "required",
             }))
           }
-          className="select select-bordered w-full">
+          className="select select-bordered w-full"
+        >
           <option value="none">No Deposit</option>
           <option value="required">Deposit Required</option>
         </select>
@@ -188,16 +204,13 @@ const BasicInfoStep: React.FC<Props> = ({
           <div className="flex items-center gap-2 mt-2">
             <FaPercent className="text-primary" />
             <Input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               name="depositPercentage"
-              placeholder="Enter deposit percentage (%)"
+              placeholder="Deposit %"
               value={formData.depositPercentage || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  depositPercentage: e.target.value,
-                }))
-              }
+              onChange={handleChange}
               className="w-32"
             />
             <span className="text-sm text-muted-foreground">
@@ -212,13 +225,12 @@ const BasicInfoStep: React.FC<Props> = ({
         <Button
           onClick={() => {
             const err = validate();
-            if (err) {
-              return setError(err);
-            }
+            if (err) return setError(err);
             setError(null);
             setStep(2);
           }}
-          className="w-full sm:w-auto">
+          className="w-full sm:w-auto"
+        >
           Next
         </Button>
       </div>
