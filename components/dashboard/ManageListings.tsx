@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 /* =========================
    TYPES
@@ -19,21 +19,19 @@ type Property = {
   type: string;
   status: string;
   country: string;
-  amenities?: string[];
-  locationLat?: number | null;
-  locationLng?: number | null;
   agentId?: string | null;
-  frontElevation?: string | null;
-  southView?: string | null;
-  westView?: string | null;
-  eastView?: string | null;
-  floorPlan?: string | null;
   published?: boolean;
   approvedBy?: string | null;
   approvedAt?: string | null;
   $createdAt?: string;
   $updatedAt?: string;
 };
+
+/* =========================
+   CONSTANT (TEMP)
+   👉 Replace with logged-in user id
+========================= */
+const AGENT_ID = "356a9dd7-cca7-4685-a74f-0169e71aa99b";
 
 /* =========================
    COMPONENT
@@ -86,6 +84,8 @@ export default function ManageListings() {
      DELETE PROPERTY
   ========================= */
   const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this listing?")) return;
+
     try {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Not authenticated");
@@ -97,9 +97,7 @@ export default function ManageListings() {
         },
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to delete property");
-      }
+      if (!res.ok) throw new Error("Failed to delete property");
 
       setProperties((prev) => prev.filter((p) => p.$id !== id));
     } catch (err) {
@@ -115,88 +113,111 @@ export default function ManageListings() {
   }, [fetchListings]);
 
   /* =========================
-     FILTER
+     FILTER (AGENT + SEARCH)
   ========================= */
-  const filtered = properties.filter((p) =>
-    p.title?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+
+    return properties.filter((p) => {
+      return (
+        p.agentId === AGENT_ID && // 👈 agent specific
+        p.title?.toLowerCase().includes(q) &&
+        p.type === "industrial" && // optional
+        p.status === "pending" // optional
+      );
+    });
+  }, [properties, search]);
+
+  /* =========================
+     STATUS STYLES
+  ========================= */
+  const statusStyles = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "approved":
+      case "available":
+        return "bg-green-100 text-green-700";
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
 
   /* =========================
      RENDER
   ========================= */
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 md:p-8 space-y-6 font-sans">
-      <h1 className="text-2xl font-bold text-primary">Manage Listings</h1>
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">
+          My Pending Industrial Listings
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Properties submitted by you and awaiting approval
+        </p>
+      </div>
 
       <Separator />
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+      <div className="flex justify-between gap-4">
         <Input
-          placeholder="Search by title..."
+          placeholder="Search title..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-1/2"
+          className="max-w-sm"
         />
-
         <Button onClick={fetchListings} disabled={loading}>
-          {loading ? "Refreshing..." : "Refresh"}
+          {loading ? "Refreshing…" : "Refresh"}
         </Button>
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="text-center text-muted-foreground py-12">
-          <p>No listings found.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="table w-full text-sm sm:text-base">
-            <thead>
+      {loading && (
+        <p className="text-center py-12 text-muted-foreground">
+          Loading listings…
+        </p>
+      )}
+
+      {!loading && filtered.length === 0 && (
+        <p className="text-center py-12 text-muted-foreground">
+          No listings found for this agent.
+        </p>
+      )}
+
+      {!loading && filtered.length > 0 && (
+        <div className="rounded-lg border overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
               <tr>
-                <th>Title</th>
-                <th>Location</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Type</th>
-                <th>Rooms</th>
-                <th>Country</th>
-                <th className="text-right">Actions</th>
+                <th className="px-4 py-3">Title</th>
+                <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">Price</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-
             <tbody>
-              {filtered.map((property) => (
-                <tr key={property.$id}>
-                  <td>{property.title}</td>
-                  <td>{property.location}</td>
-                  <td>${property.price}</td>
-                  <td>
+              {filtered.map((p) => (
+                <tr key={p.$id} className="border-t hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium">{p.title}</td>
+                  <td className="px-4 py-3">{p.location}</td>
+                  <td className="px-4 py-3">${p.price}</td>
+                  <td className="px-4 py-3">
                     <span
-                      className={`badge ${
-                        property.status === "approved" ||
-                        property.status === "Available"
-                          ? "badge-success"
-                          : "badge-warning"
-                      }`}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles(
+                        p.status,
+                      )}`}
                     >
-                      {property.status}
+                      {p.status}
                     </span>
                   </td>
-                  <td>{property.type}</td>
-                  <td>{property.rooms}</td>
-                  <td>{property.country}</td>
-                  <td className="text-right space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => console.warn("Edit", property.$id)}
-                    >
+                  <td className="px-4 py-3 text-right space-x-2">
+                    <Button variant="outline" size="sm">
                       Edit
                     </Button>
-
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDelete(property.$id)}
+                      onClick={() => handleDelete(p.$id)}
                     >
                       Delete
                     </Button>
