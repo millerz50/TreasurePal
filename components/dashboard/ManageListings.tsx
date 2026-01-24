@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 /* =========================
    TYPES
@@ -28,8 +29,8 @@ type Property = {
 };
 
 /* =========================
-   CONSTANT (TEMP)
-   👉 Replace with logged-in user id
+   TEMP CONSTANT
+   👉 Replace with auth user id
 ========================= */
 const AGENT_ID = "356a9dd7-cca7-4685-a74f-0169e71aa99b";
 
@@ -37,6 +38,8 @@ const AGENT_ID = "356a9dd7-cca7-4685-a74f-0169e71aa99b";
    COMPONENT
 ========================= */
 export default function ManageListings() {
+  const router = useRouter();
+
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -120,10 +123,10 @@ export default function ManageListings() {
 
     return properties.filter((p) => {
       return (
-        p.agentId === AGENT_ID && // 👈 agent specific
+        p.agentId === AGENT_ID &&
         p.title?.toLowerCase().includes(q) &&
-        p.type === "industrial" && // optional
-        p.status === "pending" // optional
+        p.type === "industrial" &&
+        p.status === "pending"
       );
     });
   }, [properties, search]);
@@ -166,6 +169,7 @@ export default function ManageListings() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
+
         <Button onClick={fetchListings} disabled={loading}>
           {loading ? "Refreshing…" : "Refresh"}
         </Button>
@@ -211,9 +215,14 @@ export default function ManageListings() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right space-x-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/dashboard/edit/${p.$id}`)}
+                    >
                       Edit
                     </Button>
+
                     <Button
                       variant="destructive"
                       size="sm"
