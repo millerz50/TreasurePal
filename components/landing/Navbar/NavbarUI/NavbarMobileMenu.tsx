@@ -15,7 +15,7 @@ export function NavbarMobileMenu() {
   return (
     <div className="lg:hidden relative">
       <button
-        onClick={() => setOpen((p) => !p)}
+        onClick={() => setOpen((prev) => !prev)}
         aria-label="Toggle menu"
         className="rounded-full p-2 hover:bg-accent/10"
       >
@@ -33,43 +33,47 @@ export function NavbarMobileMenu() {
             {NAV_LINKS.map((item) => {
               const Icon = item.icon;
 
-              return item.dropdown ? (
-                <div key={item.label} className="space-y-1">
-                  <button
-                    onClick={() =>
-                      setOpenDropdown(
-                        openDropdown === item.label ? null : item.label,
-                      )
-                    }
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent/10"
-                  >
-                    <span className="flex items-center gap-3">
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </span>
-                    <ChevronDown
-                      className={`h-4 w-4 transition ${
-                        openDropdown === item.label ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
+              if (item.dropdown && item.dropdown.length > 0) {
+                return (
+                  <div key={item.label} className="space-y-1">
+                    <button
+                      onClick={() =>
+                        setOpenDropdown(
+                          openDropdown === item.label ? null : item.label,
+                        )
+                      }
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent/10"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition ${
+                          openDropdown === item.label ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
 
-                  {openDropdown === item.label &&
-                    item.dropdown.map((sub) => (
-                      <Link
-                        key={sub.href}
-                        href={sub.href!} // fixed TS type
-                        onClick={() => setOpen(false)}
-                        className="ml-8 block rounded-lg px-3 py-2 text-sm hover:bg-accent/10"
-                      >
-                        {sub.label}
-                      </Link>
-                    ))}
-                </div>
-              ) : (
+                    {openDropdown === item.label &&
+                      item.dropdown.map((sub) => (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          onClick={() => setOpen(false)}
+                          className="ml-8 block rounded-lg px-3 py-2 text-sm hover:bg-accent/10"
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                  </div>
+                );
+              }
+
+              return (
                 <Link
                   key={item.href}
-                  href={item.href!} // fixed TS type
+                  href={item.href!}
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-accent/10"
                 >
