@@ -6,17 +6,23 @@ function formatSubTypeLabel(subType: string) {
   return subType.replace(/([A-Z])/g, " $1").trim();
 }
 
+// ✅ Explicit props interface avoids PageProps mismatch
 interface CategoryPageProps {
   params: {
-    category: string;
+    category?: string;
   };
 }
 
 export default function CategoryPage({ params }: CategoryPageProps) {
-  const categoryKey = params.category as keyof typeof PROPERTY_HIERARCHY;
-  const category = PROPERTY_HIERARCHY[categoryKey];
+  const categoryKey = params?.category as
+    | keyof typeof PROPERTY_HIERARCHY
+    | undefined;
 
-  if (!category) return notFound();
+  if (!categoryKey || !(categoryKey in PROPERTY_HIERARCHY)) {
+    return notFound();
+  }
+
+  const category = PROPERTY_HIERARCHY[categoryKey];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16">
