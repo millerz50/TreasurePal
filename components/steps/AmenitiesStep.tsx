@@ -2,7 +2,7 @@
 "use client";
 
 import { ICON_MAP } from "@/components/icons/maps/ICON_MAP";
-import { AMENITIES } from "@/components/amenities/Amenities";
+import { AMENITIES } from "@/components/amenities/AMENITIES";
 import { Button } from "@/components/ui/button";
 import type { Dispatch, SetStateAction } from "react";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";

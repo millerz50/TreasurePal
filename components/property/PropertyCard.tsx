@@ -4,7 +4,11 @@ import type { ComponentType } from "react";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { AMENITIES } from "@/components/amenities/AmenityMap";
+import { AMENITIES } from "@/components/amenities/AMENITIES";
+import type {
+  AmenityItem,
+  PropertySubType,
+} from "@/components/property/PropertyMapping/propertyTypes";
 import { Button } from "@/components/ui/button";
 import { HeartIcon as OutlineHeart } from "@heroicons/react/24/outline";
 import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
@@ -42,19 +46,19 @@ function getAppwriteFileUrl(fileId: string | null) {
   return `${base}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
 
-// Normalize property type → AMENITIES key
-function normalizePropertyType(type: string) {
-  const map: Record<string, string> = {
-    industrial: "Business",
-    commercial: "Business",
-    residential: "Residential",
-    land: "Land",
+// Normalize property type → PropertySubType key
+function normalizePropertyType(type: string): PropertySubType {
+  const map: Record<string, PropertySubType> = {
+    industrial: "Industrial",
+    commercial: "BusinessBuilding",
+    residential: "FullHouse",
+    land: "ResidentialStand",
+    hospitality: "Hotel",
+    recreational: "RecreationalFacility",
+    agricultural: "AgriculturalLand",
   };
 
-  return (
-    map[type.toLowerCase()] ??
-    type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
-  );
+  return map[type.toLowerCase()] ?? (type as PropertySubType);
 }
 
 /* ------------------------------------------------------------------
@@ -112,9 +116,9 @@ export default function PropertyCard({ property }: { property: Property }) {
     if (!categories) return out;
 
     Object.values(categories).forEach((items) => {
-      items.forEach(({ name, icon }) => {
-        if (typeof icon === "function") {
-          out[name] = icon;
+      items.forEach((item: AmenityItem) => {
+        if (typeof item.icon === "function") {
+          out[item.name] = item.icon;
         }
       });
     });
@@ -127,30 +131,13 @@ export default function PropertyCard({ property }: { property: Property }) {
   /* ------------------------------------------------------------------ */
 
   return (
-    <div
-      className="
-        group
-        rounded-xl
-        border
-        bg-card
-        text-card-foreground
-        shadow-sm
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:shadow-lg
-      "
-    >
+    <div className="group rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Image */}
       <div className="relative aspect-video overflow-hidden rounded-t-xl">
         <img
           src={imageUrl}
           alt={title}
-          className="
-            h-full w-full object-cover
-            transition-transform duration-500
-            group-hover:scale-105
-          "
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => {
             e.currentTarget.src = "/default-property.jpg";
           }}
@@ -161,16 +148,7 @@ export default function PropertyCard({ property }: { property: Property }) {
           type="button"
           onClick={() => setLiked((v) => !v)}
           aria-label="Like property"
-          className="
-            absolute right-3 top-3
-            rounded-full
-            bg-background/90
-            p-2
-            shadow
-            backdrop-blur
-            transition
-            hover:scale-110
-          "
+          className="absolute right-3 top-3 rounded-full bg-background/90 p-2 shadow backdrop-blur transition hover:scale-110"
         >
           {liked ? (
             <SolidHeart className="h-5 w-5 text-red-500" />
@@ -211,14 +189,7 @@ export default function PropertyCard({ property }: { property: Property }) {
               return (
                 <div
                   key={item}
-                  className="
-                    flex items-center gap-1.5
-                    rounded-full
-                    bg-muted
-                    px-2.5 py-1
-                    text-xs
-                    text-muted-foreground
-                  "
+                  className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
                 >
                   {Icon && <Icon className="h-3.5 w-3.5" />}
                   <span>{item}</span>

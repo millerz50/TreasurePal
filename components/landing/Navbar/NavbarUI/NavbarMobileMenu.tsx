@@ -17,7 +17,8 @@ export function NavbarMobileMenu() {
       <button
         onClick={() => setOpen((p) => !p)}
         aria-label="Toggle menu"
-        className="rounded-full p-2 hover:bg-accent/10">
+        className="rounded-full p-2 hover:bg-accent/10"
+      >
         {open ? <X /> : <Menu />}
       </button>
 
@@ -27,7 +28,8 @@ export function NavbarMobileMenu() {
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            className="absolute right-0 mt-3 w-80 rounded-3xl border bg-background shadow-2xl p-4 z-50">
+            className="absolute right-0 mt-3 w-80 rounded-3xl border bg-background shadow-2xl p-4 z-50"
+          >
             {NAV_LINKS.map((item) => {
               const Icon = item.icon;
 
@@ -36,10 +38,11 @@ export function NavbarMobileMenu() {
                   <button
                     onClick={() =>
                       setOpenDropdown(
-                        openDropdown === item.label ? null : item.label
+                        openDropdown === item.label ? null : item.label,
                       )
                     }
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent/10">
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent/10"
+                  >
                     <span className="flex items-center gap-3">
                       <Icon className="h-4 w-4" />
                       {item.label}
@@ -55,9 +58,10 @@ export function NavbarMobileMenu() {
                     item.dropdown.map((sub) => (
                       <Link
                         key={sub.href}
-                        href={sub.href}
+                        href={sub.href!} // fixed TS type
                         onClick={() => setOpen(false)}
-                        className="ml-8 block rounded-lg px-3 py-2 text-sm hover:bg-accent/10">
+                        className="ml-8 block rounded-lg px-3 py-2 text-sm hover:bg-accent/10"
+                      >
                         {sub.label}
                       </Link>
                     ))}
@@ -65,9 +69,10 @@ export function NavbarMobileMenu() {
               ) : (
                 <Link
                   key={item.href}
-                  href={item.href!}
+                  href={item.href!} // fixed TS type
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-accent/10">
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-accent/10"
+                >
                   <Icon className="h-4 w-4" />
                   {item.label}
                 </Link>

@@ -1,11 +1,17 @@
-import { PROPERTY_HIERARCHY } from "./propertyHierarchy";
+// components/property/PropertyMapping/propertySetup.ts
+import { PROPERTY_HIERARCHY as hierarchy } from "./propertyHierarchy";
 import type {
   PropertyCategory,
   PropertySubType,
   PropertySetupMap,
 } from "./propertyTypes";
-import { AMENITIES } from "@/components/amenities/Amenities";
+import { AMENITIES } from "@/components/amenities/AMENITIES";
 import type { ICON_MAP } from "@/components/icons/maps/ICON_MAP";
+
+/* ----------------------------------
+   Export PROPERTY_HIERARCHY
+----------------------------------- */
+export const PROPERTY_HIERARCHY = hierarchy;
 
 /* ----------------------------------
    PROPERTY SETUP
@@ -38,7 +44,7 @@ export const getPropertyIcons = (
   return Object.fromEntries(
     Object.entries(amenities).map(([category, items]) => [
       category,
-      items.map((item) => item.icon),
+      (items as { icon: keyof typeof ICON_MAP }[]).map((item) => item.icon),
     ]),
   );
 };

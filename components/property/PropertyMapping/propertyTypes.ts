@@ -25,6 +25,7 @@ export type PropertySubType =
   | "StudentHousing"
   | "Lodge"
   | "BookingHouse"
+  | "SpecialPurposeProperty"
 
   // Commercial
   | "BusinessBuilding"
@@ -49,7 +50,11 @@ export type PropertySubType =
   // Land
   | "ResidentialStand"
   | "CommercialStand"
-  | "IndustrialStand";
+  | "IndustrialStand"
+
+  // Additional subtypes for categories without existing subtypes
+  | "RecreationalFacility" // Recreational
+  | "AgriculturalLand"; // Agricultural
 
 /* ----------------------------------
    AMENITIES TYPES
@@ -60,6 +65,7 @@ export interface AmenityItem {
 }
 
 export type AmenityCategory = Record<string, AmenityItem[]>;
+
 export type AmenityMap = {
   [key in PropertySubType]?: AmenityCategory;
 };
