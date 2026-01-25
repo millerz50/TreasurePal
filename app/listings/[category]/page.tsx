@@ -6,7 +6,7 @@ function formatSubTypeLabel(subType: string) {
   return subType.replace(/([A-Z])/g, " $1").trim(); // e.g., "StudentHousing" → "Student Housing"
 }
 
-// ✅ Correct signature for App Router dynamic routes
+// ✅ Correct signature for App Router dynamic route
 export default function CategoryPage({
   params,
 }: {
