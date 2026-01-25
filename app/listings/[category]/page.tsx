@@ -6,13 +6,9 @@ function formatSubTypeLabel(subType: string) {
   return subType.replace(/([A-Z])/g, " $1").trim();
 }
 
-// ✅ Don’t use PageProps, just type params directly
-export default function CategoryPage({
-  params,
-}: {
-  params: { category: string };
-}) {
-  const categoryKey = params.category as keyof typeof PROPERTY_HIERARCHY;
+// ✅ Use `any` for params to avoid PageProps mismatch
+export default function CategoryPage({ params }: any) {
+  const categoryKey = params?.category as keyof typeof PROPERTY_HIERARCHY;
   const category = PROPERTY_HIERARCHY[categoryKey];
 
   if (!category) {
