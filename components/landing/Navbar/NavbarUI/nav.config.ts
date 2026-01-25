@@ -8,7 +8,7 @@ import React from "react";
 ----------------------------------- */
 export type NavDropdownItem = {
   label: string;
-  href?: string;
+  href: string; // Always required for Next.js Link
   className?: string;
   activeClassName?: string;
   subItems?: NavDropdownItem[]; // Nested subtypes
@@ -26,20 +26,21 @@ export type NavItem = {
 /* ----------------------------------
    Build Listings dropdown by category
 ----------------------------------- */
-const listingsDropdown: NavDropdownItem[] = Object.entries(PROPERTY_HIERARCHY)
-  .map(([_, category]) => {
+const listingsDropdown: NavDropdownItem[] = Object.values(PROPERTY_HIERARCHY)
+  .map((category) => {
     // Filter subtypes that exist in AMENITIES
     const subItems: NavDropdownItem[] = category.subTypes
       .filter((subType) => AMENITIES[subType as keyof typeof AMENITIES])
       .map((subType) => ({
         label: subType,
-        href: `/listings/${subType.toLowerCase()}`,
+        href: `/listings/${subType.toLowerCase()}` || "#", // Fallback
       }));
 
     if (!subItems.length) return null; // Skip empty categories
 
     return {
-      label: category.label, // Category name
+      label: category.label,
+      href: subItems[0].href, // Fallback for category label
       subItems,
     };
   })
@@ -67,6 +68,7 @@ export const NAV_LINKS: NavItem[] = [
   {
     label: "Listings",
     icon: Building2,
+    href: listingsDropdown[0]?.href || "#", // fallback to first subitem
     dropdownClassName:
       "absolute left-0 top-full mt-3 w-72 rounded-2xl border bg-background shadow-xl ring-1 ring-black/5 dark:ring-white/10",
     itemClassName:
