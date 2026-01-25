@@ -8,15 +8,13 @@ import React from "react";
 ----------------------------------- */
 export type NavDropdownItem = {
   label: string;
-  href: string; // Always required for Next.js Link
+  href: string; // Always required
   className?: string;
-  activeClassName?: string;
-  subItems?: NavDropdownItem[]; // Nested subtypes
 };
 
 export type NavItem = {
   label: string;
-  href?: string;
+  href?: string; // Main link (optional if dropdown)
   icon: React.ComponentType<{ className?: string }>;
   dropdown?: NavDropdownItem[];
   dropdownClassName?: string;
@@ -28,19 +26,18 @@ export type NavItem = {
 ----------------------------------- */
 const listingsDropdown: NavDropdownItem[] = Object.values(PROPERTY_HIERARCHY)
   .map((category) => {
-    // Filter subtypes that exist in AMENITIES
-    const subItems: NavDropdownItem[] = category.subTypes
-      .filter((subType) => AMENITIES[subType as keyof typeof AMENITIES])
-      .map((subType) => ({
-        label: subType,
-        href: `/listings/${subType.toLowerCase()}` || "#", // Fallback
-      }));
+    // Map each subType to a dropdown item
+    const subItems: NavDropdownItem[] = category.subTypes.map((subType) => ({
+      label: subType,
+      href: `/listings/${subType.toLowerCase()}`,
+    }));
 
-    if (!subItems.length) return null; // Skip empty categories
+    // Skip categories with no subtypes
+    if (!subItems.length) return null;
 
     return {
       label: category.label,
-      href: subItems[0].href, // Fallback for category label
+      href: subItems[0].href, // main category link goes to first subitem
       subItems,
     };
   })
