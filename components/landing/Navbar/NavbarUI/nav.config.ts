@@ -1,4 +1,3 @@
-// components/navigation/navConfig.ts
 import { AMENITIES } from "@/components/amenities/AMENITIES";
 import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertySetup";
 import { Briefcase, Building2, Home, Info, Phone, Store } from "lucide-react";
@@ -28,7 +27,7 @@ export type NavItem = {
    Build Listings dropdown by category
 ----------------------------------- */
 const listingsDropdown: NavDropdownItem[] = Object.entries(PROPERTY_HIERARCHY)
-  .map(([categoryKey, category]) => {
+  .map(([_, category]) => {
     // Filter subtypes that exist in AMENITIES
     const subItems: NavDropdownItem[] = category.subTypes
       .filter((subType) => AMENITIES[subType as keyof typeof AMENITIES])
