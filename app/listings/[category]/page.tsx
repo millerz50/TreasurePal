@@ -3,15 +3,16 @@ import Link from "next/link";
 import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertyHierarchy";
 
 function formatSubTypeLabel(subType: string) {
-  return subType.replace(/([A-Z])/g, " $1").trim(); // e.g., "StudentHousing" → "Student Housing"
+  return subType.replace(/([A-Z])/g, " $1").trim();
 }
 
-// ✅ Correct signature for App Router dynamic route
-export default function CategoryPage({
-  params,
-}: {
-  params: { category: string };
-}) {
+interface CategoryPageProps {
+  params: {
+    category: string;
+  };
+}
+
+export default function CategoryPage({ params }: CategoryPageProps) {
   const categoryKey = params.category as keyof typeof PROPERTY_HIERARCHY;
   const category = PROPERTY_HIERARCHY[categoryKey];
 
