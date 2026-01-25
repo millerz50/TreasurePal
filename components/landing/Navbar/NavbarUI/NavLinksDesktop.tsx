@@ -1,20 +1,17 @@
-"use client";
-
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { NAV_LINKS, NavItem, NavDropdownItem } from "./nav.config";
+import { NAV_LINKS, NavItem } from "./nav.config";
 
 export default function NavLinksDesktop() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
     <nav className="flex items-center gap-2">
-      {NAV_LINKS.map((item) => {
+      {NAV_LINKS.map((item: NavItem) => {
         const Icon = item.icon;
 
-        // If dropdown exists
         if (item.dropdown && item.dropdown.length > 0) {
           return (
             <div key={item.label} className="relative">
@@ -62,7 +59,6 @@ export default function NavLinksDesktop() {
           );
         }
 
-        // If no dropdown
         return (
           <Link
             key={item.href}

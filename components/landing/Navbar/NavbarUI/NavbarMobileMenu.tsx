@@ -6,7 +6,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import NavbarUser from "./NavbarUser";
-import { NAV_LINKS } from "./nav.config";
+import { NAV_LINKS, NavItem } from "./nav.config";
 
 export function NavbarMobileMenu() {
   const [open, setOpen] = useState(false);
@@ -14,6 +14,7 @@ export function NavbarMobileMenu() {
 
   return (
     <div className="lg:hidden relative">
+      {/* Hamburger / Close button */}
       <button
         onClick={() => setOpen((prev) => !prev)}
         aria-label="Toggle menu"
@@ -30,9 +31,10 @@ export function NavbarMobileMenu() {
             exit={{ opacity: 0, y: -12 }}
             className="absolute right-0 mt-3 w-80 rounded-3xl border bg-background shadow-2xl p-4 z-50"
           >
-            {NAV_LINKS.map((item) => {
+            {NAV_LINKS.map((item: NavItem) => {
               const Icon = item.icon;
 
+              // Dropdown items
               if (item.dropdown && item.dropdown.length > 0) {
                 return (
                   <div key={item.label} className="space-y-1">
@@ -70,6 +72,7 @@ export function NavbarMobileMenu() {
                 );
               }
 
+              // Single links
               return (
                 <Link
                   key={item.href}
@@ -83,6 +86,7 @@ export function NavbarMobileMenu() {
               );
             })}
 
+            {/* User & theme */}
             <div className="border-t mt-4 pt-4 space-y-3">
               <NavbarUser />
               <ThemeSwitcher />
