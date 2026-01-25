@@ -7,8 +7,9 @@ import React from "react";
 ----------------------------------- */
 export type NavDropdownItem = {
   label: string;
-  href: string; // Always required
+  href: string;
   className?: string;
+  subItems?: NavDropdownItem[]; // for categories with multiple subtypes
 };
 
 export type NavItem = {
