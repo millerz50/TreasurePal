@@ -1,4 +1,3 @@
-import { AMENITIES } from "@/components/amenities/AMENITIES";
 import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertySetup";
 import { Briefcase, Building2, Home, Info, Phone, Store } from "lucide-react";
 import React from "react";
