@@ -1,14 +1,13 @@
 // components/steps/AmenitiesStep.tsx
 "use client";
 
-import {
-  ICON_MAP,
-  type IconComponent,
-} from "@/components/amenities/AmenityIcons";
-import { AMENITIES } from "@/components/amenities/AmenityMap";
+import { ICON_MAP } from "@/components/icons/maps/ICON_MAP";
+import { AMENITIES } from "@/components/amenities/Amenities";
 import { Button } from "@/components/ui/button";
 import type { Dispatch, SetStateAction } from "react";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
+import type { PropertySubType } from "@/components/property/PropertyMapping/propertyTypes";
+import type { LucideIcon } from "lucide-react";
 
 interface Props {
   formData: PropertyFormValues;
@@ -36,6 +35,9 @@ export default function AmenitiesStep({
 
   const selectedCount = (formData.amenities ?? []).length;
 
+  const subType = formData.type as PropertySubType;
+  const amenitiesForType = AMENITIES[subType];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -43,12 +45,13 @@ export default function AmenitiesStep({
         <span className="text-sm text-gray-500">{selectedCount} selected</span>
       </div>
 
-      {AMENITIES[formData.type] ? (
-        Object.entries(AMENITIES[formData.type]).map(([category, items]) => (
+      {amenitiesForType ? (
+        Object.entries(amenitiesForType).map(([category, items]) => (
           <section key={category} aria-labelledby={`amenity-${category}`}>
             <h3
               id={`amenity-${category}`}
-              className="font-semibold text-primary mb-2">
+              className="font-semibold text-primary mb-2"
+            >
               {category}
             </h3>
 
@@ -56,7 +59,7 @@ export default function AmenitiesStep({
               {items.map(({ name, icon }) => {
                 const selected = (formData.amenities ?? []).includes(name);
                 const Icon = ICON_MAP[icon as keyof typeof ICON_MAP] as
-                  | IconComponent
+                  | LucideIcon
                   | undefined;
 
                 return (
@@ -69,12 +72,11 @@ export default function AmenitiesStep({
                       selected
                         ? "bg-primary text-white border-primary"
                         : "bg-white hover:bg-muted border-gray-300"
-                    }`}>
+                    }`}
+                  >
                     {Icon ? (
                       <Icon
-                        className={`w-5 h-5 ${
-                          selected ? "text-white" : "text-primary"
-                        }`}
+                        className={`w-5 h-5 ${selected ? "text-white" : "text-primary"}`}
                         aria-hidden={true}
                       />
                     ) : null}

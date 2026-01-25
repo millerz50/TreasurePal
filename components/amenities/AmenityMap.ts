@@ -1,32 +1,9 @@
-// components/amenities/amenities.ts
 import { ICON_MAP } from "./AmenityIcons";
+import type { AmenityItem, AmenityCategory, AmenityMap } from "./amenity.types";
 
 /* ----------------------------------
-   TYPES
+   AMENITIES MAP
 ----------------------------------- */
-
-/**
- * `icon` is a key into ICON_MAP so it's strongly typed and safe to use
- * when rendering icons in the UI.
- */
-export interface AmenityItem {
-  name: string;
-  icon: keyof typeof ICON_MAP;
-}
-
-export type AmenityCategory = Record<string, AmenityItem[]>;
-
-export interface AmenityMap {
-  [propertyType: string]: AmenityCategory;
-}
-
-/* ----------------------------------
-   AMENITIES MAP (CORRECTED & TYPED)
-   - `icon` values are keys from ICON_MAP
-   - Removed references to icons that weren't defined
-   - Use consistent, user-facing category names
------------------------------------ */
-
 export const AMENITIES: AmenityMap = {
   StudentHousing: {
     Essentials: [
@@ -99,7 +76,7 @@ export const AMENITIES: AmenityMap = {
     ],
     Policies: [
       { name: "Pet Friendly", icon: "pet" },
-      { name: "Free Cancellation", icon: "calendarCheck" },
+      { name: "Free Cancellation", icon: "calendar" },
     ],
   },
 
@@ -159,7 +136,7 @@ export const AMENITIES: AmenityMap = {
     Services: [
       { name: "Cleaning Service", icon: "cleaning" },
       { name: "Security Personnel", icon: "security" },
-      { name: "Mail Handling", icon: "mail_handling" },
+      { name: "Mail Handling", icon: "mail" },
     ],
     Accessibility: [
       { name: "Wheelchair Accessible", icon: "wheelchair" },
@@ -356,9 +333,7 @@ export const AMENITIES: AmenityMap = {
 
 /* ----------------------------------
    ROUTE → PROPERTY TYPE MAP
-   - Use this to map your nav/listing routes to the AMENITIES keys
 ----------------------------------- */
-
 export const ROUTE_TO_PROPERTY_TYPE: Record<string, keyof typeof AMENITIES> = {
   "/listings/students": "StudentHousing",
   "/listings/lodges": "Lodge",
@@ -372,11 +347,3 @@ export const ROUTE_TO_PROPERTY_TYPE: Record<string, keyof typeof AMENITIES> = {
   "/listings/business": "BusinessBuilding",
   "/listings/mixed-use": "MixedUse",
 };
-
-/* ----------------------------------
-   EXPORTS
------------------------------------ */
-
-export const PROPERTY_TYPES = Object.keys(AMENITIES) as Array<
-  keyof typeof AMENITIES
->;

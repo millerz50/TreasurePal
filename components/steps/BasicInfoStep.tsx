@@ -1,6 +1,6 @@
 "use client";
 
-import { PROPERTY_TYPES } from "@/components/amenities/AmenityMap";
+import { PROPERTY_TYPES } from "@/components/property/PropertyMapping/propertySetup";
 import LocationSearch from "@/components/property/LocationSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,24 +41,23 @@ const BasicInfoStep: React.FC<Props> = ({
     >,
   ) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
-      [name]: value, // 👈 keep EVERYTHING as string in UI
+      [name]: value,
     }));
   };
 
   const validate = (): string | null => {
-    if (!formData.title.trim()) return "Title is required.";
+    if (!formData.title?.trim()) return "Title is required.";
     if (!String(formData.price).trim()) return "Price is required.";
     if (isNaN(Number(formData.price))) return "Price must be a number.";
-    if (!formData.location.trim()) return "Location is required.";
-    if (!formData.address.trim()) return "Address is required.";
+    if (!formData.location?.trim()) return "Location is required.";
+    if (!formData.address?.trim()) return "Address is required.";
 
     const rooms = Number(formData.rooms);
     if (!rooms || rooms < 1) return "Rooms must be at least 1.";
 
-    if (!formData.country.trim()) return "Country is required.";
+    if (!formData.country?.trim()) return "Country is required.";
 
     if (
       formData.depositOption === "required" &&
@@ -93,6 +92,7 @@ const BasicInfoStep: React.FC<Props> = ({
         <Input
           name="price"
           inputMode="numeric"
+          pattern="[0-9]*"
           placeholder="Price (USD)"
           value={formData.price}
           onChange={handleChange}
@@ -144,7 +144,7 @@ const BasicInfoStep: React.FC<Props> = ({
             pattern="[0-9]*"
             name="rooms"
             placeholder="Rooms"
-            value={formData.rooms || ""}
+            value={formData.rooms ?? ""}
             onChange={handleChange}
             className="w-24"
           />
@@ -153,7 +153,6 @@ const BasicInfoStep: React.FC<Props> = ({
       </div>
 
       {/* Property type */}
-      {/* Property type */}
       <select
         name="type"
         value={formData.type}
@@ -161,7 +160,6 @@ const BasicInfoStep: React.FC<Props> = ({
         className="select select-bordered w-full"
       >
         <option value="">Select property type</option>
-
         {PROPERTY_TYPES.map((type) => (
           <option key={type} value={type}>
             {type === "BookingHouse" ? "Booking House" : type}
@@ -209,7 +207,7 @@ const BasicInfoStep: React.FC<Props> = ({
               pattern="[0-9]*"
               name="depositPercentage"
               placeholder="Deposit %"
-              value={formData.depositPercentage || ""}
+              value={formData.depositPercentage ?? ""}
               onChange={handleChange}
               className="w-32"
             />
