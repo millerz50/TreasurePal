@@ -42,6 +42,7 @@ const BasicInfoStep: React.FC<Props> = ({
     (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
   );
 
+  // Get subtypes from the selected mainType
   const subTypes = useMemo<PropertySubType[]>(
     () => PROPERTY_HIERARCHY[mainType]?.subTypes ?? [],
     [mainType],
@@ -55,12 +56,10 @@ const BasicInfoStep: React.FC<Props> = ({
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      if (name === "rooms") {
+      if (name === "rooms")
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
-      }
-      if (name === "price" || name === "depositPercentage") {
+      if (name === "price" || name === "depositPercentage")
         return { ...prev, [name]: value };
-      }
       return { ...prev, [name]: value };
     });
   };
@@ -176,7 +175,7 @@ const BasicInfoStep: React.FC<Props> = ({
           setFormData((prev) => ({
             ...prev,
             type: newType,
-            subType: "",
+            subType: subTypes[0] || "", // default first subType if exists
           }));
         }}
         className="select select-bordered w-full"

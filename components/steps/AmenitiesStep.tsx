@@ -1,4 +1,3 @@
-// components/steps/AmenitiesStep.tsx
 "use client";
 
 import { ICON_MAP } from "@/components/icons/maps/ICON_MAP";
@@ -6,7 +5,10 @@ import { AMENITIES } from "@/components/amenities/AMENITIES";
 import { Button } from "@/components/ui/button";
 import type { Dispatch, SetStateAction } from "react";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
-import type { PropertySubType } from "@/components/property/PropertyMapping/propertyTypes";
+import type {
+  PropertySubType,
+  AmenityMap,
+} from "@/components/property/PropertyMapping/propertyTypes";
 import type { LucideIcon } from "lucide-react";
 
 interface Props {
@@ -20,13 +22,18 @@ export default function AmenitiesStep({
   setFormData,
   setStep,
 }: Props) {
+  const subType = formData.subType as PropertySubType;
+
+  // Ensure correct typing for key
+  const key: keyof AmenityMap = (subType || formData.type) as keyof AmenityMap;
+  const amenitiesForType = AMENITIES[key];
+
   const toggleAmenity = (amenity: string) => {
     setFormData((prev) => {
       const currentAmenities = prev.amenities ?? [];
-      const has = currentAmenities.includes(amenity);
       return {
         ...prev,
-        amenities: has
+        amenities: currentAmenities.includes(amenity)
           ? currentAmenities.filter((a) => a !== amenity)
           : [...currentAmenities, amenity],
       };
@@ -34,9 +41,6 @@ export default function AmenitiesStep({
   };
 
   const selectedCount = (formData.amenities ?? []).length;
-
-  const subType = formData.type as PropertySubType;
-  const amenitiesForType = AMENITIES[subType];
 
   return (
     <div className="space-y-6">
@@ -46,7 +50,9 @@ export default function AmenitiesStep({
       </div>
 
       {amenitiesForType ? (
-        Object.entries(amenitiesForType).map(([category, items]) => (
+        Object.entries(
+          amenitiesForType as Record<string, { name: string; icon: string }[]>,
+        ).map(([category, items]) => (
           <section key={category} aria-labelledby={`amenity-${category}`}>
             <h3
               id={`amenity-${category}`}
@@ -54,14 +60,12 @@ export default function AmenitiesStep({
             >
               {category}
             </h3>
-
             <div className="flex flex-wrap gap-3">
               {items.map(({ name, icon }) => {
                 const selected = (formData.amenities ?? []).includes(name);
                 const Icon = ICON_MAP[icon as keyof typeof ICON_MAP] as
                   | LucideIcon
                   | undefined;
-
                 return (
                   <button
                     key={name}
@@ -74,12 +78,11 @@ export default function AmenitiesStep({
                         : "bg-white hover:bg-muted border-gray-300"
                     }`}
                   >
-                    {Icon ? (
+                    {Icon && (
                       <Icon
                         className={`w-5 h-5 ${selected ? "text-white" : "text-primary"}`}
-                        aria-hidden={true}
                       />
-                    ) : null}
+                    )}
                     <span className="text-sm font-medium">{name}</span>
                   </button>
                 );
@@ -88,7 +91,9 @@ export default function AmenitiesStep({
           </section>
         ))
       ) : (
-        <p className="text-muted">No amenities defined for {formData.type}</p>
+        <p className="text-muted">
+          No amenities defined for {formData.subType || formData.type}
+        </p>
       )}
 
       <div className="flex justify-between">
