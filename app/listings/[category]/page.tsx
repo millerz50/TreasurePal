@@ -7,13 +7,13 @@ function formatSubTypeLabel(subType: string) {
   return subType.replace(/([A-Z])/g, " $1").trim();
 }
 
-// ✅ Make the page async to await `params`
-export default async function CategoryPage({ params }: any) {
-  // Unwrap params
-  const resolvedParams = await params;
-
-  const categoryKey =
-    resolvedParams?.category as keyof typeof PROPERTY_HIERARCHY;
+// ✅ Keep it synchronous, params is already an object
+export default function CategoryPage({
+  params,
+}: {
+  params: { category: string };
+}) {
+  const categoryKey = params.category as keyof typeof PROPERTY_HIERARCHY;
   const category = PROPERTY_HIERARCHY[categoryKey];
 
   if (!category) {
