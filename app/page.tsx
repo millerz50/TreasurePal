@@ -6,23 +6,27 @@ import Hero from "@/components/landing/hero/Hero.server";
 import HomeContent from "@/components/home/HomeContent";
 import { domainConfig } from "@/components/landing/Navbar/ssrWrapperNav/domains";
 
+// ✅ Make the function async
 export async function generateMetadata(): Promise<Metadata> {
-  const headersList = await headers(); // ✅ FIX HERE
+  const headersList = await headers(); // ✅ Await here
 
   const host =
     headersList.get("x-forwarded-host") || headersList.get("host") || "";
 
-  // Remove port (localhost:3000 → localhost)
   const domain = host.replace(/:\d+$/, "");
 
   const config = domainConfig[domain] ?? domainConfig.default;
 
-  const baseUrl =
-    domain === "treasurepal.co.zw"
-      ? "https://treasurepal.co.zw"
-      : domain === "treasureprops.com"
-        ? "https://treasureprops.com"
-        : "https://treasurepal.co.zw";
+  const baseUrl = (() => {
+    switch (domain) {
+      case "treasurepal.co.zw":
+        return "https://treasurepal.co.zw";
+      case "treasureprops.com":
+        return "https://treasureprops.com";
+      default:
+        return "https://treasurepal.co.zw";
+    }
+  })();
 
   return {
     title: `${config.name} | Explore Properties`,

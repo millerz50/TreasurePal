@@ -1,3 +1,4 @@
+// app/listings/[category]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertyHierarchy";
@@ -6,13 +7,17 @@ function formatSubTypeLabel(subType: string) {
   return subType.replace(/([A-Z])/g, " $1").trim();
 }
 
-// ✅ Use `any` for params to avoid PageProps mismatch
-export default function CategoryPage({ params }: any) {
-  const categoryKey = params?.category as keyof typeof PROPERTY_HIERARCHY;
+// ✅ Make the page async to await `params`
+export default async function CategoryPage({ params }: any) {
+  // Unwrap params
+  const resolvedParams = await params;
+
+  const categoryKey =
+    resolvedParams?.category as keyof typeof PROPERTY_HIERARCHY;
   const category = PROPERTY_HIERARCHY[categoryKey];
 
   if (!category) {
-    return notFound();
+    return notFound(); // 404 page
   }
 
   return (
