@@ -21,6 +21,7 @@ import {
 } from "react-icons/fa";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
 
+// Props interface
 interface Props {
   formData: PropertyFormValues;
   setFormData: Dispatch<SetStateAction<PropertyFormValues>>;
@@ -29,7 +30,14 @@ interface Props {
   setError: Dispatch<SetStateAction<string | null>>;
 }
 
+// Default category
 const DEFAULT_CATEGORY: PropertyCategory = "Residential";
+
+// Property status options
+const PROPERTY_STATUS_OPTIONS = [
+  { label: "For Rent", value: "forRent" },
+  { label: "For Sale", value: "forSale" },
+];
 
 const BasicInfoStep: React.FC<Props> = ({
   formData,
@@ -42,19 +50,19 @@ const BasicInfoStep: React.FC<Props> = ({
     (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
   );
 
-  // Get subtypes from the selected mainType
+  // Get subtypes from selected category
   const subTypes = useMemo<PropertySubType[]>(
     () => PROPERTY_HIERARCHY[mainType]?.subTypes ?? [],
     [mainType],
   );
 
+  // Handle input changes
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => {
     const { name, value } = e.target;
-
     setFormData((prev) => {
       if (name === "rooms")
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
@@ -64,19 +72,20 @@ const BasicInfoStep: React.FC<Props> = ({
     });
   };
 
+  // Validation
   const validate = (): string | null => {
     if (!formData.title?.trim()) return "Title is required.";
     if (!String(formData.price).trim()) return "Price is required.";
     if (isNaN(Number(formData.price))) return "Price must be a number.";
     if (!formData.location?.trim()) return "Location is required.";
     if (!formData.address?.trim()) return "Address is required.";
-
-    const rooms = Number(formData.rooms);
-    if (!rooms || rooms < 1) return "Rooms must be at least 1.";
-
     if (!formData.country?.trim()) return "Country is required.";
     if (!formData.type) return "Property category is required.";
     if (!formData.subType) return "Property sub-type is required.";
+    if (!formData.status) return "Property status is required.";
+
+    const rooms = Number(formData.rooms);
+    if (!rooms || rooms < 1) return "Rooms must be at least 1.";
 
     if (
       formData.depositOption === "required" &&
@@ -116,6 +125,24 @@ const BasicInfoStep: React.FC<Props> = ({
           onChange={handleChange}
           className="flex-1"
         />
+      </div>
+
+      {/* Property Status */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-1">Property Status</label>
+        <select
+          name="status"
+          value={formData.status || ""}
+          onChange={handleChange}
+          className="select select-bordered w-full"
+        >
+          <option value="">Select status</option>
+          {PROPERTY_STATUS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Location */}
@@ -165,7 +192,7 @@ const BasicInfoStep: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Property category */}
+      {/* Property Category */}
       <select
         name="type"
         value={mainType}
@@ -175,7 +202,7 @@ const BasicInfoStep: React.FC<Props> = ({
           setFormData((prev) => ({
             ...prev,
             type: newType,
-            subType: subTypes[0] || "", // default first subType if exists
+            subType: subTypes[0] || "",
           }));
         }}
         className="select select-bordered w-full"
@@ -187,7 +214,7 @@ const BasicInfoStep: React.FC<Props> = ({
         ))}
       </select>
 
-      {/* Property sub-type */}
+      {/* Property Sub-Type */}
       <select
         name="subType"
         value={formData.subType || ""}
