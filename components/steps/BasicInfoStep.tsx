@@ -151,7 +151,7 @@ const BasicInfoStep: React.FC<Props> = ({
         <label className="text-sm font-medium mb-1">Market Status</label>
         <select
           name="property_status"
-          value={formData.property_status || ""}
+          value={formData.property_status || "forRent"} // default
           onChange={handleChange}
           className="select select-bordered w-full"
         >
@@ -169,7 +169,7 @@ const BasicInfoStep: React.FC<Props> = ({
         <label className="text-sm font-medium mb-1">Internal Status</label>
         <select
           name="status"
-          value={formData.status || ""}
+          value={formData.status || "pending"} // ✅ default to pending
           onChange={handleChange}
           className="select select-bordered w-full"
         >
