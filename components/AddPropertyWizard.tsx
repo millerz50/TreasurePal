@@ -25,11 +25,9 @@ export type Step = 1 | 2 | 3 | 4 | 5;
 export const PropertySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
 
-  price: z
-    .union([z.string(), z.number()])
-    .refine((val) => Number(val) > 0, {
-      message: "Price must be greater than 0",
-    }),
+  price: z.union([z.string(), z.number()]).refine((val) => Number(val) > 0, {
+    message: "Price must be greater than 0",
+  }),
 
   type: z.string().min(1, "Property type is required"),
   subType: z.string().min(1, "Property subtype is required"),
