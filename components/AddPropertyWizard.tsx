@@ -29,10 +29,15 @@ export const PropertySchema = z.object({
   }),
   type: z.string().min(1, "Property type is required"),
   subType: z.string().min(1, "Property subtype is required"),
-  status: z.string().optional(), // optional/internal
+
+  // Internal status
+  status: z.enum(["pending", "verified", "notVerified"]).optional(),
+
+  // Market status
   property_status: z.enum(["forRent", "forSale"], {
     required_error: "Property status is required",
   }),
+
   country: z.string(),
   location: z.string().min(2, "Location is required"),
   address: z.string().min(5, "Address must be more detailed"),
@@ -80,8 +85,13 @@ export default function AddPropertyWizard() {
     price: "",
     type: "Residential",
     subType: "House",
-    status: "", // optional
-    property_status: "forRent", // ✅ default value
+
+    // Internal verification status
+    status: "pending",
+
+    // Market status
+    property_status: "forRent",
+
     country: "Zimbabwe",
     location: "",
     address: "",
@@ -149,8 +159,8 @@ export default function AddPropertyWizard() {
           price: "",
           type: "Residential",
           subType: "House",
-          status: "",
-          property_status: "forRent", // ✅ reset to default
+          status: "pending", // reset internal status
+          property_status: "forRent", // reset market status
           country: "Zimbabwe",
           location: "",
           address: "",

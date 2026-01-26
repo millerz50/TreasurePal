@@ -33,10 +33,17 @@ interface Props {
 // Default category
 const DEFAULT_CATEGORY: PropertyCategory = "Residential";
 
-// Property status options
+// Market status options
 const PROPERTY_STATUS_OPTIONS = [
   { label: "For Rent", value: "forRent" },
   { label: "For Sale", value: "forSale" },
+];
+
+// Internal verification status options
+const STATUS_OPTIONS = [
+  { label: "Pending", value: "pending" },
+  { label: "Verified", value: "verified" },
+  { label: "Not Verified", value: "notVerified" },
 ];
 
 const BasicInfoStep: React.FC<Props> = ({
@@ -50,13 +57,11 @@ const BasicInfoStep: React.FC<Props> = ({
     (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
   );
 
-  // Get subtypes from selected category
   const subTypes = useMemo<PropertySubType[]>(
     () => PROPERTY_HIERARCHY[mainType]?.subTypes ?? [],
     [mainType],
   );
 
-  // Handle input changes
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -65,26 +70,27 @@ const BasicInfoStep: React.FC<Props> = ({
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      if (name === "rooms") {
+      if (name === "rooms")
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
-      }
-
-      if (name === "price" || name === "depositPercentage") {
+      if (name === "price" || name === "depositPercentage")
         return { ...prev, [name]: value };
-      }
-
       if (
         name === "property_status" &&
         (value === "forRent" || value === "forSale")
-      ) {
+      )
         return { ...prev, property_status: value };
-      }
-
+      if (
+        name === "status" &&
+        ["pending", "verified", "notVerified"].includes(value)
+      )
+        return {
+          ...prev,
+          status: value as "pending" | "verified" | "notVerified",
+        };
       return { ...prev, [name]: value };
     });
   };
 
-  // Validation
   const validate = (): string | null => {
     if (!formData.title?.trim()) return "Title is required.";
     if (!String(formData.price).trim()) return "Price is required.";
@@ -94,7 +100,8 @@ const BasicInfoStep: React.FC<Props> = ({
     if (!formData.country?.trim()) return "Country is required.";
     if (!formData.type) return "Property category is required.";
     if (!formData.subType) return "Property sub-type is required.";
-    if (!formData.property_status) return "Property status is required."; // ✅ check property_status
+    if (!formData.property_status) return "Market property status is required.";
+    if (!formData.status) return "Internal status is required.";
 
     const rooms = Number(formData.rooms);
     if (!rooms || rooms < 1) return "Rooms must be at least 1.";
@@ -139,17 +146,35 @@ const BasicInfoStep: React.FC<Props> = ({
         />
       </div>
 
-      {/* Property Status */}
+      {/* Market Property Status */}
       <div className="flex flex-col">
-        <label className="text-sm font-medium mb-1">Property Status</label>
+        <label className="text-sm font-medium mb-1">Market Status</label>
         <select
           name="property_status"
           value={formData.property_status || ""}
-          onChange={handleChange} // ✅ map to property_status
+          onChange={handleChange}
           className="select select-bordered w-full"
         >
-          <option value="">Select status</option>
+          <option value="">Select market status</option>
           {PROPERTY_STATUS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Internal Verification Status */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-1">Internal Status</label>
+        <select
+          name="status"
+          value={formData.status || ""}
+          onChange={handleChange}
+          className="select select-bordered w-full"
+        >
+          <option value="">Select internal status</option>
+          {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
