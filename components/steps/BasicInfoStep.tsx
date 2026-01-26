@@ -63,11 +63,23 @@ const BasicInfoStep: React.FC<Props> = ({
     >,
   ) => {
     const { name, value } = e.target;
+
     setFormData((prev) => {
-      if (name === "rooms")
+      if (name === "rooms") {
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
-      if (name === "price" || name === "depositPercentage")
+      }
+
+      if (name === "price" || name === "depositPercentage") {
         return { ...prev, [name]: value };
+      }
+
+      if (
+        name === "property_status" &&
+        (value === "forRent" || value === "forSale")
+      ) {
+        return { ...prev, property_status: value };
+      }
+
       return { ...prev, [name]: value };
     });
   };
@@ -82,7 +94,7 @@ const BasicInfoStep: React.FC<Props> = ({
     if (!formData.country?.trim()) return "Country is required.";
     if (!formData.type) return "Property category is required.";
     if (!formData.subType) return "Property sub-type is required.";
-    if (!formData.status) return "Property status is required.";
+    if (!formData.property_status) return "Property status is required."; // ✅ check property_status
 
     const rooms = Number(formData.rooms);
     if (!rooms || rooms < 1) return "Rooms must be at least 1.";
@@ -131,9 +143,9 @@ const BasicInfoStep: React.FC<Props> = ({
       <div className="flex flex-col">
         <label className="text-sm font-medium mb-1">Property Status</label>
         <select
-          name="status"
-          value={formData.status || ""}
-          onChange={handleChange}
+          name="property_status"
+          value={formData.property_status || ""}
+          onChange={handleChange} // ✅ map to property_status
           className="select select-bordered w-full"
         >
           <option value="">Select status</option>

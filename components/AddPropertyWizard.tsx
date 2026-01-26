@@ -24,14 +24,15 @@ export type Step = 1 | 2 | 3 | 4 | 5;
 ----------------------------------- */
 export const PropertySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
-  price: z
-    .union([z.string(), z.number()])
-    .refine((val) => Number(val) > 0, {
-      message: "Price must be greater than 0",
-    }),
+  price: z.union([z.string(), z.number()]).refine((val) => Number(val) > 0, {
+    message: "Price must be greater than 0",
+  }),
   type: z.string().min(1, "Property type is required"),
   subType: z.string().min(1, "Property subtype is required"),
-  status: z.string(),
+  status: z.string().optional(), // optional/internal
+  property_status: z.enum(["forRent", "forSale"], {
+    required_error: "Property status is required",
+  }),
   country: z.string(),
   location: z.string().min(2, "Location is required"),
   address: z.string().min(5, "Address must be more detailed"),
@@ -79,7 +80,8 @@ export default function AddPropertyWizard() {
     price: "",
     type: "Residential",
     subType: "House",
-    status: "Available",
+    status: "", // optional
+    property_status: "forRent", // ✅ default value
     country: "Zimbabwe",
     location: "",
     address: "",
@@ -147,7 +149,8 @@ export default function AddPropertyWizard() {
           price: "",
           type: "Residential",
           subType: "House",
-          status: "Available",
+          status: "",
+          property_status: "forRent", // ✅ reset to default
           country: "Zimbabwe",
           location: "",
           address: "",
