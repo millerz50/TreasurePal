@@ -1,12 +1,16 @@
 "use client";
 
-import { PROPERTY_TYPES } from "@/components/property/PropertyMapping/propertySetup";
+import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertySetup";
+import type {
+  PropertyCategory,
+  PropertySubType,
+} from "@/components/property/PropertyMapping/propertyTypes";
 import LocationSearch from "@/components/property/LocationSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { Dispatch, SetStateAction } from "react";
-import React from "react";
+import CountrySelect from "./CountrySelect";
 import {
   FaBed,
   FaDollarSign,
@@ -16,17 +20,16 @@ import {
   FaRoad,
 } from "react-icons/fa";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
-import CountrySelect from "./CountrySelect";
 
 interface Props {
-  formData: PropertyFormValues & { depositOption?: "none" | "required" };
-  setFormData: Dispatch<
-    SetStateAction<PropertyFormValues & { depositOption?: "none" | "required" }>
-  >;
+  formData: PropertyFormValues;
+  setFormData: Dispatch<SetStateAction<PropertyFormValues>>;
   setStep: Dispatch<SetStateAction<Step>>;
   error: string | null;
   setError: Dispatch<SetStateAction<string | null>>;
 }
+
+const DEFAULT_CATEGORY: PropertyCategory = "Residential";
 
 const BasicInfoStep: React.FC<Props> = ({
   formData,
@@ -35,16 +38,31 @@ const BasicInfoStep: React.FC<Props> = ({
   error,
   setError,
 }) => {
+  const [mainType, setMainType] = useState<PropertyCategory>(
+    (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
+  );
+
+  const subTypes = useMemo<PropertySubType[]>(
+    () => PROPERTY_HIERARCHY[mainType]?.subTypes ?? [],
+    [mainType],
+  );
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    setFormData((prev) => {
+      if (name === "rooms") {
+        return { ...prev, rooms: value === "" ? 0 : Number(value) };
+      }
+      if (name === "price" || name === "depositPercentage") {
+        return { ...prev, [name]: value };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const validate = (): string | null => {
@@ -58,6 +76,8 @@ const BasicInfoStep: React.FC<Props> = ({
     if (!rooms || rooms < 1) return "Rooms must be at least 1.";
 
     if (!formData.country?.trim()) return "Country is required.";
+    if (!formData.type) return "Property category is required.";
+    if (!formData.subType) return "Property sub-type is required.";
 
     if (
       formData.depositOption === "required" &&
@@ -80,7 +100,7 @@ const BasicInfoStep: React.FC<Props> = ({
         <Input
           name="title"
           placeholder="Property title"
-          value={formData.title}
+          value={formData.title || ""}
           onChange={handleChange}
           className="flex-1"
         />
@@ -92,9 +112,8 @@ const BasicInfoStep: React.FC<Props> = ({
         <Input
           name="price"
           inputMode="numeric"
-          pattern="[0-9]*"
           placeholder="Price (USD)"
-          value={formData.price}
+          value={formData.price || ""}
           onChange={handleChange}
           className="flex-1"
         />
@@ -121,7 +140,7 @@ const BasicInfoStep: React.FC<Props> = ({
         <Input
           name="address"
           placeholder="Street address"
-          value={formData.address}
+          value={formData.address || ""}
           onChange={handleChange}
           className="flex-1"
         />
@@ -130,19 +149,14 @@ const BasicInfoStep: React.FC<Props> = ({
       {/* Country + Rooms */}
       <div className="grid grid-cols-2 gap-6">
         <CountrySelect
-          value={formData.country}
-          onChange={(val: string) =>
-            setFormData((prev) => ({ ...prev, country: val }))
-          }
+          value={formData.country || ""}
+          onChange={(val) => setFormData((prev) => ({ ...prev, country: val }))}
         />
-
         <div className="flex items-center gap-2">
           <FaBed className="text-primary" />
           <Input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
             name="rooms"
+            inputMode="numeric"
             placeholder="Rooms"
             value={formData.rooms ?? ""}
             onChange={handleChange}
@@ -152,17 +166,44 @@ const BasicInfoStep: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Property type */}
+      {/* Property category */}
       <select
         name="type"
-        value={formData.type}
-        onChange={handleChange}
+        value={mainType}
+        onChange={(e) => {
+          const newType = e.target.value as PropertyCategory;
+          setMainType(newType);
+          setFormData((prev) => ({
+            ...prev,
+            type: newType,
+            subType: "",
+          }));
+        }}
         className="select select-bordered w-full"
       >
-        <option value="">Select property type</option>
-        {PROPERTY_TYPES.map((type) => (
-          <option key={type} value={type}>
-            {type === "BookingHouse" ? "Booking House" : type}
+        {Object.entries(PROPERTY_HIERARCHY).map(([key, value]) => (
+          <option key={key} value={key}>
+            {value.label}
+          </option>
+        ))}
+      </select>
+
+      {/* Property sub-type */}
+      <select
+        name="subType"
+        value={formData.subType || ""}
+        onChange={handleChange}
+        className="select select-bordered w-full"
+        disabled={subTypes.length === 0}
+      >
+        <option value="">
+          {subTypes.length === 0
+            ? "No sub-types available"
+            : "Select property sub-type"}
+        </option>
+        {subTypes.map((subType) => (
+          <option key={subType} value={subType}>
+            {subType.replace(/([A-Z])/g, " $1").trim()}
           </option>
         ))}
       </select>
@@ -171,7 +212,7 @@ const BasicInfoStep: React.FC<Props> = ({
       <Textarea
         name="description"
         placeholder="Property description..."
-        value={formData.description}
+        value={formData.description || ""}
         onChange={handleChange}
         className="w-full"
       />
@@ -181,7 +222,6 @@ const BasicInfoStep: React.FC<Props> = ({
         <label className="block text-sm font-medium mb-1">
           Deposit Availability
         </label>
-
         <select
           name="depositOption"
           value={formData.depositOption || "none"}
@@ -202,10 +242,8 @@ const BasicInfoStep: React.FC<Props> = ({
           <div className="flex items-center gap-2 mt-2">
             <FaPercent className="text-primary" />
             <Input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
               name="depositPercentage"
+              inputMode="numeric"
               placeholder="Deposit %"
               value={formData.depositPercentage ?? ""}
               onChange={handleChange}

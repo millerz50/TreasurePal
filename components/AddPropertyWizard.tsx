@@ -24,33 +24,26 @@ export type Step = 1 | 2 | 3 | 4 | 5;
 ----------------------------------- */
 export const PropertySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
-
-  price: z.union([z.string(), z.number()]).refine((val) => Number(val) > 0, {
-    message: "Price must be greater than 0",
-  }),
-
+  price: z
+    .union([z.string(), z.number()])
+    .refine((val) => Number(val) > 0, {
+      message: "Price must be greater than 0",
+    }),
   type: z.string().min(1, "Property type is required"),
   subType: z.string().min(1, "Property subtype is required"),
-
   status: z.string(),
   country: z.string(),
-
   location: z.string().min(2, "Location is required"),
   address: z.string().min(5, "Address must be more detailed"),
   rooms: z.number().min(0),
   description: z.string().min(10),
-
   amenities: z.array(z.string()).optional(),
-
   locationLat: z.number().nullable().optional(),
   locationLng: z.number().nullable().optional(),
-
   agentId: z.string().min(1, "Agent ID required"),
-
   depositAvailable: z.boolean().default(false),
   depositOption: z.enum(["none", "required"]).default("none"),
   depositPercentage: z.union([z.string(), z.number()]).optional(),
-
   frontElevation: z.instanceof(File).nullable().optional(),
   southView: z.instanceof(File).nullable().optional(),
   westView: z.instanceof(File).nullable().optional(),
@@ -68,7 +61,6 @@ const API_BASE_V1 =
   process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
 const API_BASE_V2 =
   process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-
 const API_BASE =
   API_VERSION === "v2" && API_BASE_V2 ? API_BASE_V2 : API_BASE_V1;
 
@@ -107,10 +99,7 @@ export default function AddPropertyWizard() {
   ----------------------------------- */
   useEffect(() => {
     if (user?.userId) {
-      setFormData((prev) => ({
-        ...prev,
-        agentId: user.userId,
-      }));
+      setFormData((prev) => ({ ...prev, agentId: user.userId }));
     }
   }, [user?.userId]);
 
@@ -127,13 +116,11 @@ export default function AddPropertyWizard() {
         throw new Error("Only agents can add properties.");
 
       const parsed = PropertySchema.safeParse(formData);
-      if (!parsed.success) {
-        throw new Error(parsed.error.errors[0]?.message);
-      }
+      if (!parsed.success) throw new Error(parsed.error.errors[0]?.message);
 
       const jwt = await account.createJWT();
-
       const fd = new FormData();
+
       Object.entries(parsed.data).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
         if (value instanceof File) fd.append(key, value);
@@ -144,16 +131,12 @@ export default function AddPropertyWizard() {
 
       const res = await fetch(`${API_BASE}/api/${API_VERSION}/properties/add`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${jwt.jwt}`,
-        },
+        headers: { Authorization: `Bearer ${jwt.jwt}` },
         body: fd,
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Failed to submit property");
-      }
+      if (!res.ok)
+        throw new Error((await res.text()) || "Failed to submit property");
 
       await res.json();
 
@@ -191,7 +174,6 @@ export default function AddPropertyWizard() {
      Guards
   ----------------------------------- */
   if (authLoading) return <div className="p-6 text-gray-500">Loading...</div>;
-
   if (!user)
     return (
       <div className="p-6 text-center text-red-500">
@@ -233,7 +215,6 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
-
       {step === 3 && (
         <LocationStep
           formData={formData}
@@ -241,7 +222,6 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
-
       {step === 4 && (
         <PropertyImagesStep
           formData={formData}
@@ -249,7 +229,6 @@ export default function AddPropertyWizard() {
           setStep={setStep}
         />
       )}
-
       {step === 5 && (
         <ReviewStep
           formData={formData}
