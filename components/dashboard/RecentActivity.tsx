@@ -4,14 +4,45 @@
 import { useAuth } from "@/context/AuthContext";
 import { account } from "@/lib/appwrite";
 import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Coins,
+  UserPlus,
+  BadgeCheck,
+  LogIn,
+  Activity as ActivityIcon,
+} from "lucide-react";
 
+/* =========================
+   TYPES
+========================= */
 type Activity = {
   id: string;
   message: string;
   createdAt: string;
   actorId?: string;
-  actorRole?: string;
+  action?: string;
 };
+
+/* =========================
+   ICON RESOLVER
+========================= */
+function getActivityIcon(action?: string) {
+  switch (action) {
+    case "credits_added":
+    case "credits_deducted":
+      return Coins;
+    case "signin_bonus":
+    case "login":
+      return LogIn;
+    case "user_created":
+      return UserPlus;
+    case "agent_approved":
+      return BadgeCheck;
+    default:
+      return ActivityIcon;
+  }
+}
 
 export default function RecentActivity() {
   const { user, loading: authLoading } = useAuth();
@@ -44,25 +75,23 @@ export default function RecentActivity() {
       setError(null);
 
       try {
-        // 1️⃣ Build endpoint
         let endpoint = "/activity/recent";
 
+        // 🔒 IMPORTANT: use accountid, not userId
         if (primaryRole === "admin") {
           endpoint += "?scope=all";
         } else if (primaryRole === "agent") {
-          endpoint += `?scope=agent&agentId=${encodeURIComponent(
-            user.userId
+          endpoint += `?scope=agent&actorId=${encodeURIComponent(
+            user.accountid,
           )}`;
         } else {
-          endpoint += `?scope=user&userId=${encodeURIComponent(
-            user.userId
+          endpoint += `?scope=user&actorId=${encodeURIComponent(
+            user.accountid,
           )}`;
         }
 
-        // 2️⃣ Create fresh Appwrite JWT
         const jwt = await account.createJWT();
 
-        // 3️⃣ Fetch activity
         const res = await fetch(`${API_BASE}${endpoint}`, {
           headers: {
             Authorization: `Bearer ${jwt.jwt}`,
@@ -92,37 +121,51 @@ export default function RecentActivity() {
   }, [authLoading, user, primaryRole, API_BASE]);
 
   return (
-    <div className="card bg-base-100 shadow-sm border border-base-300">
-      <div className="card-body">
-        <h3 className="card-title text-sm text-muted-foreground">
+    <div className="rounded-2xl border border-base-300 bg-base-100 shadow-sm">
+      <div className="p-4">
+        <h3 className="text-sm font-semibold text-muted-foreground">
           Recent Activity
         </h3>
 
         {loading || authLoading ? (
-          <p className="text-sm text-muted-foreground pt-2">
+          <p className="mt-3 text-sm text-muted-foreground">
             Loading activity…
           </p>
         ) : error ? (
-          <p className="text-sm text-red-500 pt-2">{error}</p>
+          <p className="mt-3 text-sm text-red-500">{error}</p>
         ) : activities.length === 0 ? (
-          <p className="text-sm text-muted-foreground pt-2">
-            No recent activity found.
+          <p className="mt-3 text-sm text-muted-foreground">
+            You have no recent activity.
           </p>
         ) : (
-          <ul className="text-sm space-y-2 pt-2">
-            {activities.map((act) => (
-              <li key={act.id}>
-                {act.message}{" "}
-                <span className="text-xs text-muted-foreground">
-                  ({new Date(act.createdAt).toLocaleDateString()})
-                </span>
-                {act.actorRole && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    • {act.actorRole}
-                  </span>
-                )}
-              </li>
-            ))}
+          <ul className="mt-3 space-y-2">
+            <AnimatePresence>
+              {activities.map((act) => {
+                const Icon = getActivityIcon(act.action);
+
+                return (
+                  <motion.li
+                    key={act.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex items-start gap-3 rounded-xl border border-base-200 bg-base-50 px-3 py-2"
+                  >
+                    <div className="mt-0.5 rounded-lg bg-primary/10 p-1.5 text-primary">
+                      <Icon className="h-4 w-4" />
+                    </div>
+
+                    <div className="flex-1">
+                      <p className="text-sm">{act.message}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(act.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </motion.li>
+                );
+              })}
+            </AnimatePresence>
           </ul>
         )}
       </div>

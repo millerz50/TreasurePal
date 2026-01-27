@@ -2,31 +2,49 @@
 
 import { account } from "@/lib/appwrite";
 import type { Models } from "appwrite";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 /* ----------------------------
    ENV
 ---------------------------- */
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+const APPWRITE_ENDPOINT =
+  process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
 const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
 
 /* ----------------------------
    TYPES
 ---------------------------- */
 export type UserPayload = {
-  userId: string;
+  // 🔑 Core identifiers
+  userId: string; // Appwrite auth user id
+  accountid: string; // ✅ REQUIRED – users collection identity
+
+  // 👤 Profile
   email: string;
   firstName: string;
   surname: string;
+
+  // 🧭 Status & roles
   roles: ("user" | "agent" | "admin")[];
-  status: string;
+  status: "Not Verified" | "Pending" | "Active" | "Suspended";
+
+  // 📞 Optional profile fields
   phone?: string;
   avatarUrl?: string;
   country?: string;
-  credits?: number;
   dateOfBirth?: string;
+
+  // 💰 Credits
+  credits?: number;
 };
 
 interface AuthContextType {
@@ -89,16 +107,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // 4️⃣ Set normalized user
         if (mounted.current) {
           setUser({
-            userId: appwriteUser.$id,
+            userId: appwriteUser.$id, // Appwrite auth ID
+            accountid: profile.accountid, // ✅ REQUIRED (users collection ID)
+
             email: appwriteUser.email,
             firstName: profile.firstName ?? "",
             surname: profile.surname ?? "",
+
             roles: profile.roles ?? ["user"],
             status: profile.status ?? "Active",
+
             phone: profile.phone,
             country: profile.country,
-            credits: profile.credits,
+            credits: profile.credits ?? 0,
             dateOfBirth: profile.dateOfBirth,
+
             avatarUrl,
           });
         }
@@ -116,7 +139,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, loading, signOut }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => useContext(AuthContext);
