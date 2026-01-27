@@ -36,9 +36,9 @@ const client = new Client()
   .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
   .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string);
 
-export const account = new Account(client);
-export const databases = new Databases(client);
-export const storage = new Storage(client);
+const account = new Account(client);
+const databases = new Databases(client);
+const storage = new Storage(client);
 
 /* ----------------------------------
    Check if property exists by title or address
@@ -50,17 +50,17 @@ async function propertyExists(field: "title" | "address", value: string) {
 
   try {
     const DB_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID as string;
-    const PROPERTIES_COLLECTION = process.env
+    const COLLECTION_ID = process.env
       .NEXT_PUBLIC_APPWRITE_PROPERTYTABLE_ID as string;
 
-    const result = await databases.listDocuments(DB_ID, PROPERTIES_COLLECTION, [
+    const result = await databases.listDocuments(DB_ID, COLLECTION_ID, [
       Query.equal(field, value),
       Query.limit(1),
     ]);
 
     return result.documents.length > 0;
-  } catch (error) {
-    console.error("Error checking property existence:", error);
+  } catch (err) {
+    console.error("Error checking property existence:", err);
     return false;
   }
 }
@@ -80,7 +80,6 @@ interface Props {
    Constants
 ----------------------------------- */
 const DEFAULT_CATEGORY: PropertyCategory = "Residential";
-
 const STATUS_OPTIONS = [
   { label: "For Rent", value: "forRent" },
   { label: "For Sale", value: "forSale" },
@@ -140,7 +139,6 @@ const BasicInfoStep: React.FC<Props> = ({
   const [mainType, setMainType] = useState<PropertyCategory>(
     (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
   );
-
   const [titleTouched, setTitleTouched] = useState(false);
   const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [existsError, setExistsError] = useState<string | null>(null);
@@ -150,9 +148,7 @@ const BasicInfoStep: React.FC<Props> = ({
     [mainType],
   );
 
-  /* ----------------------------------
-     Auto-generate title & description unless manually edited
-  ----------------------------------- */
+  /* Auto-generate title & description */
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -172,48 +168,37 @@ const BasicInfoStep: React.FC<Props> = ({
     setFormData,
   ]);
 
-  /* ----------------------------------
-     Check if title or address already exists
-  ----------------------------------- */
+  /* Check duplicates in Appwrite */
   useEffect(() => {
     const checkExists = async () => {
       setExistsError(null);
-
       if (!formData.title?.trim() && !formData.address?.trim()) return;
 
-      try {
-        if (
-          formData.title?.trim() &&
-          (await propertyExists("title", formData.title))
-        ) {
-          setExistsError("A property with this title already exists.");
-          return;
-        }
-
-        if (
-          formData.address?.trim() &&
-          (await propertyExists("address", formData.address))
-        ) {
-          setExistsError("A property with this address already exists.");
-        }
-      } catch (err) {
-        console.error(err);
+      if (
+        formData.title?.trim() &&
+        (await propertyExists("title", formData.title))
+      ) {
+        setExistsError("A property with this title already exists.");
+        return;
+      }
+      if (
+        formData.address?.trim() &&
+        (await propertyExists("address", formData.address))
+      ) {
+        setExistsError("A property with this address already exists.");
       }
     };
 
     checkExists();
   }, [formData.title, formData.address]);
 
-  /* ----------------------------------
-     Handlers
-  ----------------------------------- */
+  /* Handle input changes */
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => {
     const { name, value } = e.target;
-
     setFormData((prev) => {
       if (name === "rooms")
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
@@ -224,15 +209,12 @@ const BasicInfoStep: React.FC<Props> = ({
     });
   };
 
-  /* ----------------------------------
-     Validation
-  ----------------------------------- */
+  /* Validation */
   const validate = (): string | null => {
     if (!formData.title?.trim()) return "Property title is required.";
     if (!formData.property_status) return "Market status is required.";
     if (!formData.location?.trim()) return "Location is required.";
-    if (!formData.address?.trim())
-      return "Street address is required (e.g., 123 Main St, Apt 4B).";
+    if (!formData.address?.trim()) return "Street address is required.";
     if (!formData.country?.trim()) return "Country is required.";
     if (!formData.type) return "Property category is required.";
     if (!formData.subType) return "Property sub-type is required.";
@@ -240,7 +222,7 @@ const BasicInfoStep: React.FC<Props> = ({
       return "Number of rooms must be at least 1.";
     if (!formData.price || isNaN(Number(formData.price)))
       return "Price must be a valid number.";
-    if (existsError) return existsError; // check Appwrite duplicate
+    if (existsError) return existsError;
     return null;
   };
 
@@ -284,8 +266,7 @@ const BasicInfoStep: React.FC<Props> = ({
       {/* Market Status */}
       <motion.div variants={fadeUp} className="space-y-1">
         <label className="text-sm font-medium flex items-center gap-2">
-          <FaTag className="text-primary" />
-          Market Status
+          <FaTag className="text-primary" /> Market Status
         </label>
         <select
           name="property_status"
@@ -320,8 +301,7 @@ const BasicInfoStep: React.FC<Props> = ({
       {/* Street Address */}
       <motion.div variants={fadeUp} className="flex flex-col gap-1">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <FaRoad className="text-primary" />
-          Street Address
+          <FaRoad className="text-primary" /> Street Address
         </label>
         <Input
           name="address"
@@ -329,9 +309,6 @@ const BasicInfoStep: React.FC<Props> = ({
           value={formData.address || ""}
           onChange={handleChange}
         />
-        <p className="text-xs text-gray-500">
-          Format: Street number, street name, optional unit/suite
-        </p>
       </motion.div>
 
       {/* Country + Rooms */}
@@ -403,7 +380,7 @@ const BasicInfoStep: React.FC<Props> = ({
         />
       </motion.div>
 
-      {/* Navigation */}
+      {/* Continue button */}
       <motion.div variants={fadeUp} className="flex justify-end">
         <Button
           size="lg"
