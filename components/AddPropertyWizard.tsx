@@ -147,16 +147,18 @@ export default function AddPropertyWizard() {
         else fd.append(key, String(value));
       });
 
+      const creditUrl = `${API_BASE}/api/${API_VERSION}/users/${user.userId}/credits`;
+
       // Check if agent has enough coins
-      const creditRes = await fetch(
-        `${API_BASE}/users/${user.userId}/credits`,
-        {
-          headers: { Authorization: `Bearer ${jwt.jwt}` },
-        },
-      );
+      const creditRes = await fetch(creditUrl, {
+        headers: { Authorization: `Bearer ${jwt.jwt}` },
+      });
+      if (!creditRes.ok)
+        throw new Error(`Failed to fetch credits: ${creditRes.statusText}`);
+
       const creditData = await creditRes.json();
       const costPerProperty = 10; // coins required per property
-      if (creditData.balance < costPerProperty)
+      if (creditData.credits.balance < costPerProperty)
         throw new Error("Insufficient coins to add a property");
 
       // Create property
@@ -167,11 +169,11 @@ export default function AddPropertyWizard() {
       });
       if (!res.ok)
         throw new Error((await res.text()) || "Failed to create property");
-
       const createdProperty = await res.json();
 
       // Deduct coins
-      await fetch(`${API_BASE}/users/${user.userId}/credits/spend`, {
+      const spendUrl = `${API_BASE}/api/${API_VERSION}/users/${user.userId}/credits/spend`;
+      const spendRes = await fetch(spendUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${jwt.jwt}`,
@@ -185,6 +187,8 @@ export default function AddPropertyWizard() {
           message: `Coins spent for adding property "${parsed.data.title}"`,
         }),
       });
+      if (!spendRes.ok)
+        throw new Error((await spendRes.text()) || "Failed to deduct coins");
 
       // Reset form
       if (window.confirm("Property created successfully! Add another?")) {
