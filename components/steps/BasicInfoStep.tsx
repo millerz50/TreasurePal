@@ -17,6 +17,7 @@ import LocationSearch from "@/components/property/LocationSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CountrySelect from "./CountrySelect";
+import { Textarea } from "@/components/ui/textarea";
 import {
   FaBed,
   FaDollarSign,
@@ -26,7 +27,43 @@ import {
   FaTag,
 } from "react-icons/fa";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
-import { Textarea } from "@/components/ui/textarea";
+import { Client, Account, Databases, Storage, Query } from "appwrite";
+
+/* ----------------------------------
+   Appwrite Client & Services
+----------------------------------- */
+const client = new Client()
+  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
+  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string);
+
+export const account = new Account(client);
+export const databases = new Databases(client);
+export const storage = new Storage(client);
+
+/* ----------------------------------
+   Check if property exists by title or address
+----------------------------------- */
+async function propertyExists(field: "title" | "address", value: string) {
+  if (!["title", "address"].includes(field))
+    throw new Error("Field must be 'title' or 'address'");
+  if (!value.trim()) return false;
+
+  try {
+    const DB_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID as string;
+    const PROPERTIES_COLLECTION = process.env
+      .NEXT_PUBLIC_APPWRITE_PROPERTYTABLE_ID as string;
+
+    const result = await databases.listDocuments(DB_ID, PROPERTIES_COLLECTION, [
+      Query.equal(field, value),
+      Query.limit(1),
+    ]);
+
+    return result.documents.length > 0;
+  } catch (error) {
+    console.error("Error checking property existence:", error);
+    return false;
+  }
+}
 
 /* ----------------------------------
    Props
@@ -62,11 +99,11 @@ function generateTitle(data: PropertyFormValues) {
       : data.property_status === "forSale"
         ? "For Sale"
         : "";
-  return `${subType} ${statusLabel}`;
+  return `${subType} ${statusLabel}`.trim();
 }
 
 function generateDescription(data: PropertyFormValues) {
-  const rooms = data.rooms && data.rooms > 0 ? data.rooms : "N/A";
+  const rooms = Number(data.rooms) || 0;
   const price = data.price ? `$${data.price}` : "Price on request";
   const location = data.location || "a prime location";
   const type = data.subType
@@ -82,17 +119,13 @@ function generateDescription(data: PropertyFormValues) {
         ? "for sale"
         : "available";
 
-  const roomCount = Number(rooms) || 0; // ensure numeric
-  return `This ${type} features ${roomCount} well-proportioned room${roomCount > 1 ? "s" : ""}, ${statusLabel} at ${price}. It is ideally located in ${location}, offering excellent amenities and modern living standards. A perfect opportunity for anyone seeking quality, value, and comfort.`;
+  return `This ${type} features ${rooms} well-proportioned room${rooms > 1 ? "s" : ""}, ${statusLabel} at ${price}. It is ideally located in ${location}, offering excellent amenities and modern living standards. A perfect opportunity for anyone seeking quality, value, and comfort.`;
 }
 
 /* ----------------------------------
    Motion variants
 ----------------------------------- */
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0 },
-};
+const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } };
 
 /* ----------------------------------
    Component
@@ -108,19 +141,25 @@ const BasicInfoStep: React.FC<Props> = ({
     (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
   );
 
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [descriptionTouched, setDescriptionTouched] = useState(false);
+  const [existsError, setExistsError] = useState<string | null>(null);
+
   const subTypes = useMemo<PropertySubType[]>(
     () => PROPERTY_HIERARCHY[mainType]?.subTypes ?? [],
     [mainType],
   );
 
   /* ----------------------------------
-     Auto-generate title & description
+     Auto-generate title & description unless manually edited
   ----------------------------------- */
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      title: generateTitle(prev),
-      description: generateDescription(prev),
+      title: titleTouched ? prev.title : generateTitle(prev),
+      description: descriptionTouched
+        ? prev.description
+        : generateDescription(prev),
     }));
   }, [
     formData.subType,
@@ -128,16 +167,53 @@ const BasicInfoStep: React.FC<Props> = ({
     formData.rooms,
     formData.price,
     formData.property_status,
+    titleTouched,
+    descriptionTouched,
     setFormData,
   ]);
+
+  /* ----------------------------------
+     Check if title or address already exists
+  ----------------------------------- */
+  useEffect(() => {
+    const checkExists = async () => {
+      setExistsError(null);
+
+      if (!formData.title?.trim() && !formData.address?.trim()) return;
+
+      try {
+        if (
+          formData.title?.trim() &&
+          (await propertyExists("title", formData.title))
+        ) {
+          setExistsError("A property with this title already exists.");
+          return;
+        }
+
+        if (
+          formData.address?.trim() &&
+          (await propertyExists("address", formData.address))
+        ) {
+          setExistsError("A property with this address already exists.");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    checkExists();
+  }, [formData.title, formData.address]);
 
   /* ----------------------------------
      Handlers
   ----------------------------------- */
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = e.target;
+
     setFormData((prev) => {
       if (name === "rooms")
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
@@ -152,9 +228,11 @@ const BasicInfoStep: React.FC<Props> = ({
      Validation
   ----------------------------------- */
   const validate = (): string | null => {
+    if (!formData.title?.trim()) return "Property title is required.";
     if (!formData.property_status) return "Market status is required.";
     if (!formData.location?.trim()) return "Location is required.";
-    if (!formData.address?.trim()) return "Address is required.";
+    if (!formData.address?.trim())
+      return "Street address is required (e.g., 123 Main St, Apt 4B).";
     if (!formData.country?.trim()) return "Country is required.";
     if (!formData.type) return "Property category is required.";
     if (!formData.subType) return "Property sub-type is required.";
@@ -162,6 +240,7 @@ const BasicInfoStep: React.FC<Props> = ({
       return "Number of rooms must be at least 1.";
     if (!formData.price || isNaN(Number(formData.price)))
       return "Price must be a valid number.";
+    if (existsError) return existsError; // check Appwrite duplicate
     return null;
   };
 
@@ -176,10 +255,18 @@ const BasicInfoStep: React.FC<Props> = ({
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="space-y-7"
     >
-      {/* Title (auto-generated, not editable) */}
+      {/* Title */}
       <motion.div variants={fadeUp} className="flex items-center gap-3">
         <FaHome className="text-primary" />
-        <Input name="title" value={formData.title || ""} disabled />
+        <Input
+          name="title"
+          placeholder="Property title"
+          value={formData.title || ""}
+          onChange={(e) => {
+            setTitleTouched(true);
+            handleChange(e);
+          }}
+        />
       </motion.div>
 
       {/* Price */}
@@ -230,15 +317,21 @@ const BasicInfoStep: React.FC<Props> = ({
         />
       </motion.div>
 
-      {/* Address */}
-      <motion.div variants={fadeUp} className="flex items-center gap-3">
-        <FaRoad className="text-primary" />
+      {/* Street Address */}
+      <motion.div variants={fadeUp} className="flex flex-col gap-1">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <FaRoad className="text-primary" />
+          Street Address
+        </label>
         <Input
           name="address"
-          placeholder="Street address"
+          placeholder="123 Main St, Apt 4B"
           value={formData.address || ""}
           onChange={handleChange}
         />
+        <p className="text-xs text-gray-500">
+          Format: Street number, street name, optional unit/suite
+        </p>
       </motion.div>
 
       {/* Country + Rooms */}
@@ -259,7 +352,7 @@ const BasicInfoStep: React.FC<Props> = ({
         </div>
       </motion.div>
 
-      {/* Category */}
+      {/* Category & Sub-type */}
       <motion.div variants={fadeUp} className="space-y-4">
         <select
           name="type"
@@ -297,12 +390,15 @@ const BasicInfoStep: React.FC<Props> = ({
         </select>
       </motion.div>
 
-      {/* Description (auto-generated, not editable) */}
+      {/* Description */}
       <motion.div variants={fadeUp}>
         <Textarea
           name="description"
           value={formData.description || ""}
-          disabled
+          onChange={(e) => {
+            setDescriptionTouched(true);
+            handleChange(e);
+          }}
           className="min-h-[160px]"
         />
       </motion.div>
@@ -322,7 +418,9 @@ const BasicInfoStep: React.FC<Props> = ({
         </Button>
       </motion.div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {(error || existsError) && (
+        <p className="text-sm text-red-500">{error || existsError}</p>
+      )}
     </motion.div>
   );
 };
