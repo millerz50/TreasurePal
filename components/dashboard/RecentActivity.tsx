@@ -1,4 +1,3 @@
-// components/dashboard/RecentActivity.tsx
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -77,19 +76,14 @@ export default function RecentActivity() {
       try {
         let endpoint = "/activity/recent";
 
-        // 🔒 IMPORTANT: use accountid, not userId
+        // 🔒 Admin sees all, others see only their own activity
         if (primaryRole === "admin") {
           endpoint += "?scope=all";
-        } else if (primaryRole === "agent") {
-          endpoint += `?scope=agent&actorId=${encodeURIComponent(
-            user.accountid,
-          )}`;
         } else {
-          endpoint += `?scope=user&actorId=${encodeURIComponent(
-            user.accountid,
-          )}`;
+          endpoint += `?scope=user&actorId=${encodeURIComponent(user.accountid)}`;
         }
 
+        // Create fresh Appwrite JWT
         const jwt = await account.createJWT();
 
         const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -100,9 +94,7 @@ export default function RecentActivity() {
           signal: controller.signal,
         });
 
-        if (!res.ok) {
-          throw new Error(`Failed (${res.status})`);
-        }
+        if (!res.ok) throw new Error(`Failed (${res.status})`);
 
         const data = await res.json();
         setActivities(Array.isArray(data) ? data : []);
@@ -142,7 +134,6 @@ export default function RecentActivity() {
             <AnimatePresence>
               {activities.map((act) => {
                 const Icon = getActivityIcon(act.action);
-
                 return (
                   <motion.li
                     key={act.id}
@@ -160,6 +151,9 @@ export default function RecentActivity() {
                       <p className="text-sm">{act.message}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(act.createdAt).toLocaleString()}
+                        {primaryRole === "admin" && act.actorId && (
+                          <> • Actor: {act.actorId}</>
+                        )}
                       </p>
                     </div>
                   </motion.li>
