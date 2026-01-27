@@ -1,6 +1,13 @@
 "use client";
 
-import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
+import { motion } from "framer-motion";
 import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertySetup";
 import type {
   PropertyCategory,
@@ -16,8 +23,8 @@ import {
   FaDollarSign,
   FaHome,
   FaMapMarkerAlt,
-  FaPercent,
   FaRoad,
+  FaTag,
 } from "react-icons/fa";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
 
@@ -37,10 +44,57 @@ interface Props {
 ----------------------------------- */
 const DEFAULT_CATEGORY: PropertyCategory = "Residential";
 
-const PROPERTY_STATUS_OPTIONS = [
+const STATUS_OPTIONS = [
   { label: "For Rent", value: "forRent" },
   { label: "For Sale", value: "forSale" },
 ];
+
+/* ----------------------------------
+   Helpers
+----------------------------------- */
+function generateTitle(data: PropertyFormValues) {
+  const subType = data.subType
+    ? data.subType.replace(/([A-Z])/g, " $1").trim()
+    : "Property";
+  const location = data.location || "Prime Location";
+  const statusLabel =
+    data.property_status === "forRent"
+      ? "For Rent"
+      : data.property_status === "forSale"
+        ? "For Sale"
+        : "";
+  return `${subType} ${statusLabel} in ${location}`.trim();
+}
+
+function generateDescription(data: PropertyFormValues) {
+  const rooms =
+    data.rooms && data.rooms > 0
+      ? `${data.rooms} well-proportioned bedroom${data.rooms > 1 ? "s" : ""}`
+      : "spacious living areas";
+
+  const subType = data.subType
+    ? data.subType
+        .replace(/([A-Z])/g, " $1")
+        .trim()
+        .toLowerCase()
+    : "property";
+
+  const location = data.location || "a highly desirable location";
+
+  return `This beautifully presented ${subType} features ${rooms} and is ideally situated in ${location}.
+
+The property offers a well-balanced layout designed for comfortable modern living, with convenient access to key amenities, transport routes, and essential services.
+
+An excellent opportunity for discerning buyers or tenants seeking quality, value, and location in one complete package.`;
+}
+
+/* ----------------------------------
+   Motion variants
+----------------------------------- */
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0 },
+};
 
 /* ----------------------------------
    Component
@@ -56,10 +110,34 @@ const BasicInfoStep: React.FC<Props> = ({
     (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
   );
 
+  const [descriptionTouched, setDescriptionTouched] = useState(false);
+  const [titleTouched, setTitleTouched] = useState(false);
+
   const subTypes = useMemo<PropertySubType[]>(
     () => PROPERTY_HIERARCHY[mainType]?.subTypes ?? [],
     [mainType],
   );
+
+  /* ----------------------------------
+     Auto-generate title & description
+  ----------------------------------- */
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      title: titleTouched ? prev.title : generateTitle(prev),
+      description: descriptionTouched
+        ? prev.description
+        : generateDescription(prev),
+    }));
+  }, [
+    formData.subType,
+    formData.location,
+    formData.rooms,
+    formData.property_status,
+    titleTouched,
+    descriptionTouched,
+    setFormData,
+  ]);
 
   /* ----------------------------------
      Handlers
@@ -72,21 +150,11 @@ const BasicInfoStep: React.FC<Props> = ({
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      if (name === "rooms") {
+      if (name === "rooms")
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
-      }
-
-      if (name === "price" || name === "depositPercentage") {
-        return { ...prev, [name]: value };
-      }
-
-      if (
-        name === "property_status" &&
-        (value === "forRent" || value === "forSale")
-      ) {
-        return { ...prev, property_status: value };
-      }
-
+      if (name === "price") return { ...prev, price: value };
+      if (name === "property_status")
+        return { ...prev, property_status: value as "forRent" | "forSale" };
       return { ...prev, [name]: value };
     });
   };
@@ -95,29 +163,17 @@ const BasicInfoStep: React.FC<Props> = ({
      Validation
   ----------------------------------- */
   const validate = (): string | null => {
-    if (!formData.title?.trim()) return "Title is required.";
+    if (!formData.title?.trim()) return "Property title is required.";
     if (!String(formData.price).trim()) return "Price is required.";
-    if (isNaN(Number(formData.price))) return "Price must be a number.";
+    if (isNaN(Number(formData.price))) return "Price must be a valid number.";
+    if (!formData.property_status) return "Market status is required.";
     if (!formData.location?.trim()) return "Location is required.";
     if (!formData.address?.trim()) return "Address is required.";
     if (!formData.country?.trim()) return "Country is required.";
     if (!formData.type) return "Property category is required.";
     if (!formData.subType) return "Property sub-type is required.";
-    if (!formData.property_status) return "Market property status is required.";
-
-    const rooms = Number(formData.rooms);
-    if (!rooms || rooms < 1) return "Rooms must be at least 1.";
-
-    if (
-      formData.depositOption === "required" &&
-      (!String(formData.depositPercentage || "").trim() ||
-        isNaN(Number(formData.depositPercentage)) ||
-        Number(formData.depositPercentage) <= 0 ||
-        Number(formData.depositPercentage) > 100)
-    ) {
-      return "Deposit percentage must be between 1 and 100.";
-    }
-
+    if (!formData.rooms || Number(formData.rooms) < 1)
+      return "Number of rooms must be at least 1.";
     return null;
   };
 
@@ -125,35 +181,45 @@ const BasicInfoStep: React.FC<Props> = ({
      UI
   ----------------------------------- */
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={fadeUp}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="space-y-7"
+    >
       {/* Title */}
-      <div className="flex items-center gap-2">
+      <motion.div variants={fadeUp} className="flex items-center gap-3">
         <FaHome className="text-primary" />
         <Input
           name="title"
           placeholder="Property title"
           value={formData.title || ""}
-          onChange={handleChange}
-          className="flex-1"
+          onChange={(e) => {
+            setTitleTouched(true);
+            handleChange(e);
+          }}
         />
-      </div>
+      </motion.div>
 
       {/* Price */}
-      <div className="flex items-center gap-2">
+      <motion.div variants={fadeUp} className="flex items-center gap-3">
         <FaDollarSign className="text-primary" />
         <Input
           name="price"
           inputMode="numeric"
-          placeholder="Price (USD)"
+          placeholder="Price"
           value={formData.price || ""}
           onChange={handleChange}
-          className="flex-1"
         />
-      </div>
+      </motion.div>
 
       {/* Market Status */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium mb-1">Market Status</label>
+      <motion.div variants={fadeUp} className="space-y-1">
+        <label className="text-sm font-medium flex items-center gap-2">
+          <FaTag className="text-primary" />
+          Market Status
+        </label>
         <select
           name="property_status"
           value={formData.property_status || ""}
@@ -161,16 +227,16 @@ const BasicInfoStep: React.FC<Props> = ({
           className="select select-bordered w-full"
         >
           <option value="">Select market status</option>
-          {PROPERTY_STATUS_OPTIONS.map((opt) => (
+          {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
           ))}
         </select>
-      </div>
+      </motion.div>
 
       {/* Location */}
-      <div className="flex items-center gap-2">
+      <motion.div variants={fadeUp} className="flex items-center gap-3">
         <FaMapMarkerAlt className="text-primary" />
         <LocationSearch
           onSelect={({ name, lat, lng }) =>
@@ -182,27 +248,26 @@ const BasicInfoStep: React.FC<Props> = ({
             }))
           }
         />
-      </div>
+      </motion.div>
 
       {/* Address */}
-      <div className="flex items-center gap-2">
+      <motion.div variants={fadeUp} className="flex items-center gap-3">
         <FaRoad className="text-primary" />
         <Input
           name="address"
           placeholder="Street address"
           value={formData.address || ""}
           onChange={handleChange}
-          className="flex-1"
         />
-      </div>
+      </motion.div>
 
       {/* Country + Rooms */}
-      <div className="grid grid-cols-2 gap-6">
+      <motion.div variants={fadeUp} className="grid grid-cols-2 gap-6">
         <CountrySelect
           value={formData.country || ""}
           onChange={(val) => setFormData((prev) => ({ ...prev, country: val }))}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <FaBed className="text-primary" />
           <Input
             name="rooms"
@@ -210,104 +275,65 @@ const BasicInfoStep: React.FC<Props> = ({
             placeholder="Rooms"
             value={formData.rooms ?? ""}
             onChange={handleChange}
-            className="w-24"
           />
-          <span className="text-sm text-muted-foreground">rooms available</span>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Property Category */}
-      <select
-        name="type"
-        value={mainType}
-        onChange={(e) => {
-          const newType = e.target.value as PropertyCategory;
-          setMainType(newType);
-          setFormData((prev) => ({
-            ...prev,
-            type: newType,
-            subType: PROPERTY_HIERARCHY[newType]?.subTypes[0] || "",
-          }));
-        }}
-        className="select select-bordered w-full"
-      >
-        {Object.entries(PROPERTY_HIERARCHY).map(([key, value]) => (
-          <option key={key} value={key}>
-            {value.label}
-          </option>
-        ))}
-      </select>
-
-      {/* Sub-Type */}
-      <select
-        name="subType"
-        value={formData.subType || ""}
-        onChange={handleChange}
-        className="select select-bordered w-full"
-        disabled={subTypes.length === 0}
-      >
-        <option value="">
-          {subTypes.length === 0
-            ? "No sub-types available"
-            : "Select property sub-type"}
-        </option>
-        {subTypes.map((subType) => (
-          <option key={subType} value={subType}>
-            {subType.replace(/([A-Z])/g, " $1").trim()}
-          </option>
-        ))}
-      </select>
-
-      {/* Description */}
-      <Textarea
-        name="description"
-        placeholder="Property description..."
-        value={formData.description || ""}
-        onChange={handleChange}
-      />
-
-      {/* Deposit */}
-      <div className="space-y-3 border rounded-lg p-3">
-        <label className="block text-sm font-medium">
-          Deposit Availability
-        </label>
+      {/* Category */}
+      <motion.div variants={fadeUp} className="space-y-4">
         <select
-          name="depositOption"
-          value={formData.depositOption || "none"}
-          onChange={(e) =>
+          name="type"
+          value={mainType}
+          onChange={(e) => {
+            const newType = e.target.value as PropertyCategory;
+            setMainType(newType);
             setFormData((prev) => ({
               ...prev,
-              depositOption: e.target.value as "none" | "required",
-              depositAvailable: e.target.value === "required",
-            }))
-          }
+              type: newType,
+              subType: PROPERTY_HIERARCHY[newType]?.subTypes[0] || "",
+            }));
+          }}
           className="select select-bordered w-full"
         >
-          <option value="none">No Deposit</option>
-          <option value="required">Deposit Required</option>
+          {Object.entries(PROPERTY_HIERARCHY).map(([key, value]) => (
+            <option key={key} value={key}>
+              {value.label}
+            </option>
+          ))}
         </select>
 
-        {formData.depositOption === "required" && (
-          <div className="flex items-center gap-2">
-            <FaPercent className="text-primary" />
-            <Input
-              name="depositPercentage"
-              inputMode="numeric"
-              placeholder="Deposit %"
-              value={formData.depositPercentage ?? ""}
-              onChange={handleChange}
-              className="w-32"
-            />
-            <span className="text-sm text-muted-foreground">
-              of property price
-            </span>
-          </div>
-        )}
-      </div>
+        <select
+          name="subType"
+          value={formData.subType || ""}
+          onChange={handleChange}
+          className="select select-bordered w-full"
+        >
+          <option value="">Select property sub-type</option>
+          {subTypes.map((subType) => (
+            <option key={subType} value={subType}>
+              {subType.replace(/([A-Z])/g, " $1").trim()}
+            </option>
+          ))}
+        </select>
+      </motion.div>
+
+      {/* Description */}
+      <motion.div variants={fadeUp}>
+        <Textarea
+          name="description"
+          value={formData.description || ""}
+          onChange={(e) => {
+            setDescriptionTouched(true);
+            handleChange(e);
+          }}
+          className="min-h-[160px]"
+        />
+      </motion.div>
 
       {/* Navigation */}
-      <div className="flex justify-end">
+      <motion.div variants={fadeUp} className="flex justify-end">
         <Button
+          size="lg"
           onClick={() => {
             const err = validate();
             if (err) return setError(err);
@@ -315,12 +341,12 @@ const BasicInfoStep: React.FC<Props> = ({
             setStep(2);
           }}
         >
-          Next
+          Continue
         </Button>
-      </div>
+      </motion.div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-    </div>
+      {error && <p className="text-sm text-red-500">{error}</p>}
+    </motion.div>
   );
 };
 
