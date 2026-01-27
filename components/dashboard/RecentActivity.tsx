@@ -55,7 +55,7 @@ export default function RecentActivity() {
     `/api/${process.env.NEXT_PUBLIC_API_VERSION || "v2"}`;
 
   /* ----------------------------------
-     RESOLVE PRIMARY ROLE
+     DETERMINE PRIMARY ROLE
   ----------------------------------- */
   const primaryRole = useMemo(() => {
     if (!user?.roles?.length) return "user";
@@ -76,11 +76,11 @@ export default function RecentActivity() {
       try {
         let endpoint = "/activity/recent";
 
-        // 🔒 Admin sees all with actorId
-        // Users and agents only see their own activity
+        // Admin sees all
         if (primaryRole === "admin") {
           endpoint += "?scope=all";
         } else {
+          // User/Agent sees only their own activity
           endpoint += `?scope=user&actorId=${encodeURIComponent(user.accountid)}`;
         }
 
@@ -95,6 +95,10 @@ export default function RecentActivity() {
           signal: controller.signal,
         });
 
+        if (res.status === 401)
+          throw new Error("Unauthorized: Please login again");
+        if (res.status === 404) throw new Error("Activity endpoint not found");
+
         if (!res.ok) throw new Error(`Failed (${res.status})`);
 
         const data = await res.json();
@@ -102,7 +106,7 @@ export default function RecentActivity() {
       } catch (err: any) {
         if (err.name === "AbortError") return;
         console.error("❌ Failed to fetch recent activity:", err);
-        setError("Could not load activity");
+        setError(err.message || "Could not load activity");
         setActivities([]);
       } finally {
         setLoading(false);
@@ -135,7 +139,6 @@ export default function RecentActivity() {
             <AnimatePresence>
               {activities.map((act) => {
                 const Icon = getActivityIcon(act.action);
-
                 return (
                   <motion.li
                     key={act.id}
@@ -153,7 +156,6 @@ export default function RecentActivity() {
                       <p className="text-sm">{act.message}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(act.createdAt).toLocaleString()}
-                        {/* Admin sees actorId */}
                         {primaryRole === "admin" && act.actorId && (
                           <> • Actor: {act.actorId}</>
                         )}
