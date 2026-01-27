@@ -31,29 +31,22 @@ export const PropertySchema = z.object({
     .string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title cannot exceed 100 characters"),
-  price: z
-    .union([z.string(), z.number()])
-    .refine((val) => Number(val) > 0, {
-      message: "Price must be greater than 0",
-    }),
+  price: z.union([z.string(), z.number()]).refine((val) => Number(val) > 0, {
+    message: "Price must be greater than 0",
+  }),
   type: z.string().min(1, "Property type is required"),
   subType: z.string().min(1, "Property subtype is required"),
-
-  // Internal status
   status: z.enum(["pending", "verified", "notVerified"]).optional(),
-
-  // Market status
   property_status: z.enum(["forRent", "forSale"], {
     required_error: "Property status is required",
   }),
-
   country: z.string(),
   location: z.string().min(2, "Location is required"),
-  address: z.string().min(5, "Address must be more detailed"),
+  address: z.string().min(5, "Address must be detailed"),
   rooms: z.number().min(1, "At least 1 room is required"),
   description: z
     .string()
-    .min(10)
+    .min(10, "Description too short")
     .max(255, "Description must not exceed 255 characters"),
   amenities: z.array(z.string()).optional(),
   locationLat: z.number().nullable().optional(),
@@ -98,10 +91,8 @@ export default function AddPropertyWizard() {
     price: "",
     type: "Residential",
     subType: "House",
-
     status: "pending",
     property_status: "forRent",
-
     country: "Zimbabwe",
     location: "",
     address: "",
@@ -126,7 +117,11 @@ export default function AddPropertyWizard() {
   }, [user?.userId]);
 
   /* ----------------------------------
-     Submit
+     Submit handler
+     - Validates
+     - Creates property
+     - Deducts coins
+     - Logs transaction
   ----------------------------------- */
   const handleSubmit = async () => {
     setLoading(true);
@@ -137,6 +132,7 @@ export default function AddPropertyWizard() {
       if (!user || !hasRole(user, "agent"))
         throw new Error("Only agents can add properties.");
 
+      // Validate
       const parsed = PropertySchema.safeParse(formData);
       if (!parsed.success) throw new Error(parsed.error.errors[0]?.message);
 
@@ -151,17 +147,46 @@ export default function AddPropertyWizard() {
         else fd.append(key, String(value));
       });
 
+      // Check if agent has enough coins
+      const creditRes = await fetch(
+        `${API_BASE}/users/${user.userId}/credits`,
+        {
+          headers: { Authorization: `Bearer ${jwt.jwt}` },
+        },
+      );
+      const creditData = await creditRes.json();
+      const costPerProperty = 10; // coins required per property
+      if (creditData.balance < costPerProperty)
+        throw new Error("Insufficient coins to add a property");
+
+      // Create property
       const res = await fetch(`${API_BASE}/api/${API_VERSION}/properties/add`, {
         method: "POST",
         headers: { Authorization: `Bearer ${jwt.jwt}` },
         body: fd,
       });
-
       if (!res.ok)
-        throw new Error((await res.text()) || "Failed to submit property");
+        throw new Error((await res.text()) || "Failed to create property");
 
-      await res.json();
+      const createdProperty = await res.json();
 
+      // Deduct coins
+      await fetch(`${API_BASE}/users/${user.userId}/credits/spend`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${jwt.jwt}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: costPerProperty,
+          refId: createdProperty.$id,
+          refType: "property",
+          action: "add_property",
+          message: `Coins spent for adding property "${parsed.data.title}"`,
+        }),
+      });
+
+      // Reset form
       if (window.confirm("Property created successfully! Add another?")) {
         setStep(1);
         setFormData({
@@ -231,7 +256,6 @@ export default function AddPropertyWizard() {
           setError={setError}
         />
       )}
-
       {step === 2 && (
         <AmenitiesStep
           formData={formData}
