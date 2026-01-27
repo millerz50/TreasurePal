@@ -26,8 +26,9 @@ import {
   FaRoad,
   FaTag,
 } from "react-icons/fa";
+import { Switch } from "@/components/ui/switch"; // Tailwind/your UI library
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
-import { Client, Account, Databases, Storage, Query } from "appwrite";
+import { Client, Databases, Query } from "appwrite";
 
 /* ----------------------------------
    Appwrite Client & Services
@@ -36,9 +37,7 @@ const client = new Client()
   .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
   .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string);
 
-const account = new Account(client);
 const databases = new Databases(client);
-const storage = new Storage(client);
 
 /* ----------------------------------
    Check if property exists by title or address
@@ -84,21 +83,31 @@ const STATUS_OPTIONS = [
   { label: "For Rent", value: "forRent" },
   { label: "For Sale", value: "forSale" },
 ];
+const MAX_LENGTH = 255; // max chars for title & description
 
 /* ----------------------------------
    Helpers
 ----------------------------------- */
 function generateTitle(data: PropertyFormValues) {
+  const propertyName = data.propertyName?.trim();
   const subType = data.subType
-    ? data.subType.replace(/([A-Z])/g, " $1").trim()
-    : "Property";
+    ? data.subType.replace(/([A-Z])/g, " $1").toLowerCase()
+    : "property";
+  const rooms =
+    data.rooms && data.rooms > 0
+      ? `${data.rooms} room${data.rooms > 1 ? "s" : ""}`
+      : "full house";
   const statusLabel =
     data.property_status === "forRent"
-      ? "For Rent"
+      ? "available"
       : data.property_status === "forSale"
-        ? "For Sale"
+        ? "for sale"
         : "";
-  return `${subType} ${statusLabel}`.trim();
+
+  const title = propertyName
+    ? `${propertyName} ${rooms} ${statusLabel}`
+    : `${subType} ${rooms} ${statusLabel}`;
+  return title.length > MAX_LENGTH ? title.slice(0, MAX_LENGTH) : title;
 }
 
 function generateDescription(data: PropertyFormValues) {
@@ -118,7 +127,10 @@ function generateDescription(data: PropertyFormValues) {
         ? "for sale"
         : "available";
 
-  return `This ${type} features ${rooms} well-proportioned room${rooms > 1 ? "s" : ""}, ${statusLabel} at ${price}. It is ideally located in ${location}, offering excellent amenities and modern living standards. A perfect opportunity for anyone seeking quality, value, and comfort.`;
+  let description = `This ${type} features ${rooms} well-proportioned room${rooms > 1 ? "s" : ""}, ${statusLabel} at ${price}. It is ideally located in ${location}, offering excellent amenities and modern living standards.`;
+  if (description.length > MAX_LENGTH)
+    description = description.slice(0, MAX_LENGTH);
+  return description;
 }
 
 /* ----------------------------------
@@ -139,17 +151,20 @@ const BasicInfoStep: React.FC<Props> = ({
   const [mainType, setMainType] = useState<PropertyCategory>(
     (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
   );
+
   const [titleTouched, setTitleTouched] = useState(false);
   const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [existsError, setExistsError] = useState<string | null>(null);
+  const [autoGenerate, setAutoGenerate] = useState(true);
 
   const subTypes = useMemo<PropertySubType[]>(
     () => PROPERTY_HIERARCHY[mainType]?.subTypes ?? [],
     [mainType],
   );
 
-  /* Auto-generate title & description */
+  // Auto-generate title & description if toggle is ON
   useEffect(() => {
+    if (!autoGenerate) return;
     setFormData((prev) => ({
       ...prev,
       title: titleTouched ? prev.title : generateTitle(prev),
@@ -158,6 +173,7 @@ const BasicInfoStep: React.FC<Props> = ({
         : generateDescription(prev),
     }));
   }, [
+    formData.propertyName,
     formData.subType,
     formData.location,
     formData.rooms,
@@ -165,10 +181,11 @@ const BasicInfoStep: React.FC<Props> = ({
     formData.property_status,
     titleTouched,
     descriptionTouched,
+    autoGenerate,
     setFormData,
   ]);
 
-  /* Check duplicates in Appwrite */
+  // Check duplicates in Appwrite
   useEffect(() => {
     const checkExists = async () => {
       setExistsError(null);
@@ -192,24 +209,30 @@ const BasicInfoStep: React.FC<Props> = ({
     checkExists();
   }, [formData.title, formData.address]);
 
-  /* Handle input changes */
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => {
     const { name, value } = e.target;
+
+    // If user types manually in title/description, stop auto-generation
+    if (name === "title" || name === "description") setAutoGenerate(false);
+
+    // Limit length
+    const newValue =
+      value.length > MAX_LENGTH ? value.slice(0, MAX_LENGTH) : value;
+
     setFormData((prev) => {
       if (name === "rooms")
-        return { ...prev, rooms: value === "" ? 0 : Number(value) };
-      if (name === "price") return { ...prev, price: value };
+        return { ...prev, rooms: newValue === "" ? 0 : Number(newValue) };
+      if (name === "price") return { ...prev, price: newValue };
       if (name === "property_status")
-        return { ...prev, property_status: value as "forRent" | "forSale" };
-      return { ...prev, [name]: value };
+        return { ...prev, property_status: newValue as "forRent" | "forSale" };
+      return { ...prev, [name]: newValue };
     });
   };
 
-  /* Validation */
   const validate = (): string | null => {
     if (!formData.title?.trim()) return "Property title is required.";
     if (!formData.property_status) return "Market status is required.";
@@ -226,9 +249,6 @@ const BasicInfoStep: React.FC<Props> = ({
     return null;
   };
 
-  /* ----------------------------------
-     UI
-  ----------------------------------- */
   return (
     <motion.div
       initial="hidden"
@@ -237,6 +257,37 @@ const BasicInfoStep: React.FC<Props> = ({
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="space-y-7"
     >
+      {/* Auto-generate toggle */}
+      <motion.div variants={fadeUp} className="flex items-center gap-2">
+        <Switch
+          id="auto-generate"
+          checked={autoGenerate}
+          onCheckedChange={setAutoGenerate}
+        />
+        <label htmlFor="auto-generate" className="text-sm font-medium">
+          Auto-generate title & description
+        </label>
+      </motion.div>
+
+      {/* Property Name */}
+      <motion.div variants={fadeUp} className="flex flex-col gap-1">
+        <label className="text-sm font-medium">Property Name (optional)</label>
+        <Input
+          name="propertyName"
+          placeholder="e.g., Chiramba Complex"
+          value={formData.propertyName || ""}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              propertyName: e.target.value.slice(0, MAX_LENGTH),
+            }))
+          }
+        />
+        <p className="text-xs text-gray-500">
+          If entered, this name will be used in the auto-generated title.
+        </p>
+      </motion.div>
+
       {/* Title */}
       <motion.div variants={fadeUp} className="flex items-center gap-3">
         <FaHome className="text-primary" />
@@ -244,10 +295,7 @@ const BasicInfoStep: React.FC<Props> = ({
           name="title"
           placeholder="Property title"
           value={formData.title || ""}
-          onChange={(e) => {
-            setTitleTouched(true);
-            handleChange(e);
-          }}
+          onChange={handleChange}
         />
       </motion.div>
 
@@ -372,12 +420,10 @@ const BasicInfoStep: React.FC<Props> = ({
         <Textarea
           name="description"
           value={formData.description || ""}
-          onChange={(e) => {
-            setDescriptionTouched(true);
-            handleChange(e);
-          }}
+          onChange={handleChange}
           className="min-h-[160px]"
         />
+        <p className="text-xs text-gray-500">Max {MAX_LENGTH} characters</p>
       </motion.div>
 
       {/* Continue button */}

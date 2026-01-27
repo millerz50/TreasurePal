@@ -23,10 +23,19 @@ export type Step = 1 | 2 | 3 | 4 | 5;
    Schema
 ----------------------------------- */
 export const PropertySchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  price: z.union([z.string(), z.number()]).refine((val) => Number(val) > 0, {
-    message: "Price must be greater than 0",
-  }),
+  propertyName: z
+    .string()
+    .max(50, "Property name cannot exceed 50 characters")
+    .optional(),
+  title: z
+    .string()
+    .min(3, "Title must be at least 3 characters")
+    .max(100, "Title cannot exceed 100 characters"),
+  price: z
+    .union([z.string(), z.number()])
+    .refine((val) => Number(val) > 0, {
+      message: "Price must be greater than 0",
+    }),
   type: z.string().min(1, "Property type is required"),
   subType: z.string().min(1, "Property subtype is required"),
 
@@ -41,8 +50,11 @@ export const PropertySchema = z.object({
   country: z.string(),
   location: z.string().min(2, "Location is required"),
   address: z.string().min(5, "Address must be more detailed"),
-  rooms: z.number().min(0),
-  description: z.string().min(10),
+  rooms: z.number().min(1, "At least 1 room is required"),
+  description: z
+    .string()
+    .min(10)
+    .max(255, "Description must not exceed 255 characters"),
   amenities: z.array(z.string()).optional(),
   locationLat: z.number().nullable().optional(),
   locationLng: z.number().nullable().optional(),
@@ -81,21 +93,19 @@ export default function AddPropertyWizard() {
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<PropertyFormValues>({
+    propertyName: "",
     title: "",
     price: "",
     type: "Residential",
     subType: "House",
 
-    // Internal verification status
     status: "pending",
-
-    // Market status
     property_status: "forRent",
 
     country: "Zimbabwe",
     location: "",
     address: "",
-    rooms: 0,
+    rooms: 1,
     description: "",
     amenities: [],
     locationLat: null,
@@ -155,16 +165,17 @@ export default function AddPropertyWizard() {
       if (window.confirm("Property created successfully! Add another?")) {
         setStep(1);
         setFormData({
+          propertyName: "",
           title: "",
           price: "",
           type: "Residential",
           subType: "House",
-          status: "pending", // reset internal status
-          property_status: "forRent", // reset market status
+          status: "pending",
+          property_status: "forRent",
           country: "Zimbabwe",
           location: "",
           address: "",
-          rooms: 0,
+          rooms: 1,
           description: "",
           amenities: [],
           locationLat: null,
