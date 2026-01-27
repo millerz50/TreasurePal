@@ -51,7 +51,7 @@ export default function OverviewCards({
       <div className="p-4 bg-white rounded shadow">
         <div className="text-sm text-gray-500">Avg rating</div>
         <div className="text-2xl font-semibold">
-          {loading ? "Loading…" : metrics?.averagePropertyRating ?? "—"}
+          {loading ? "Loading…" : (metrics?.averagePropertyRating ?? "—")}
         </div>
       </div>
 
@@ -59,7 +59,9 @@ export default function OverviewCards({
       <div className="p-4 bg-white rounded shadow">
         <div className="text-sm text-gray-500">Metric records</div>
         <div className="text-2xl font-semibold">
-          {loading ? "Loading…" : formatNumber(metrics?.historicalMetricRecords)}
+          {loading
+            ? "Loading…"
+            : formatNumber(metrics?.historicalMetricRecords)}
         </div>
       </div>
 
@@ -113,4 +115,3 @@ export default function OverviewCards({
     </div>
   );
 }
-
