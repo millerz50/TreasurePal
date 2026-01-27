@@ -76,7 +76,8 @@ export default function RecentActivity() {
       try {
         let endpoint = "/activity/recent";
 
-        // 🔒 Admin sees all, others see only their own activity
+        // 🔒 Admin sees all with actorId
+        // Users and agents only see their own activity
         if (primaryRole === "admin") {
           endpoint += "?scope=all";
         } else {
@@ -134,6 +135,7 @@ export default function RecentActivity() {
             <AnimatePresence>
               {activities.map((act) => {
                 const Icon = getActivityIcon(act.action);
+
                 return (
                   <motion.li
                     key={act.id}
@@ -151,6 +153,7 @@ export default function RecentActivity() {
                       <p className="text-sm">{act.message}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(act.createdAt).toLocaleString()}
+                        {/* Admin sees actorId */}
                         {primaryRole === "admin" && act.actorId && (
                           <> • Actor: {act.actorId}</>
                         )}
