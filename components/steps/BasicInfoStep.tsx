@@ -16,7 +16,6 @@ import type {
 import LocationSearch from "@/components/property/LocationSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import CountrySelect from "./CountrySelect";
 import {
   FaBed,
@@ -27,6 +26,7 @@ import {
   FaTag,
 } from "react-icons/fa";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
+import { Textarea } from "@/components/ui/textarea";
 
 /* ----------------------------------
    Props
@@ -56,36 +56,34 @@ function generateTitle(data: PropertyFormValues) {
   const subType = data.subType
     ? data.subType.replace(/([A-Z])/g, " $1").trim()
     : "Property";
-  const location = data.location || "Prime Location";
   const statusLabel =
     data.property_status === "forRent"
       ? "For Rent"
       : data.property_status === "forSale"
         ? "For Sale"
         : "";
-  return `${subType} ${statusLabel} in ${location}`.trim();
+  return `${subType} ${statusLabel}`;
 }
 
 function generateDescription(data: PropertyFormValues) {
-  const rooms =
-    data.rooms && data.rooms > 0
-      ? `${data.rooms} well-proportioned bedroom${data.rooms > 1 ? "s" : ""}`
-      : "spacious living areas";
-
-  const subType = data.subType
+  const rooms = data.rooms && data.rooms > 0 ? data.rooms : "N/A";
+  const price = data.price ? `$${data.price}` : "Price on request";
+  const location = data.location || "a prime location";
+  const type = data.subType
     ? data.subType
         .replace(/([A-Z])/g, " $1")
         .trim()
         .toLowerCase()
     : "property";
+  const statusLabel =
+    data.property_status === "forRent"
+      ? "available for rent"
+      : data.property_status === "forSale"
+        ? "for sale"
+        : "available";
 
-  const location = data.location || "a highly desirable location";
-
-  return `This beautifully presented ${subType} features ${rooms} and is ideally situated in ${location}.
-
-The property offers a well-balanced layout designed for comfortable modern living, with convenient access to key amenities, transport routes, and essential services.
-
-An excellent opportunity for discerning buyers or tenants seeking quality, value, and location in one complete package.`;
+  const roomCount = Number(rooms) || 0; // ensure numeric
+  return `This ${type} features ${roomCount} well-proportioned room${roomCount > 1 ? "s" : ""}, ${statusLabel} at ${price}. It is ideally located in ${location}, offering excellent amenities and modern living standards. A perfect opportunity for anyone seeking quality, value, and comfort.`;
 }
 
 /* ----------------------------------
@@ -110,9 +108,6 @@ const BasicInfoStep: React.FC<Props> = ({
     (formData.type as PropertyCategory) ?? DEFAULT_CATEGORY,
   );
 
-  const [descriptionTouched, setDescriptionTouched] = useState(false);
-  const [titleTouched, setTitleTouched] = useState(false);
-
   const subTypes = useMemo<PropertySubType[]>(
     () => PROPERTY_HIERARCHY[mainType]?.subTypes ?? [],
     [mainType],
@@ -124,18 +119,15 @@ const BasicInfoStep: React.FC<Props> = ({
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      title: titleTouched ? prev.title : generateTitle(prev),
-      description: descriptionTouched
-        ? prev.description
-        : generateDescription(prev),
+      title: generateTitle(prev),
+      description: generateDescription(prev),
     }));
   }, [
     formData.subType,
     formData.location,
     formData.rooms,
+    formData.price,
     formData.property_status,
-    titleTouched,
-    descriptionTouched,
     setFormData,
   ]);
 
@@ -143,12 +135,9 @@ const BasicInfoStep: React.FC<Props> = ({
      Handlers
   ----------------------------------- */
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-
     setFormData((prev) => {
       if (name === "rooms")
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
@@ -163,9 +152,6 @@ const BasicInfoStep: React.FC<Props> = ({
      Validation
   ----------------------------------- */
   const validate = (): string | null => {
-    if (!formData.title?.trim()) return "Property title is required.";
-    if (!String(formData.price).trim()) return "Price is required.";
-    if (isNaN(Number(formData.price))) return "Price must be a valid number.";
     if (!formData.property_status) return "Market status is required.";
     if (!formData.location?.trim()) return "Location is required.";
     if (!formData.address?.trim()) return "Address is required.";
@@ -174,6 +160,8 @@ const BasicInfoStep: React.FC<Props> = ({
     if (!formData.subType) return "Property sub-type is required.";
     if (!formData.rooms || Number(formData.rooms) < 1)
       return "Number of rooms must be at least 1.";
+    if (!formData.price || isNaN(Number(formData.price)))
+      return "Price must be a valid number.";
     return null;
   };
 
@@ -188,18 +176,10 @@ const BasicInfoStep: React.FC<Props> = ({
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="space-y-7"
     >
-      {/* Title */}
+      {/* Title (auto-generated, not editable) */}
       <motion.div variants={fadeUp} className="flex items-center gap-3">
         <FaHome className="text-primary" />
-        <Input
-          name="title"
-          placeholder="Property title"
-          value={formData.title || ""}
-          onChange={(e) => {
-            setTitleTouched(true);
-            handleChange(e);
-          }}
-        />
+        <Input name="title" value={formData.title || ""} disabled />
       </motion.div>
 
       {/* Price */}
@@ -317,15 +297,12 @@ const BasicInfoStep: React.FC<Props> = ({
         </select>
       </motion.div>
 
-      {/* Description */}
+      {/* Description (auto-generated, not editable) */}
       <motion.div variants={fadeUp}>
         <Textarea
           name="description"
           value={formData.description || ""}
-          onChange={(e) => {
-            setDescriptionTouched(true);
-            handleChange(e);
-          }}
+          disabled
           className="min-h-[160px]"
         />
       </motion.div>
