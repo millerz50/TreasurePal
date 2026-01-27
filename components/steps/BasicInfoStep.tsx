@@ -21,7 +21,9 @@ import {
 } from "react-icons/fa";
 import type { PropertyFormValues, Step } from "../AddPropertyWizard";
 
-// Props interface
+/* ----------------------------------
+   Props
+----------------------------------- */
 interface Props {
   formData: PropertyFormValues;
   setFormData: Dispatch<SetStateAction<PropertyFormValues>>;
@@ -30,22 +32,19 @@ interface Props {
   setError: Dispatch<SetStateAction<string | null>>;
 }
 
-// Default category
+/* ----------------------------------
+   Constants
+----------------------------------- */
 const DEFAULT_CATEGORY: PropertyCategory = "Residential";
 
-// Market status options
 const PROPERTY_STATUS_OPTIONS = [
   { label: "For Rent", value: "forRent" },
   { label: "For Sale", value: "forSale" },
 ];
 
-// Internal verification status options
-const STATUS_OPTIONS = [
-  { label: "Pending", value: "pending" },
-  { label: "Verified", value: "verified" },
-  { label: "Not Verified", value: "notVerified" },
-];
-
+/* ----------------------------------
+   Component
+----------------------------------- */
 const BasicInfoStep: React.FC<Props> = ({
   formData,
   setFormData,
@@ -62,6 +61,9 @@ const BasicInfoStep: React.FC<Props> = ({
     [mainType],
   );
 
+  /* ----------------------------------
+     Handlers
+  ----------------------------------- */
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -70,27 +72,28 @@ const BasicInfoStep: React.FC<Props> = ({
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      if (name === "rooms")
+      if (name === "rooms") {
         return { ...prev, rooms: value === "" ? 0 : Number(value) };
-      if (name === "price" || name === "depositPercentage")
+      }
+
+      if (name === "price" || name === "depositPercentage") {
         return { ...prev, [name]: value };
+      }
+
       if (
         name === "property_status" &&
         (value === "forRent" || value === "forSale")
-      )
+      ) {
         return { ...prev, property_status: value };
-      if (
-        name === "status" &&
-        ["pending", "verified", "notVerified"].includes(value)
-      )
-        return {
-          ...prev,
-          status: value as "pending" | "verified" | "notVerified",
-        };
+      }
+
       return { ...prev, [name]: value };
     });
   };
 
+  /* ----------------------------------
+     Validation
+  ----------------------------------- */
   const validate = (): string | null => {
     if (!formData.title?.trim()) return "Title is required.";
     if (!String(formData.price).trim()) return "Price is required.";
@@ -101,7 +104,6 @@ const BasicInfoStep: React.FC<Props> = ({
     if (!formData.type) return "Property category is required.";
     if (!formData.subType) return "Property sub-type is required.";
     if (!formData.property_status) return "Market property status is required.";
-    if (!formData.status) return "Internal status is required.";
 
     const rooms = Number(formData.rooms);
     if (!rooms || rooms < 1) return "Rooms must be at least 1.";
@@ -119,6 +121,9 @@ const BasicInfoStep: React.FC<Props> = ({
     return null;
   };
 
+  /* ----------------------------------
+     UI
+  ----------------------------------- */
   return (
     <div className="space-y-6">
       {/* Title */}
@@ -146,35 +151,17 @@ const BasicInfoStep: React.FC<Props> = ({
         />
       </div>
 
-      {/* Market Property Status */}
+      {/* Market Status */}
       <div className="flex flex-col">
         <label className="text-sm font-medium mb-1">Market Status</label>
         <select
           name="property_status"
-          value={formData.property_status || "forRent"} // default
+          value={formData.property_status || ""}
           onChange={handleChange}
           className="select select-bordered w-full"
         >
           <option value="">Select market status</option>
           {PROPERTY_STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Internal Verification Status */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium mb-1">Internal Status</label>
-        <select
-          name="status"
-          value={formData.status || "pending"} // ✅ default to pending
-          onChange={handleChange}
-          className="select select-bordered w-full"
-        >
-          <option value="">Select internal status</option>
-          {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -239,7 +226,7 @@ const BasicInfoStep: React.FC<Props> = ({
           setFormData((prev) => ({
             ...prev,
             type: newType,
-            subType: subTypes[0] || "",
+            subType: PROPERTY_HIERARCHY[newType]?.subTypes[0] || "",
           }));
         }}
         className="select select-bordered w-full"
@@ -251,7 +238,7 @@ const BasicInfoStep: React.FC<Props> = ({
         ))}
       </select>
 
-      {/* Property Sub-Type */}
+      {/* Sub-Type */}
       <select
         name="subType"
         value={formData.subType || ""}
@@ -277,12 +264,11 @@ const BasicInfoStep: React.FC<Props> = ({
         placeholder="Property description..."
         value={formData.description || ""}
         onChange={handleChange}
-        className="w-full"
       />
 
       {/* Deposit */}
       <div className="space-y-3 border rounded-lg p-3">
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium">
           Deposit Availability
         </label>
         <select
@@ -302,7 +288,7 @@ const BasicInfoStep: React.FC<Props> = ({
         </select>
 
         {formData.depositOption === "required" && (
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2">
             <FaPercent className="text-primary" />
             <Input
               name="depositPercentage"
@@ -328,7 +314,6 @@ const BasicInfoStep: React.FC<Props> = ({
             setError(null);
             setStep(2);
           }}
-          className="w-full sm:w-auto"
         >
           Next
         </Button>
