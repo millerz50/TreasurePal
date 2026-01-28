@@ -7,32 +7,43 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /* =========================
-   TYPES
+   TYPES (MATCH API SCHEMA)
 ========================= */
 type Property = {
   $id: string;
   title: string;
-  price: number | string;
-  location: string;
-  address: string;
-  rooms: number;
-  description: string;
   type: string;
-  status: string;
-  country: string;
-  agentId?: string | null;
-  published?: boolean;
+  subType: string;
+  property_status: string;
+  price: number | null;
+  location: string | null;
+  address: string | null;
+  rooms: number | null;
+  description: string | null;
+  country: string | null;
+  accountId?: string | null; // ✅ FIXED
+  companyId?: string | null;
+  published: boolean;
   approvedBy?: string | null;
   approvedAt?: string | null;
-  $createdAt?: string;
-  $updatedAt?: string;
+  $createdAt: string;
+  $updatedAt: string;
 };
 
 /* =========================
-   TEMP CONSTANT
-   👉 Replace with auth user id
+   JWT HELPER
 ========================= */
-const AGENT_ID = "356a9dd7-cca7-4685-a74f-0169e71aa99b";
+const getAccountIdFromToken = (): string | null => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.accountId || payload.sub || null;
+  } catch {
+    return null;
+  }
+};
 
 /* =========================
    COMPONENT
@@ -43,15 +54,14 @@ export default function ManageListings() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [accountId, setAccountId] = useState<string | null>(null);
 
   /* =========================
      API CONFIG
   ========================= */
   const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
-
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
-
   const API_BASE = `${API_BASE_URL}/api/${API_VERSION}`;
 
   /* =========================
@@ -64,19 +74,15 @@ export default function ManageListings() {
       if (!token) throw new Error("Not authenticated");
 
       const res = await fetch(`${API_BASE}/properties/all`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) {
-        throw new Error(`Failed to fetch listings (${res.status})`);
-      }
+      if (!res.ok) throw new Error("Failed to fetch listings");
 
       const data = await res.json();
       setProperties(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("❌ Failed to fetch listings", err);
+      console.error("❌ Fetch error", err);
       setProperties([]);
     } finally {
       setLoading(false);
@@ -87,7 +93,7 @@ export default function ManageListings() {
      DELETE PROPERTY
   ========================= */
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this listing?")) return;
+    if (!confirm("Delete this listing?")) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -95,12 +101,10 @@ export default function ManageListings() {
 
       const res = await fetch(`${API_BASE}/properties/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error("Failed to delete property");
+      if (!res.ok) throw new Error("Delete failed");
 
       setProperties((prev) => prev.filter((p) => p.$id !== id));
     } catch (err) {
@@ -109,27 +113,26 @@ export default function ManageListings() {
   };
 
   /* =========================
-     EFFECT
+     EFFECTS
   ========================= */
   useEffect(() => {
+    setAccountId(getAccountIdFromToken());
     fetchListings();
   }, [fetchListings]);
 
   /* =========================
-     FILTER (AGENT + SEARCH)
+     FILTER (MY PROPERTIES ONLY)
   ========================= */
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
 
     return properties.filter((p) => {
       return (
-        p.agentId === AGENT_ID &&
-        p.title?.toLowerCase().includes(q) &&
-        p.type === "industrial" &&
-        p.status === "pending"
+        (!accountId || p.accountId === accountId) &&
+        p.title.toLowerCase().includes(q)
       );
     });
-  }, [properties, search]);
+  }, [properties, search, accountId]);
 
   /* =========================
      STATUS STYLES
@@ -137,10 +140,11 @@ export default function ManageListings() {
   const statusStyles = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
-      case "available":
         return "bg-green-100 text-green-700";
       case "pending":
         return "bg-yellow-100 text-yellow-700";
+      case "rejected":
+        return "bg-red-100 text-red-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
@@ -152,11 +156,9 @@ export default function ManageListings() {
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">
-          My Pending Industrial Listings
-        </h1>
+        <h1 className="text-2xl font-semibold">My Property Listings</h1>
         <p className="text-sm text-muted-foreground">
-          Properties submitted by you and awaiting approval
+          Properties created by your account
         </p>
       </div>
 
@@ -164,7 +166,7 @@ export default function ManageListings() {
 
       <div className="flex justify-between gap-4">
         <Input
-          placeholder="Search title..."
+          placeholder="Search by title..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -183,7 +185,7 @@ export default function ManageListings() {
 
       {!loading && filtered.length === 0 && (
         <p className="text-center py-12 text-muted-foreground">
-          No listings found for this agent.
+          No properties found.
         </p>
       )}
 
@@ -203,15 +205,17 @@ export default function ManageListings() {
               {filtered.map((p) => (
                 <tr key={p.$id} className="border-t hover:bg-muted/40">
                   <td className="px-4 py-3 font-medium">{p.title}</td>
-                  <td className="px-4 py-3">{p.location}</td>
-                  <td className="px-4 py-3">${p.price}</td>
+                  <td className="px-4 py-3">{p.location ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {p.price !== null ? `$${p.price.toLocaleString()}` : "—"}
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles(
-                        p.status,
+                        p.property_status,
                       )}`}
                     >
-                      {p.status}
+                      {p.property_status}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right space-x-2">
