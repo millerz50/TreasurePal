@@ -1,311 +1,249 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { account, storage } from "@/lib/appwrite";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
-/* ======================================================
-   Helpers (same logic as PropertyCard)
-====================================================== */
-
-type ImageValue = string | { $id: string } | null | undefined;
-
-function resolveFileId(file: ImageValue): string | null {
-  if (!file) return null;
-  if (typeof file === "string") return file;
-  if (typeof file === "object" && "$id" in file) return file.$id;
-  return null;
-}
-
-function getAppwriteFileUrl(fileId: string | null) {
-  if (!fileId) return "/default-property.jpg";
-
-  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID;
-  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
-
-  if (!endpoint || !bucketId || !projectId) {
-    return "/default-property.jpg";
-  }
-
-  const base = endpoint.endsWith("/v1")
-    ? endpoint
-    : `${endpoint.replace(/\/$/, "")}/v1`;
-
-  return `${base}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
-}
-
-/* ======================================================
-   Types
-====================================================== */
-
+/* =========================
+   TYPES (MATCH API SCHEMA)
+========================= */
 type Property = {
   $id: string;
   title: string;
-  description: string;
-  price: number | string;
   type: string;
   subType: string;
-  status: string | null;
-  property_status: string;
-  location: string;
-  address: string;
-  rooms: number;
-  country: string;
-
-  frontElevation?: ImageValue;
-  southView?: ImageValue;
-  westView?: ImageValue;
-  eastView?: ImageValue;
-  floorPlan?: ImageValue;
+  property_status: string; // pending | approved | rejected | etc
+  price: number | null;
+  location: string | null;
+  address: string | null;
+  rooms: number | null;
+  description: string | null;
+  country: string | null;
+  accountId?: string | null;
+  companyId?: string | null;
+  published: boolean;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  $createdAt: string;
+  $updatedAt: string;
 };
 
-/* ======================================================
-   Image keys (STRICT)
-====================================================== */
+/* =========================
+   JWT HELPER
+========================= */
+const getAccountIdFromToken = (): string | null => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
 
-type ImageField =
-  | "frontElevation"
-  | "southView"
-  | "westView"
-  | "eastView"
-  | "floorPlan";
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.accountId ?? payload.sub ?? null;
+  } catch {
+    return null;
+  }
+};
 
-const IMAGE_FIELDS: ImageField[] = [
-  "frontElevation",
-  "southView",
-  "westView",
-  "eastView",
-  "floorPlan",
-];
-
-/* ======================================================
-   Component
-====================================================== */
-
-export default function EditListingPage() {
-  const { id } = useParams<{ id: string }>();
+/* =========================
+   COMPONENT
+========================= */
+export default function ManageListings() {
   const router = useRouter();
 
-  const [property, setProperty] = useState<Property | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState<string | null>(null);
 
+  /* =========================
+     API CONFIG
+  ========================= */
   const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
   const API_BASE = `${API_BASE_URL}/api/${API_VERSION}`;
 
   /* =========================
-     Fetch property
+     FETCH LISTINGS
   ========================= */
-
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchProperty = async () => {
-      setLoading(true);
-      try {
-        const { jwt } = await account.createJWT();
-
-        const res = await fetch(`${API_BASE}/properties/${id}`, {
-          headers: { Authorization: `Bearer ${jwt}` },
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch property");
-
-        setProperty(await res.json());
-      } catch (err: any) {
-        setError(err.message || "Fetch failed");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProperty();
-  }, [id, API_BASE]);
-
-  /* =========================
-     Handlers
-  ========================= */
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    if (!property) return;
-    const { name, value } = e.target;
-    setProperty({ ...property, [name]: value });
-  };
-
-  const handleImageUpload = async (field: ImageField, file: File) => {
-    if (!property) return;
-
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
-    const uploaded = await storage.createFile(bucketId, "unique()", file);
-
-    setProperty({
-      ...property,
-      [field]: uploaded.$id,
-    });
-  };
-
-  const handleSave = async () => {
-    if (!property) return;
-
-    setSaving(true);
-    setError(null);
-
+  const fetchListings = useCallback(async () => {
+    setLoading(true);
     try {
-      const { jwt } = await account.createJWT();
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Not authenticated");
 
-      const payload = {
-        title: property.title,
-        description: property.description,
-        price: Number(property.price),
-        type: property.type,
-        subType: property.subType,
-        status: property.status,
-        property_status: property.property_status,
-        location: property.location,
-        address: property.address,
-        rooms: Number(property.rooms),
-        country: property.country,
-
-        frontElevation: resolveFileId(property.frontElevation),
-        southView: resolveFileId(property.southView),
-        westView: resolveFileId(property.westView),
-        eastView: resolveFileId(property.eastView),
-        floorPlan: resolveFileId(property.floorPlan),
-      };
-
-      const res = await fetch(`${API_BASE}/properties/${property.$id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${jwt}`,
-        },
-        body: JSON.stringify(payload),
+      const res = await fetch(`${API_BASE}/properties/all`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error("Update failed");
+      if (!res.ok) throw new Error("Failed to fetch listings");
 
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Save failed");
+      const data = await res.json();
+      setProperties(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("❌ Fetch error", err);
+      setProperties([]);
     } finally {
-      setSaving(false);
+      setLoading(false);
+    }
+  }, [API_BASE]);
+
+  /* =========================
+     DELETE PROPERTY
+  ========================= */
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this listing?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await fetch(`${API_BASE}/properties/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      setProperties((prev) => prev.filter((p) => p.$id !== id));
+    } catch (err) {
+      console.error("❌ Delete error", err);
     }
   };
 
   /* =========================
-     Render
+     EFFECTS
   ========================= */
+  useEffect(() => {
+    setAccountId(getAccountIdFromToken());
+    fetchListings();
+  }, [fetchListings]);
 
-  if (loading) return <div className="p-6 text-center">Loading…</div>;
-  if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
-  if (!property) return null;
+  /* =========================
+     FILTER (ALL STATUSES)
+     👉 ONLY filter by owner + search
+  ========================= */
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
 
+    return properties.filter((p) => {
+      const matchesOwner = !accountId || p.accountId === accountId;
+      const matchesSearch = p.title?.toLowerCase().includes(q);
+
+      return matchesOwner && matchesSearch;
+    });
+  }, [properties, search, accountId]);
+
+  /* =========================
+     STATUS STYLES
+  ========================= */
+  const statusStyles = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "approved":
+        return "bg-green-100 text-green-700";
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+      case "rejected":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  /* =========================
+     RENDER
+  ========================= */
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Edit Listing</h1>
+        <h1 className="text-2xl font-semibold">My Property Listings</h1>
         <p className="text-sm text-muted-foreground">
-          Update your property details
+          All properties created by your account
         </p>
       </div>
 
       <Separator />
 
-      {/* Text fields */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Input name="title" value={property.title} onChange={handleChange} />
-        <Input name="price" value={property.price} onChange={handleChange} />
-        <Input name="type" value={property.type} onChange={handleChange} />
+      <div className="flex justify-between gap-4">
         <Input
-          name="subType"
-          value={property.subType}
-          onChange={handleChange}
+          placeholder="Search by title..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
         />
-        <Input
-          name="property_status"
-          value={property.property_status}
-          onChange={handleChange}
-        />
-        <Input
-          name="status"
-          value={property.status ?? ""}
-          onChange={handleChange}
-        />
-        <Input
-          name="location"
-          value={property.location}
-          onChange={handleChange}
-        />
-        <Input
-          name="address"
-          value={property.address}
-          onChange={handleChange}
-        />
-        <Input
-          name="rooms"
-          type="number"
-          value={property.rooms}
-          onChange={handleChange}
-        />
-        <Input
-          name="country"
-          value={property.country}
-          onChange={handleChange}
-        />
-      </div>
 
-      <textarea
-        name="description"
-        value={property.description}
-        onChange={handleChange}
-        className="min-h-[120px] w-full rounded-md border px-3 py-2 text-sm"
-      />
-
-      {/* Images */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {IMAGE_FIELDS.map((field) => {
-          const fileId = resolveFileId(property[field]);
-          const preview = getAppwriteFileUrl(fileId);
-
-          return (
-            <div key={field} className="space-y-2">
-              <img
-                src={preview}
-                className="h-40 w-full rounded-md object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = "/default-property.jpg";
-                }}
-              />
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) =>
-                  e.target.files && handleImageUpload(field, e.target.files[0])
-                }
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => router.back()}>
-          Cancel
-        </Button>
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Saving…" : "Save Changes"}
+        <Button onClick={fetchListings} disabled={loading}>
+          {loading ? "Refreshing…" : "Refresh"}
         </Button>
       </div>
+
+      {loading && (
+        <p className="text-center py-12 text-muted-foreground">
+          Loading listings…
+        </p>
+      )}
+
+      {!loading && filtered.length === 0 && (
+        <p className="text-center py-12 text-muted-foreground">
+          No properties found.
+        </p>
+      )}
+
+      {!loading && filtered.length > 0 && (
+        <div className="rounded-lg border overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="px-4 py-3">Title</th>
+                <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">Price</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((p) => (
+                <tr key={p.$id} className="border-t hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium">{p.title}</td>
+                  <td className="px-4 py-3">{p.location ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {p.price !== null ? `$${p.price.toLocaleString()}` : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles(
+                        p.property_status,
+                      )}`}
+                    >
+                      {p.property_status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        router.push(`/dashboard/properties/edit/${p.$id}`)
+                      }
+                    >
+                      Edit
+                    </Button>
+
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(p.$id)}
+                    >
+                      Delete
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
