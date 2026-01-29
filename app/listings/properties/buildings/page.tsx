@@ -7,7 +7,6 @@ import type {
   PropertySubType,
 } from "@/components/property/PropertyMapping/propertyTypes";
 import Link from "next/link";
-import type Map from "leaflet";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, MapPin, Layers } from "lucide-react";
 
@@ -15,7 +14,7 @@ import { Home, MapPin, Layers } from "lucide-react";
    TYPES (MATCH BACKEND)
 ========================= */
 interface Property {
-  $id: string; // ✅ Appwrite ID
+  $id: string;
   title: string;
   type: PropertyCategory;
   subType: PropertySubType;
@@ -29,7 +28,9 @@ interface Property {
    HELPERS
 ========================= */
 function formatLabel(label: string) {
-  return label.replace(/([A-Z])/g, " $1").trim();
+  // Convert CamelCase or PascalCase to human-readable words
+  const spaced = label.replace(/([A-Z])/g, " $1").trim();
+  return spaced.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function getCategoryIcon(category: PropertyCategory) {
@@ -69,10 +70,10 @@ export default function PropertyFilterPage() {
   const [mapVisible, setMapVisible] = useState(false);
   const mapWrapperRef = useRef<HTMLDivElement | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<Map | null>(null);
+  const mapInstanceRef = useRef<any>(null); // Leaflet map instance
 
   /* =========================
-     FETCH BY TYPE ✅ FIXED
+     FETCH PROPERTIES BY CATEGORY
   ========================= */
   useEffect(() => {
     async function fetchProperties() {
@@ -151,7 +152,8 @@ export default function PropertyFilterPage() {
     const initMap = async () => {
       if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-      const L = await import("leaflet");
+      const LModule = await import("leaflet");
+      const L = LModule.default;
 
       mapInstanceRef.current = L.map(mapContainerRef.current).setView(
         [filteredProperties[0].lat, filteredProperties[0].lng],
@@ -164,7 +166,7 @@ export default function PropertyFilterPage() {
 
       filteredProperties.forEach((prop) => {
         L.marker([prop.lat, prop.lng])
-          .addTo(mapInstanceRef.current!)
+          .addTo(mapInstanceRef.current)
           .bindPopup(
             `<a href="/listings/properties/${prop.$id}" class="font-bold text-indigo-600">
               ${prop.title}
@@ -183,7 +185,7 @@ export default function PropertyFilterPage() {
   }, [mapVisible, filteredProperties]);
 
   /* =========================
-     STATES
+     RENDER STATES
   ========================= */
   if (loading)
     return <div className="p-6 text-center">Loading properties…</div>;
@@ -196,7 +198,7 @@ export default function PropertyFilterPage() {
     <div className="max-w-7xl mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold mb-8">Explore Listings</h1>
 
-      <div className="flex gap-4 mb-8">
+      <div className="flex gap-4 mb-8 flex-wrap">
         <select
           className="p-3 border rounded-lg"
           value={selectedCategory}
@@ -213,7 +215,7 @@ export default function PropertyFilterPage() {
         </select>
 
         <input
-          className="p-3 border rounded-lg flex-1"
+          className="p-3 border rounded-lg flex-1 min-w-[200px]"
           placeholder="Filter subtypes…"
           value={selectedSubType}
           onChange={(e) => setSelectedSubType(e.target.value)}
@@ -223,18 +225,25 @@ export default function PropertyFilterPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AnimatePresence>
           {filteredSubTypes.map((subType) => {
+            // ✅ Keep original casing in URL (use encodeURIComponent for safety)
             const href =
               selectedCategory === "Land"
-                ? `/listings/land/${subType.toLowerCase()}`
-                : `/listings/properties/buildings/${selectedCategory.toLowerCase()}/${subType.toLowerCase()}`;
+                ? `/listings/land/${encodeURIComponent(subType)}`
+                : `/listings/properties/buildings/${selectedCategory.toLowerCase()}/${encodeURIComponent(subType)}`;
 
             const Icon = getCategoryIcon(selectedCategory);
 
             return (
-              <motion.div key={subType} layout>
+              <motion.div
+                key={subType}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
                 <Link
                   href={href}
-                  className="block p-6 rounded-xl border hover:shadow-lg"
+                  className="block p-6 rounded-xl border hover:shadow-lg transition"
                 >
                   <div className="flex gap-3 items-center">
                     <Icon className="text-indigo-600" />
