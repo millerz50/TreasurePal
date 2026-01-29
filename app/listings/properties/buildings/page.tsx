@@ -75,14 +75,13 @@ export default function PropertyFilterPage() {
 
   /* =========================
      FETCH PROPERTIES BY CATEGORY
-  ========================= */
+  ========================== */
   useEffect(() => {
     async function fetchProperties() {
       try {
         setLoading(true);
         setError(null);
 
-        // Use exact category casing
         const res = await fetch(
           `${API_BASE}/api/${API_VERSION}/properties/type/${selectedCategory}`,
         );
@@ -105,7 +104,7 @@ export default function PropertyFilterPage() {
 
   /* =========================
      SUB TYPES
-  ========================= */
+  ========================== */
   const subTypes = useMemo<PropertySubType[]>(() => {
     return PROPERTY_HIERARCHY[selectedCategory]?.subTypes ?? [];
   }, [selectedCategory]);
@@ -119,7 +118,7 @@ export default function PropertyFilterPage() {
 
   /* =========================
      FILTER PROPERTIES
-  ========================= */
+  ========================== */
   const filteredProperties = useMemo(() => {
     if (!selectedSubType) return properties;
     return properties.filter((p) => p.subType === selectedSubType);
@@ -127,7 +126,7 @@ export default function PropertyFilterPage() {
 
   /* =========================
      MAP LAZY LOAD
-  ========================= */
+  ========================== */
   useEffect(() => {
     if (!mapWrapperRef.current) return;
 
@@ -147,7 +146,7 @@ export default function PropertyFilterPage() {
 
   /* =========================
      MAP INIT
-  ========================= */
+  ========================== */
   useEffect(() => {
     if (!mapVisible || !filteredProperties.length) return;
 
@@ -188,14 +187,14 @@ export default function PropertyFilterPage() {
 
   /* =========================
      RENDER STATES
-  ========================= */
+  ========================== */
   if (loading)
     return <div className="p-6 text-center">Loading properties…</div>;
   if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
 
   /* =========================
      RENDER
-  ========================= */
+  ========================== */
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold mb-8">Explore Listings</h1>
@@ -227,7 +226,6 @@ export default function PropertyFilterPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AnimatePresence>
           {filteredSubTypes.map((subType) => {
-            // ✅ Preserve exact casing from PROPERTY_HIERARCHY
             const href =
               selectedCategory === "Land"
                 ? `/listings/land/${subType}`
