@@ -62,6 +62,7 @@ export default function PropertyFilterPage() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<Map | null>(null);
 
+  // Fetch properties
   useEffect(() => {
     async function fetchProperties() {
       setLoading(true);
@@ -98,6 +99,7 @@ export default function PropertyFilterPage() {
     [selectedCategory],
   );
 
+  // Filter subtypes case-insensitively
   const filteredSubTypes = useMemo(() => {
     if (!selectedSubType) return subTypes;
     return subTypes.filter((st) =>
@@ -113,6 +115,7 @@ export default function PropertyFilterPage() {
     );
   }, [properties, selectedCategory, selectedSubType]);
 
+  // Lazy load map when visible
   useEffect(() => {
     if (!mapWrapperRef.current) return;
     const obs = new IntersectionObserver(
@@ -130,6 +133,7 @@ export default function PropertyFilterPage() {
     return () => obs.disconnect();
   }, []);
 
+  // Initialize Leaflet map
   useEffect(() => {
     if (!mapVisible || filteredProperties.length === 0) return;
 
@@ -232,11 +236,11 @@ export default function PropertyFilterPage() {
         <AnimatePresence>
           {filteredSubTypes.length > 0 ? (
             filteredSubTypes.map((subType, i) => {
-              // ✅ Conditional URL logic
+              // ✅ Use lowercase in URL for routing, keep display title formatted
               const href =
                 selectedCategory === "Land"
-                  ? `/listings/Land/${subType}`
-                  : `/listings/properties/buildings/${selectedCategory}/${subType}`;
+                  ? `/listings/land/${subType.toLowerCase()}`
+                  : `/listings/properties/buildings/${selectedCategory.toLowerCase()}/${subType.toLowerCase()}`;
 
               return (
                 <motion.div
