@@ -41,7 +41,7 @@ export default function OneRoomPage() {
     <ListingsPageClient
       title="One Room Properties"
       subtitle="Browse one-room residential properties and rentals across Zimbabwe."
-      endpoint="Residential/OneRoom"
+      endpoint="type/Residential/OneRoom"
     />
   );
 }

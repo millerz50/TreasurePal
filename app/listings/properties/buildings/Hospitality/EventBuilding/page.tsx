@@ -38,7 +38,7 @@ export default function EventBuildingPage() {
     <ListingsPageClient
       title="Event Buildings"
       subtitle="Browse event buildings and venues across Zimbabwe."
-      endpoint="Hospitality/EventBuilding"
+      endpoint="type/Hospitality/EventBuilding"
     />
   );
 }

@@ -38,7 +38,7 @@ export default function SchoolPage() {
     <ListingsPageClient
       title="Schools"
       subtitle="Browse schools and educational institutions across Zimbabwe."
-      endpoint="Institutional/School"
+      endpoint="type/Institutional/School"
     />
   );
 }

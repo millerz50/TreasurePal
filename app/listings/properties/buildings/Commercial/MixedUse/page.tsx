@@ -38,7 +38,7 @@ export default function MixedUsePage() {
     <ListingsPageClient
       title="Mixed Use"
       subtitle="Browse mixed-use commercial developments across Zimbabwe."
-      endpoint="commercial/MixedUse"
+      endpoint="type/Commercial/MixedUse"
     />
   );
 }

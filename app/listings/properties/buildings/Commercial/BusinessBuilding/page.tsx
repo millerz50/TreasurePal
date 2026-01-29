@@ -6,7 +6,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // Make sure path matches your folder structure
+import ListingsPageClient from "../../ListingsPageClient"; // Adjust path if needed
 
 export const metadata: Metadata = {
   title: `Business Building • ${SITE_NAME}`,
@@ -46,7 +46,8 @@ export default function BusinessBuildingPage() {
     <ListingsPageClient
       title="Business Buildings"
       subtitle="Browse office and commercial buildings across Zimbabwe."
-      endpoint="Commercial/BusinessBuilding"
+      // ✅ Corrected endpoint to match backend route
+      endpoint="type/Commercial/BusinessBuilding"
     />
   );
 }

@@ -38,7 +38,7 @@ export default function HospitalPage() {
     <ListingsPageClient
       title="Hospitals"
       subtitle="Browse hospitals and medical facilities across Zimbabwe."
-      endpoint="Institutional/Hospital"
+      endpoint="type/Institutional/Hospital"
     />
   );
 }

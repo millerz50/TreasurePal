@@ -43,7 +43,7 @@ export default function BookingHousePage() {
     <ListingsPageClient
       title="Booking Houses"
       subtitle="Browse booking houses and short-stay homes across Zimbabwe."
-      endpoint="Residential/BookingHouse"
+      endpoint="type/Residential/BookingHouse"
     />
   );
 }

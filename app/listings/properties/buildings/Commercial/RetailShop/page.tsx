@@ -40,7 +40,7 @@ export default function RetailShopPage() {
     <ListingsPageClient
       title="Retail Shops"
       subtitle="Browse retail shops and storefront properties across Zimbabwe."
-      endpoint="commercial/RetailShop"
+      endpoint="type/Commercial/RetailShop"
     />
   );
 }

@@ -39,7 +39,7 @@ export default function LodgePage() {
     <ListingsPageClient
       title="Lodges"
       subtitle="Browse residential lodges and short-term stays across Zimbabwe."
-      endpoint="Residential/Lodge"
+      endpoint="type/Residential/Lodge"
     />
   );
 }

@@ -43,7 +43,7 @@ export default function FullHousePage() {
     <ListingsPageClient
       title="Full Houses"
       subtitle="Browse full houses for sale and rent across Zimbabwe."
-      endpoint="Residential/FullHouse"
+      endpoint="type/Residential/FullHouse"
     />
   );
 }

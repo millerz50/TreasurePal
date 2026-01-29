@@ -43,7 +43,7 @@ export default function GovernmentBuildingPage() {
     <ListingsPageClient
       title="Government Buildings"
       subtitle="Browse government buildings and public institutions across Zimbabwe."
-      endpoint="Institutional/GovernmentBuilding"
+      endpoint="type/Institutional/GovernmentBuilding"
     />
   );
 }

@@ -36,7 +36,7 @@ export default function HotelPage() {
     <ListingsPageClient
       title="Hotels"
       subtitle="Browse hotels and accommodation across Zimbabwe."
-      endpoint="Hospitality/Hotel"
+      endpoint="type/Hospitality/Hotel"
     />
   );
 }
