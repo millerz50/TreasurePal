@@ -34,7 +34,7 @@ export default function BusinessBuildingPage() {
   return (
     <BusinessBuildingClient
       title="Business Buildings"
-      subtitle="Browse office and commercial buildings across Zimbabwe"
+      subtitle="Browse office and commercial buildings across Zimbabwe."
       endpoint="type/Commercial/BusinessBuilding"
     />
   );

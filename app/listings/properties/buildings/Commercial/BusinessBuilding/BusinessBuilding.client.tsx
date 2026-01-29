@@ -6,9 +6,6 @@ import PropertyCard, {
   type Property,
 } from "@/components/property/PropertyCard";
 import PropertyMap from "@/components/property/PropertyMap";
-import PropertyFilters, {
-  type Filters,
-} from "@/components/property/PropertyFilters";
 
 type Props = {
   title: string;
@@ -22,33 +19,23 @@ export default function BusinessBuildingClient({
   endpoint,
 }: Props) {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [filters, setFilters] = useState<Filters>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (Object.keys(filters).length === 0) return;
-
     const fetchProperties = async () => {
-      setLoading(true);
-      setError(null);
-
       try {
-        let url = `${process.env.NEXT_PUBLIC_API_URLV2}/api/v2/properties/${endpoint}`;
-        const params = new URLSearchParams();
+        setLoading(true);
+        setError(null);
 
-        if (filters.location) params.append("location", filters.location);
-        if (filters.type) params.append("subType", filters.type);
-        if (filters.minPrice)
-          params.append("minPrice", filters.minPrice.toString());
-        if (filters.maxPrice)
-          params.append("maxPrice", filters.maxPrice.toString());
-        if (filters.rooms) params.append("rooms", filters.rooms.toString());
+        const API_BASE = process.env.NEXT_PUBLIC_API_URLV2;
+        if (!API_BASE) throw new Error("API base URL not configured");
 
-        if (params.toString()) url += `?${params.toString()}`;
+        const res = await fetch(`${API_BASE}/api/v2/properties/${endpoint}`);
 
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch properties");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch properties (${res.status})`);
+        }
 
         const data: Property[] = await res.json();
         setProperties(data);
@@ -60,26 +47,29 @@ export default function BusinessBuildingClient({
     };
 
     fetchProperties();
-  }, [filters, endpoint]);
+  }, [endpoint]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
-      <h1 className="text-4xl font-bold mb-8">{title}</h1>
-      <p className="mb-6 text-gray-600">{subtitle}</p>
+      <h1 className="text-4xl font-bold mb-2">{title}</h1>
+      <p className="mb-8 text-gray-600">{subtitle}</p>
 
-      <PropertyFilters onFilterChange={setFilters} />
+      {loading && <p className="text-center py-10">Loading properties…</p>}
 
-      {loading && <p className="py-6 text-center">Loading properties…</p>}
-      {error && <p className="py-6 text-center text-red-500">{error}</p>}
+      {error && <p className="text-center py-10 text-red-500">{error}</p>}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+      {!loading && !error && properties.length === 0 && (
+        <p className="text-center py-10 text-gray-500">No properties found.</p>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {properties.map((prop) => (
           <PropertyCard key={prop.id} property={prop} />
         ))}
       </div>
 
       {properties[0]?.lat && properties[0]?.lng && (
-        <div className="mt-10">
+        <div className="mt-12">
           <PropertyMap coordinates={[properties[0].lat, properties[0].lng]} />
         </div>
       )}
