@@ -242,30 +242,41 @@ export default function PropertyFilterPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <AnimatePresence>
           {filteredSubTypes.length > 0 ? (
-            filteredSubTypes.map((subType, i) => (
-              <motion.div
-                key={subType}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Link
-                  href={`/listings/${selectedCategory}/${subType}`}
-                  className="flex items-center gap-2 p-6 bg-white dark:bg-gray-800 shadow-md rounded-xl hover:shadow-xl transition transform hover:scale-105 border border-gray-100 dark:border-gray-700"
+            filteredSubTypes.map((subType, i) => {
+              // Corrected link structure
+              const urlCategory =
+                selectedCategory === "Land" ? "Land" : selectedCategory;
+
+              return (
+                <motion.div
+                  key={subType}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ delay: i * 0.1 }}
                 >
-                  <MapPin className="text-indigo-600 w-6 h-6 flex-shrink-0" />
-                  <div>
-                    <h2 className="text-xl font-semibold mb-1 dark:text-white text-gray-900">
-                      {formatLabel(subType)}
-                    </h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
-                      View listings under {formatLabel(subType)}
-                    </p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))
+                  <Link
+                    href={`/listings/${urlCategory}/${subType}`}
+                    className="flex items-center gap-2 p-6 bg-white dark:bg-gray-800 shadow-md rounded-xl hover:shadow-xl transition transform hover:scale-105 border border-gray-100 dark:border-gray-700"
+                  >
+                    {(() => {
+                      const Icon = getCategoryIcon(selectedCategory);
+                      return (
+                        <Icon className="text-indigo-600 w-6 h-6 flex-shrink-0" />
+                      );
+                    })()}
+                    <div>
+                      <h2 className="text-xl font-semibold mb-1 dark:text-white text-gray-900">
+                        {formatLabel(subType)}
+                      </h2>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        View listings under {formatLabel(subType)}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })
           ) : (
             <motion.p
               className="col-span-full text-gray-500 dark:text-gray-400"
