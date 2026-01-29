@@ -27,21 +27,13 @@ interface Property {
 /* =========================
    HELPERS
 ========================= */
-// Convert CamelCase or PascalCase to human-readable words
+// Format CamelCase/PascalCase to human-readable words
 function formatLabel(label: string) {
   const spaced = label.replace(/([A-Z])/g, " $1").trim();
   return spaced.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// Convert string to SEO-friendly URL slug
-function toSlug(str: string) {
-  return str
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2") // camelCase to hyphen
-    .replace(/\s+/g, "-") // spaces to hyphens
-    .toLowerCase();
-}
-
-// Get icon based on category
+// Get icon for category
 function getCategoryIcon(category: PropertyCategory) {
   switch (category) {
     case "Residential":
@@ -79,7 +71,7 @@ export default function PropertyFilterPage() {
   const [mapVisible, setMapVisible] = useState(false);
   const mapWrapperRef = useRef<HTMLDivElement | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<any>(null); // Leaflet map instance
+  const mapInstanceRef = useRef<any>(null);
 
   /* =========================
      FETCH PROPERTIES BY CATEGORY
@@ -90,8 +82,9 @@ export default function PropertyFilterPage() {
         setLoading(true);
         setError(null);
 
+        // Use exact category casing
         const res = await fetch(
-          `${API_BASE}/api/${API_VERSION}/properties/type/${toSlug(selectedCategory)}`,
+          `${API_BASE}/api/${API_VERSION}/properties/type/${selectedCategory}`,
         );
 
         if (!res.ok) {
@@ -234,10 +227,11 @@ export default function PropertyFilterPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AnimatePresence>
           {filteredSubTypes.map((subType) => {
+            // ✅ Preserve exact casing from PROPERTY_HIERARCHY
             const href =
               selectedCategory === "Land"
-                ? `/listings/land/${toSlug(subType)}`
-                : `/listings/properties/buildings/${toSlug(selectedCategory)}/${toSlug(subType)}`;
+                ? `/listings/land/${subType}`
+                : `/listings/properties/buildings/${selectedCategory}/${subType}`;
 
             const Icon = getCategoryIcon(selectedCategory);
 
