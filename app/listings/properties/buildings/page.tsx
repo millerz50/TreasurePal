@@ -27,13 +27,11 @@ interface Property {
 /* =========================
    HELPERS
 ========================= */
-// Format CamelCase/PascalCase to human-readable words
 function formatLabel(label: string) {
   const spaced = label.replace(/([A-Z])/g, " $1").trim();
   return spaced.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// Get icon for category
 function getCategoryIcon(category: PropertyCategory) {
   switch (category) {
     case "Residential":
@@ -63,7 +61,9 @@ export default function PropertyFilterPage() {
   const [selectedCategory, setSelectedCategory] = useState<PropertyCategory>(
     categories[0],
   );
-  const [selectedSubType, setSelectedSubType] = useState("");
+  const [selectedSubType, setSelectedSubType] = useState<PropertySubType>(
+    PROPERTY_HIERARCHY[categories[0]].subTypes[0] ?? "",
+  );
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,16 +74,18 @@ export default function PropertyFilterPage() {
   const mapInstanceRef = useRef<any>(null);
 
   /* =========================
-     FETCH PROPERTIES BY CATEGORY
+     FETCH PROPERTIES BY CATEGORY + SUBTYPE
   ========================== */
   useEffect(() => {
+    if (!selectedSubType) return; // ensure we have a subType
+
     async function fetchProperties() {
       try {
         setLoading(true);
         setError(null);
 
         const res = await fetch(
-          `${API_BASE}/api/${API_VERSION}/properties/type/${selectedCategory}`,
+          `${API_BASE}/api/${API_VERSION}/properties/type/${selectedCategory}/${selectedSubType}`,
         );
 
         if (!res.ok) {
@@ -100,7 +102,7 @@ export default function PropertyFilterPage() {
     }
 
     fetchProperties();
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedSubType]);
 
   /* =========================
      SUB TYPES
@@ -108,21 +110,6 @@ export default function PropertyFilterPage() {
   const subTypes = useMemo<PropertySubType[]>(() => {
     return PROPERTY_HIERARCHY[selectedCategory]?.subTypes ?? [];
   }, [selectedCategory]);
-
-  const filteredSubTypes = useMemo(() => {
-    if (!selectedSubType) return subTypes;
-    return subTypes.filter((st) =>
-      st.toLowerCase().includes(selectedSubType.toLowerCase()),
-    );
-  }, [subTypes, selectedSubType]);
-
-  /* =========================
-     FILTER PROPERTIES
-  ========================== */
-  const filteredProperties = useMemo(() => {
-    if (!selectedSubType) return properties;
-    return properties.filter((p) => p.subType === selectedSubType);
-  }, [properties, selectedSubType]);
 
   /* =========================
      MAP LAZY LOAD
@@ -148,7 +135,7 @@ export default function PropertyFilterPage() {
      MAP INIT
   ========================== */
   useEffect(() => {
-    if (!mapVisible || !filteredProperties.length) return;
+    if (!mapVisible || !properties.length) return;
 
     const initMap = async () => {
       if (!mapContainerRef.current || mapInstanceRef.current) return;
@@ -157,7 +144,7 @@ export default function PropertyFilterPage() {
       const L = LModule.default;
 
       mapInstanceRef.current = L.map(mapContainerRef.current).setView(
-        [filteredProperties[0].lat, filteredProperties[0].lng],
+        [properties[0].lat, properties[0].lng],
         7,
       );
 
@@ -165,7 +152,7 @@ export default function PropertyFilterPage() {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(mapInstanceRef.current);
 
-      filteredProperties.forEach((prop) => {
+      properties.forEach((prop) => {
         L.marker([prop.lat, prop.lng])
           .addTo(mapInstanceRef.current)
           .bindPopup(
@@ -183,7 +170,7 @@ export default function PropertyFilterPage() {
       mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;
     };
-  }, [mapVisible, filteredProperties]);
+  }, [mapVisible, properties]);
 
   /* =========================
      RENDER STATES
@@ -204,8 +191,12 @@ export default function PropertyFilterPage() {
           className="p-3 border rounded-lg"
           value={selectedCategory}
           onChange={(e) => {
-            setSelectedCategory(e.target.value as PropertyCategory);
-            setSelectedSubType("");
+            const newCategory = e.target.value as PropertyCategory;
+            setSelectedCategory(newCategory);
+            // reset subType to first of new category
+            setSelectedSubType(
+              PROPERTY_HIERARCHY[newCategory].subTypes[0] ?? "",
+            );
           }}
         >
           {categories.map((cat) => (
@@ -215,22 +206,25 @@ export default function PropertyFilterPage() {
           ))}
         </select>
 
-        <input
+        <select
           className="p-3 border rounded-lg flex-1 min-w-[200px]"
-          placeholder="Filter subtypes…"
           value={selectedSubType}
-          onChange={(e) => setSelectedSubType(e.target.value)}
-        />
+          onChange={(e) =>
+            setSelectedSubType(e.target.value as PropertySubType)
+          }
+        >
+          {subTypes.map((st) => (
+            <option key={st} value={st}>
+              {formatLabel(st)}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AnimatePresence>
-          {filteredSubTypes.map((subType) => {
-            const href =
-              selectedCategory === "Land"
-                ? `/listings/land/${subType}`
-                : `/listings/properties/buildings/${selectedCategory}/${subType}`;
-
+          {subTypes.map((subType) => {
+            const href = `/listings/properties/buildings/${selectedCategory}/${subType}`;
             const Icon = getCategoryIcon(selectedCategory);
 
             return (
