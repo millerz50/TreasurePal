@@ -11,7 +11,6 @@ import type Map from "leaflet";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, MapPin, Layers } from "lucide-react";
 
-// ---------------------- TYPES ----------------------
 interface Property {
   id: string;
   title: string;
@@ -25,7 +24,6 @@ interface Property {
   agentId?: string;
 }
 
-// ---------------------- HELPERS ----------------------
 function formatLabel(label: string) {
   return label.replace(/([A-Z])/g, " $1").trim();
 }
@@ -41,7 +39,6 @@ function getCategoryIcon(category: PropertyCategory) {
   }
 }
 
-// ---------------------- API VERSIONING ----------------------
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
 const API_BASE_V1 =
   process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
@@ -50,7 +47,6 @@ const API_BASE_V2 =
 const API_BASE =
   API_VERSION === "v2" && API_BASE_V2 ? API_BASE_V2 : API_BASE_V1;
 
-// ---------------------- COMPONENT ----------------------
 export default function PropertyFilterPage() {
   const categories = Object.keys(PROPERTY_HIERARCHY) as PropertyCategory[];
   const [selectedCategory, setSelectedCategory] = useState<PropertyCategory>(
@@ -66,7 +62,6 @@ export default function PropertyFilterPage() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<Map | null>(null);
 
-  // ---------------------- FETCH PROPERTIES ----------------------
   useEffect(() => {
     async function fetchProperties() {
       setLoading(true);
@@ -98,7 +93,6 @@ export default function PropertyFilterPage() {
     fetchProperties();
   }, []);
 
-  // ---------------------- FILTERS ----------------------
   const subTypes = useMemo<PropertySubType[]>(
     () => PROPERTY_HIERARCHY[selectedCategory]?.subTypes || [],
     [selectedCategory],
@@ -119,7 +113,6 @@ export default function PropertyFilterPage() {
     );
   }, [properties, selectedCategory, selectedSubType]);
 
-  // ---------------------- LAZY MAP ----------------------
   useEffect(() => {
     if (!mapWrapperRef.current) return;
     const obs = new IntersectionObserver(
@@ -188,7 +181,6 @@ export default function PropertyFilterPage() {
     };
   }, [mapVisible, filteredProperties]);
 
-  // ---------------------- RENDER ----------------------
   if (loading)
     return (
       <div className="p-6 text-center text-gray-500">Loading properties...</div>
@@ -197,7 +189,6 @@ export default function PropertyFilterPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
-      {/* Title */}
       <motion.h1
         className="text-4xl font-bold mb-8 dark:text-white text-gray-900"
         initial={{ opacity: 0, y: -20 }}
@@ -207,7 +198,6 @@ export default function PropertyFilterPage() {
         Explore Listings
       </motion.h1>
 
-      {/* Filters */}
       <motion.div
         className="flex flex-col sm:flex-row gap-4 mb-8"
         initial={{ opacity: 0 }}
@@ -238,14 +228,15 @@ export default function PropertyFilterPage() {
         />
       </motion.div>
 
-      {/* Subtypes Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <AnimatePresence>
           {filteredSubTypes.length > 0 ? (
             filteredSubTypes.map((subType, i) => {
-              // Corrected link structure
-              const urlCategory =
-                selectedCategory === "Land" ? "Land" : selectedCategory;
+              // ✅ Conditional URL logic
+              const href =
+                selectedCategory === "Land"
+                  ? `/listings/Land/${subType}`
+                  : `/listings/properties/buildings/${selectedCategory}/${subType}`;
 
               return (
                 <motion.div
@@ -256,7 +247,7 @@ export default function PropertyFilterPage() {
                   transition={{ delay: i * 0.1 }}
                 >
                   <Link
-                    href={`/listings/${urlCategory}/${subType}`}
+                    href={href}
                     className="flex items-center gap-2 p-6 bg-white dark:bg-gray-800 shadow-md rounded-xl hover:shadow-xl transition transform hover:scale-105 border border-gray-100 dark:border-gray-700"
                   >
                     {(() => {
@@ -289,7 +280,6 @@ export default function PropertyFilterPage() {
         </AnimatePresence>
       </div>
 
-      {/* Map */}
       <motion.div
         ref={mapWrapperRef}
         className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 h-[500px] w-full"
