@@ -14,13 +14,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   alternates: {
     ...baseAlternates,
-    canonical: `${SITE_URL}/listings/Commercial/MixedUse`,
+    canonical: `${SITE_URL}/listings/commercial/MixedUse`,
   },
   openGraph: {
     ...defaultOpenGraph,
     title: `Mixed Use • ${SITE_NAME}`,
     description: "Browse mixed-use commercial developments across Zimbabwe.",
-    url: `${SITE_URL}/listings/Commercial/MixedUse`,
+    url: `${SITE_URL}/listings/commercial/MixedUse`,
     images: [
       { url: "/og/mixeduse.jpg", width: 1200, height: 630, alt: "Mixed Use" },
     ],
@@ -38,7 +38,7 @@ export default function MixedUsePage() {
     <ListingsPageClient
       title="Mixed Use"
       subtitle="Browse mixed-use commercial developments across Zimbabwe."
-      endpoint="Commercial/MixedUse"
+      endpoint="commercial/MixedUse"
     />
   );
 }

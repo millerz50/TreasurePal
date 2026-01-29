@@ -14,14 +14,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   alternates: {
     ...baseAlternates,
-    canonical: `${SITE_URL}/listings/Commercial/RetailShop`,
+    canonical: `${SITE_URL}/listings/commercial/RetailShop`,
   },
   openGraph: {
     ...defaultOpenGraph,
     title: `Retail Shop • ${SITE_NAME}`,
     description:
       "Browse retail shops and storefront properties across Zimbabwe.",
-    url: `${SITE_URL}/listings/Commercial/RetailShop`,
+    url: `${SITE_URL}/listings/commercial/RetailShop`,
     images: [
       { url: "/og/retail.jpg", width: 1200, height: 630, alt: "Retail Shop" },
     ],
@@ -40,7 +40,7 @@ export default function RetailShopPage() {
     <ListingsPageClient
       title="Retail Shops"
       subtitle="Browse retail shops and storefront properties across Zimbabwe."
-      endpoint="Commercial/RetailShop"
+      endpoint="commercial/RetailShop"
     />
   );
 }
