@@ -3,7 +3,7 @@
 import { motion, useAnimation, useInView } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { domainConfig } from "@/components/landing/Navbar/ssrWrapperNav/domains";
+import { domainConfig } from "@/components/config/site_domains/domains";
 
 export function NavbarBrand() {
   const [config, setConfig] = useState(domainConfig.default);

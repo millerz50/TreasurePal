@@ -4,9 +4,8 @@ import { useEffect, useState } from "react";
 import { account } from "@/lib/appwrite";
 import Link from "next/link";
 
-type RawRecord = Record<string, unknown>;
-
-type Property = {
+export type RawRecord = Record<string, unknown>;
+export type Property = {
   id: string;
   title: string;
   location?: string;
@@ -18,36 +17,26 @@ type Property = {
   summary?: string;
 };
 
-function toString(v: unknown): string {
-  return typeof v === "string" ? v : v === null ? "" : String(v);
-}
+const toString = (v: unknown, fallback = "") =>
+  typeof v === "string" && v.trim() !== "" ? v : fallback;
+const toNumber = (v: unknown) =>
+  typeof v === "number" ? v : !Number.isNaN(Number(v)) ? Number(v) : undefined;
+const parseProperty = (raw: RawRecord): Property => ({
+  id: toString(raw.$id ?? raw.id ?? raw.slug, Math.random().toString(36)),
+  title: toString(raw.title ?? raw.name, "Untitled property"),
+  location: toString(raw.location ?? raw.city, "Zimbabwe"),
+  price: toString(raw.price ?? raw.displayPrice, "Contact for price"),
+  beds: toNumber(raw.beds ?? raw.bedrooms),
+  baths: toNumber(raw.baths ?? raw.bathrooms),
+  image:
+    (raw.frontElevation ?? raw.image ?? raw.photo)
+      ? toString(raw.frontElevation ?? raw.image ?? raw.photo)
+      : null,
+  slug: raw.slug ? toString(raw.slug) : raw.$id ? toString(raw.$id) : undefined,
+  summary: toString(raw.summary ?? raw.description ?? ""),
+});
 
-function toNumberOrUndefined(v: unknown): number | undefined {
-  if (typeof v === "number") return v;
-  if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) {
-    return Number(v);
-  }
-  return undefined;
-}
-
-function parseProperty(raw: RawRecord): Property {
-  return {
-    id: toString(raw.$id ?? raw.id ?? raw.slug ?? Math.random().toString(36).slice(2)),
-    title: toString(raw.title ?? raw.name ?? "Untitled property"),
-    location: toString(raw.location ?? raw.city ?? "Unknown"),
-    price: toString(raw.price ?? raw.displayPrice ?? "Contact for price"),
-    beds: toNumberOrUndefined(raw.beds ?? raw.bedrooms),
-    baths: toNumberOrUndefined(raw.baths ?? raw.bathrooms),
-    image:
-      raw.frontElevation ?? raw.image ?? raw.photo
-        ? toString(raw.frontElevation ?? raw.image ?? raw.photo)
-        : null,
-    slug: raw.slug ? toString(raw.slug) : raw.$id ? toString(raw.$id) : undefined,
-    summary: toString(raw.summary ?? raw.description ?? ""),
-  };
-}
-
-export default function LodgesPageClient() {
+export default function PropertyPageClient({ slug }: { slug: string }) {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,55 +44,46 @@ export default function LodgesPageClient() {
     const fetchProperties = async () => {
       try {
         setLoading(true);
-
-        // 1️⃣ Get fresh JWT
-        const jwtResponse = await account.createJWT();
-
-        // 2️⃣ Construct API URL
-        const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
-        const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URLV2 ?? "").replace(/\/+$/, "");
-        const url = `${API_BASE_URL}/api/${API_VERSION}/properties/lodges`;
-
-        // 3️⃣ Fetch properties
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${jwtResponse.jwt}`,
-          },
-        });
-
+        const jwt = await account.createJWT();
+        const API_VERSION = (
+          process.env.NEXT_PUBLIC_API_VERSION || "v2"
+        ).trim();
+        const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URLV2 ?? "").replace(
+          /\/+$/,
+          "",
+        );
+        const res = await fetch(
+          `${API_BASE_URL}/api/${API_VERSION}/properties/${slug.toLowerCase()}`,
+          { headers: { Authorization: `Bearer ${jwt.jwt}` } },
+        );
         if (!res.ok) {
-          console.error("Failed to fetch lodges", res.status);
           setProperties([]);
           return;
         }
-
         const data: any[] = await res.json();
-        setProperties(data.map((raw) => parseProperty(raw)));
+        setProperties(data.map(parseProperty));
       } catch (err) {
-        console.error("Error fetching lodges:", err);
         setProperties([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProperties();
-  }, []);
+  }, [slug]);
 
   return (
     <main className="min-h-screen bg-base-200 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        {/* HEADER */}
         <header className="mb-6">
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">
-            Lodges & Hotels
+            {slug.replace(/([A-Z])/g, " $1").trim()}
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-            Short-term stays and lodges for travel, events and business.
+            Browse {slug.replace(/([A-Z])/g, " $1").toLowerCase()} across
+            Zimbabwe.
           </p>
         </header>
 
-        {/* LOADING */}
         {loading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
@@ -114,32 +94,29 @@ export default function LodgesPageClient() {
             ))}
           </div>
         ) : properties.length === 0 ? (
-          // NO LISTINGS
           <section className="rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-6 shadow-sm text-center">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              No lodges or hotels found
+              No {slug} found
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 max-w-prose mx-auto">
-              No short-term stays listed right now. Hoteliers and lodge owners can list to reach travelers.
+              No {slug} listed right now. Owners can add their property.
             </p>
-
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/sell/new"
                 className="inline-flex items-center px-5 py-3 rounded-full bg-gradient-to-r from-[#2ECC71] to-[#1E90FF] text-white font-semibold shadow-sm"
               >
-                List your lodge or hotel
+                List property
               </Link>
               <Link
                 href="/support"
                 className="inline-flex items-center px-5 py-3 rounded-full border border-gray-200 dark:border-slate-700 text-sm"
               >
-                Need help listing?
+                Need help?
               </Link>
             </div>
           </section>
         ) : (
-          // PROPERTY GRID
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {properties.map((p) => (
               <article
@@ -160,7 +137,6 @@ export default function LodgesPageClient() {
                     </div>
                   )}
                 </div>
-
                 <div className="p-4">
                   <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
                     {p.title}
@@ -168,16 +144,16 @@ export default function LodgesPageClient() {
                   <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
                     {p.location} • {p.price}
                   </p>
-
                   {p.summary && (
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
                       {p.summary}
                     </p>
                   )}
-
                   <div className="mt-3 flex items-center justify-between">
                     <Link
-                      href={p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`}
+                      href={
+                        p.slug ? `/listings/${p.slug}` : `/listings/${p.id}`
+                      }
                       className="text-sm text-blue-600 dark:text-blue-400 underline"
                     >
                       View

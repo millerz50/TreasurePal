@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 
 import Hero from "@/components/landing/hero/Hero.server";
 import HomeContent from "@/components/home/HomeContent";
-import { domainConfig } from "@/components/landing/Navbar/ssrWrapperNav/domains";
+import { domainConfig } from "@/components/config/site_domains/domains";
 
 // ✅ Make the function async
 export async function generateMetadata(): Promise<Metadata> {

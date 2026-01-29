@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { domainConfig } from "../Navbar/ssrWrapperNav/domains";
+import { domainConfig } from "../../config/site_domains/domains";
 import HeroImages from "./HeroImages";
 import HeroStats from "./HeroStats";
 import PromoAd from "./PromoAd.client";
