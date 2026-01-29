@@ -1,4 +1,3 @@
-// src/app/listings/Residential/BookingHouse/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // adjust path if needed
+import BookingHouseClient from "./BookingHouse.client";
 
 export const metadata: Metadata = {
   title: `Booking House • ${SITE_NAME}`,
@@ -40,7 +39,7 @@ export const metadata: Metadata = {
 
 export default function BookingHousePage() {
   return (
-    <ListingsPageClient
+    <BookingHouseClient
       title="Booking Houses"
       subtitle="Browse booking houses and short-stay homes across Zimbabwe."
       endpoint="type/Residential/BookingHouse"

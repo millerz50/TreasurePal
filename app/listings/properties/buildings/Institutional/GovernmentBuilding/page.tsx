@@ -41,8 +41,8 @@ export const metadata: Metadata = {
 export default function GovernmentBuildingPage() {
   return (
     <ListingsPageClient
-      title="Government Buildings"
-      subtitle="Browse government buildings and public institutions across Zimbabwe."
+      pageTitle="Government Buildings"
+      pageSubtitle="Browse government buildings and public institutions across Zimbabwe."
       endpoint="type/Institutional/GovernmentBuilding"
     />
   );

@@ -1,4 +1,3 @@
-// src/app/listings/Residential/OneRoom/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // adjust path if needed
+import OneRoomClient from "./OneRoom.client";
 
 export const metadata: Metadata = {
   title: `One Room • ${SITE_NAME}`,
@@ -38,7 +37,7 @@ export const metadata: Metadata = {
 
 export default function OneRoomPage() {
   return (
-    <ListingsPageClient
+    <OneRoomClient
       title="One Room Properties"
       subtitle="Browse one-room residential properties and rentals across Zimbabwe."
       endpoint="type/Residential/OneRoom"

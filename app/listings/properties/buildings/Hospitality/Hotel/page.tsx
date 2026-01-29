@@ -1,4 +1,3 @@
-// src/app/listings/Hospitality/Hotel/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // adjust path if needed
+import HotelClient from "./Hotel.client";
 
 export const metadata: Metadata = {
   title: `Hotel • ${SITE_NAME}`,
@@ -33,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function HotelPage() {
   return (
-    <ListingsPageClient
+    <HotelClient
       title="Hotels"
       subtitle="Browse hotels and accommodation across Zimbabwe."
       endpoint="type/Hospitality/Hotel"

@@ -41,8 +41,8 @@ export const metadata: Metadata = {
 export default function CommercialStandsPage() {
   return (
     <ListingsPageClient
-      title="Commercial Stands"
-      subtitle="Browse commercial land and stands across Zimbabwe."
+      pageTitle="Commercial Stands"
+      pageSubtitle="Browse commercial land and stands across Zimbabwe."
       endpoint="Land/CommercialStands"
     />
   );

@@ -41,8 +41,8 @@ export const metadata: Metadata = {
 export default function IndustrialStandsPage() {
   return (
     <ListingsPageClient
-      title="Industrial Stands"
-      subtitle="Browse industrial land and stands across Zimbabwe."
+      pageTitle="Industrial Stands"
+      pageSubtitle="Browse industrial land and stands across Zimbabwe."
       endpoint="Land/IndustrialStands"
     />
   );

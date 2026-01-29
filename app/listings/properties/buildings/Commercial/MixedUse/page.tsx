@@ -1,4 +1,3 @@
-// src/app/listings/Commercial/MixedUse/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // Update path if needed
+import MixedUseClient from "./MixedUse.client";
 
 export const metadata: Metadata = {
   title: `Mixed Use • ${SITE_NAME}`,
@@ -22,7 +21,12 @@ export const metadata: Metadata = {
     description: "Browse mixed-use commercial developments across Zimbabwe.",
     url: `${SITE_URL}/listings/commercial/MixedUse`,
     images: [
-      { url: "/og/mixeduse.jpg", width: 1200, height: 630, alt: "Mixed Use" },
+      {
+        url: "/og/mixeduse.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Mixed Use",
+      },
     ],
   },
   twitter: {
@@ -35,7 +39,7 @@ export const metadata: Metadata = {
 
 export default function MixedUsePage() {
   return (
-    <ListingsPageClient
+    <MixedUseClient
       title="Mixed Use"
       subtitle="Browse mixed-use commercial developments across Zimbabwe."
       endpoint="type/Commercial/MixedUse"

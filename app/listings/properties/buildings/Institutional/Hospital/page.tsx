@@ -1,4 +1,3 @@
-// src/app/listings/Institutional/Hospital/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // Adjust path if needed
+import HospitalClient from "./Hospital.client";
 
 export const metadata: Metadata = {
   title: `Hospital • ${SITE_NAME}`,
@@ -35,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function HospitalPage() {
   return (
-    <ListingsPageClient
+    <HospitalClient
       title="Hospitals"
       subtitle="Browse hospitals and medical facilities across Zimbabwe."
       endpoint="type/Institutional/Hospital"

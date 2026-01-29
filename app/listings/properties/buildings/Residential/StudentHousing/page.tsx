@@ -62,8 +62,8 @@ export default function PropertyPage({
 }: PropertyPageProps) {
   return (
     <ListingsPageClient
-      title={title}
-      subtitle={description}
+      pageTitle={title}
+      pageSubtitle={description}
       // ✅ Corrected to match backend route with `type/`
       endpoint={`type/${category}/${slug}`}
     />

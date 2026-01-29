@@ -1,4 +1,3 @@
-// src/app/listings/Commercial/RetailShop/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // Update path if needed
+import RetailShopClient from "./RetailShop.client";
 
 export const metadata: Metadata = {
   title: `Retail Shop • ${SITE_NAME}`,
@@ -37,7 +36,7 @@ export const metadata: Metadata = {
 
 export default function RetailShopPage() {
   return (
-    <ListingsPageClient
+    <RetailShopClient
       title="Retail Shops"
       subtitle="Browse retail shops and storefront properties across Zimbabwe."
       endpoint="type/Commercial/RetailShop"

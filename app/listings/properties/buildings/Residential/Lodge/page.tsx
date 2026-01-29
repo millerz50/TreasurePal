@@ -1,4 +1,3 @@
-// src/app/listings/Residential/Lodge/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // adjust path if needed
+import LodgeClient from "./Lodge.client";
 
 export const metadata: Metadata = {
   title: `Lodge • ${SITE_NAME}`,
@@ -36,7 +35,7 @@ export const metadata: Metadata = {
 
 export default function LodgePage() {
   return (
-    <ListingsPageClient
+    <LodgeClient
       title="Lodges"
       subtitle="Browse residential lodges and short-term stays across Zimbabwe."
       endpoint="type/Residential/Lodge"

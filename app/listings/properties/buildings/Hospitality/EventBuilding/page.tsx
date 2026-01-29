@@ -1,4 +1,3 @@
-// src/app/listings/Hospitality/EventBuilding/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // Adjust path if needed
+import EventBuildingClient from "./EventBuilding.client";
 
 export const metadata: Metadata = {
   title: `Event Building • ${SITE_NAME}`,
@@ -35,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function EventBuildingPage() {
   return (
-    <ListingsPageClient
+    <EventBuildingClient
       title="Event Buildings"
       subtitle="Browse event buildings and venues across Zimbabwe."
       endpoint="type/Hospitality/EventBuilding"

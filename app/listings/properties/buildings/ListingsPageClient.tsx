@@ -40,18 +40,18 @@ export const metadata: Metadata = {
   },
 };
 
-// ✅ Updated Props type
+// Props type
 type Props = {
   initialProperties?: Property[];
-  title?: string;
-  subtitle?: string;
+  pageTitle?: string;
+  pageSubtitle?: string;
   endpoint?: string;
 };
 
 export default function BusinessBuildingPage({
   initialProperties = [],
-  title = "Business Buildings",
-  subtitle = "Browse office and commercial buildings across Zimbabwe.",
+  pageTitle = "Business Buildings",
+  pageSubtitle = "Browse office and commercial buildings across Zimbabwe.",
   endpoint = "type/Commercial/BusinessBuilding",
 }: Props) {
   const [properties, setProperties] = useState<Property[]>(initialProperties);
@@ -65,11 +65,10 @@ export default function BusinessBuildingPage({
       setError(null);
 
       try {
-        if (!process.env.NEXT_PUBLIC_API_URLV2) {
-          throw new Error("API base URL not set");
-        }
+        const API_BASE = process.env.NEXT_PUBLIC_API_URLV2;
+        if (!API_BASE) throw new Error("API base URL not set");
 
-        let url = `${process.env.NEXT_PUBLIC_API_URLV2}/api/v2/properties/${endpoint}`;
+        let url = `${API_BASE}/api/v2/properties/${endpoint}`;
         const params = new URLSearchParams();
 
         if (filters.location) params.append("location", filters.location);
@@ -86,8 +85,32 @@ export default function BusinessBuildingPage({
         if (!res.ok)
           throw new Error(`Failed to fetch properties (${res.status})`);
 
-        const data: Property[] = await res.json();
-        setProperties(data);
+        const data = await res.json();
+
+        // ✅ Map API data to Property type (ensure lat/lng exist)
+        const mapped: Property[] = Array.isArray(data)
+          ? data.map((doc: any) => ({
+              id: doc.$id,
+              title: doc.title,
+              description: doc.description,
+              price: doc.price,
+              type: doc.type,
+              location: doc.location,
+              rooms: doc.rooms,
+              amenities: Array.isArray(doc.amenities) ? doc.amenities : [],
+              images: {
+                frontElevation: doc.frontElevation,
+                southView: doc.southView,
+                westView: doc.westView,
+                eastView: doc.eastView,
+                floorPlan: doc.floorPlan,
+              },
+              lat: doc.lat ?? 0, // fallback if missing
+              lng: doc.lng ?? 0, // fallback if missing
+            }))
+          : [];
+
+        setProperties(mapped);
       } catch (err: any) {
         setError(err.message ?? "Failed to fetch properties");
       } finally {
@@ -95,32 +118,26 @@ export default function BusinessBuildingPage({
       }
     };
 
-    // Only fetch when filters change
-    if (Object.keys(filters).length > 0) {
-      fetchProperties();
-    }
+    // Fetch when filters change
+    if (Object.keys(filters).length > 0) fetchProperties();
   }, [filters, endpoint]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
-      <h1 className="text-4xl font-bold mb-8">{title}</h1>
-      <p className="mb-6 text-gray-600">{subtitle}</p>
+      <h1 className="text-4xl font-bold mb-8">{pageTitle}</h1>
+      <p className="mb-6 text-gray-600">{pageSubtitle}</p>
 
-      {/* Filters */}
       <PropertyFilters onFilterChange={setFilters} />
 
-      {/* Loading / Error */}
       {loading && <p className="text-center py-6">Loading properties…</p>}
       {error && <p className="text-center py-6 text-red-500">{error}</p>}
 
-      {/* Property Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         {properties.map((prop) => (
           <PropertyCard key={prop.id} property={prop} />
         ))}
       </div>
 
-      {/* Map */}
       {properties.length > 0 && properties[0].lat && properties[0].lng && (
         <div className="mt-10">
           <PropertyMap coordinates={[properties[0].lat, properties[0].lng]} />

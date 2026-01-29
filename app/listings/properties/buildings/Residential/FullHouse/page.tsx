@@ -1,4 +1,3 @@
-// src/app/listings/Residential/FullHouse/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // adjust path if needed
+import FullHouseClient from "./FullHouse.client";
 
 export const metadata: Metadata = {
   title: `Full House • ${SITE_NAME}`,
@@ -22,12 +21,7 @@ export const metadata: Metadata = {
     description: "Browse full houses for sale and rent across Zimbabwe.",
     url: `${SITE_URL}/listings/Residential/FullHouse`,
     images: [
-      {
-        url: "/og/fullhouse.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Full House",
-      },
+      { url: "/og/fullhouse.jpg", width: 1200, height: 630, alt: "Full House" },
     ],
   },
   twitter: {
@@ -40,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function FullHousePage() {
   return (
-    <ListingsPageClient
+    <FullHouseClient
       title="Full Houses"
       subtitle="Browse full houses for sale and rent across Zimbabwe."
       endpoint="type/Residential/FullHouse"

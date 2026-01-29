@@ -1,4 +1,3 @@
-// src/app/listings/Institutional/School/page.tsx
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
@@ -6,7 +5,7 @@ import {
   defaultOpenGraph,
   defaultTwitter,
 } from "@/app/seo/seoConfig";
-import ListingsPageClient from "../../ListingsPageClient"; // Adjust path if needed
+import SchoolClient from "./School.client";
 
 export const metadata: Metadata = {
   title: `School • ${SITE_NAME}`,
@@ -35,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function SchoolPage() {
   return (
-    <ListingsPageClient
+    <SchoolClient
       title="Schools"
       subtitle="Browse schools and educational institutions across Zimbabwe."
       endpoint="type/Institutional/School"
