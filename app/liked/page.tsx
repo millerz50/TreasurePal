@@ -19,7 +19,6 @@ export default function LikedPropertiesPage() {
         const API_BASE = process.env.NEXT_PUBLIC_API_URLV2;
         if (!API_BASE) throw new Error("API base URL not configured");
 
-        // Assuming backend has endpoint like /api/v2/properties/liked for the current user
         const jwt = localStorage.getItem("token"); // or Appwrite JWT
         if (!jwt) throw new Error("Not authenticated");
 
@@ -27,7 +26,8 @@ export default function LikedPropertiesPage() {
           headers: { Authorization: `Bearer ${jwt}` },
         });
 
-        if (!res.ok) throw new Error(`Failed to fetch liked properties (${res.status})`);
+        if (!res.ok)
+          throw new Error(`Failed to fetch liked properties (${res.status})`);
 
         const data = await res.json();
 
@@ -48,6 +48,8 @@ export default function LikedPropertiesPage() {
                 eastView: doc.eastView,
                 floorPlan: doc.floorPlan,
               },
+              lat: doc.lat ?? 0, // ✅ Added lat with fallback
+              lng: doc.lng ?? 0, // ✅ Added lng with fallback
             }))
           : [];
 
@@ -67,13 +69,22 @@ export default function LikedPropertiesPage() {
     <section className="bg-base-100 px-6 py-12 animate-in fade-in duration-700">
       <h1 className="text-2xl font-bold mb-6">Your Liked Properties</h1>
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {loading
-          ? [...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse bg-gray-200 h-72 rounded-lg" />
-            ))
-          : likedProperties.length > 0
-          ? likedProperties.map((prop) => <PropertyCard key={prop.id} property={prop} />)
-          : <div className="col-span-full text-center text-gray-500">You have no liked properties yet.</div>}
+        {loading ? (
+          [...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse bg-gray-200 h-72 rounded-lg"
+            />
+          ))
+        ) : likedProperties.length > 0 ? (
+          likedProperties.map((prop) => (
+            <PropertyCard key={prop.id} property={prop} />
+          ))
+        ) : (
+          <div className="col-span-full text-center text-gray-500">
+            You have no liked properties yet.
+          </div>
+        )}
       </div>
     </section>
   );

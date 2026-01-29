@@ -1,158 +1,131 @@
-// src/components/listings/ListingsPageClient.tsx
+// src/app/listings/Commercial/BusinessBuilding/page.tsx
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { account } from "@/lib/appwrite";
-import Link from "next/link";
-import { domainConfig } from "@/components/config/site_domains/domains";
+import { useState, useEffect } from "react";
+import type { Metadata } from "next";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import PropertyCard, {
+  type Property,
+} from "@/components/property/PropertyCard";
+import PropertyMap from "@/components/property/PropertyMap";
+import PropertyFilters, {
+  type Filters,
+} from "@/components/property/PropertyFilters";
 
-type RawRecord = Record<string, unknown>;
-
-export type Property = {
-  id: string;
-  title: string;
-  location?: string;
-  price?: string;
-  rooms?: number;
-  image?: string | null;
-  slug?: string;
-  description?: string;
+// Page metadata
+export const metadata: Metadata = {
+  title: `Business Building • ${SITE_NAME}`,
+  description:
+    "Browse business buildings and office properties across Zimbabwe.",
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    title: `Business Building • ${SITE_NAME}`,
+    description:
+      "Browse business buildings and office properties across Zimbabwe.",
+    url: `${SITE_URL}/listings/Commercial/BusinessBuilding`,
+    images: [
+      {
+        url: "/og/business.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Business Buildings",
+      },
+    ],
+  },
+  twitter: {
+    title: `Business Building • ${SITE_NAME}`,
+    description:
+      "Browse business buildings and office properties across Zimbabwe.",
+    images: ["/og/business.jpg"],
+  },
 };
 
-type ListingsPageClientProps = {
+// ✅ Updated Props type
+type Props = {
+  initialProperties?: Property[];
   title?: string;
   subtitle?: string;
-  endpoint: string;
-  domain?: string; // optional domain override
+  endpoint?: string;
 };
 
-const toString = (v: unknown, fallback = "") =>
-  typeof v === "string" && v.trim() !== "" ? v : fallback;
-
-const toNumber = (v: unknown) =>
-  typeof v === "number" ? v : !Number.isNaN(Number(v)) ? Number(v) : undefined;
-
-const parseProperty = (raw: RawRecord): Property => ({
-  id: toString(raw.$id ?? raw.id),
-  title: toString(raw.title, "Untitled property"),
-  location: toString(raw.location ?? raw.country, "Zimbabwe"),
-  price: raw.price != null ? String(raw.price) : "Contact for price",
-  rooms: toNumber(raw.rooms),
-  image: raw.frontElevation ? toString(raw.frontElevation) : null,
-  slug: raw.$id ? toString(raw.$id) : undefined,
-  description: toString(raw.description ?? ""),
-});
-
-export default function ListingsPageClient({
-  title,
-  subtitle,
-  endpoint,
-  domain,
-}: ListingsPageClientProps) {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Determine domain-specific config
-  const currentDomain =
-    domainConfig[domain ?? "default"] || domainConfig.default;
-  const displayTitle = title ?? currentDomain.name;
-  const displaySubtitle = subtitle ?? currentDomain.description;
+export default function BusinessBuildingPage({
+  initialProperties = [],
+  title = "Business Buildings",
+  subtitle = "Browse office and commercial buildings across Zimbabwe.",
+  endpoint = "type/Commercial/BusinessBuilding",
+}: Props) {
+  const [properties, setProperties] = useState<Property[]>(initialProperties);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<Filters>({});
 
   useEffect(() => {
     const fetchProperties = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        const jwt = await account.createJWT();
-        const API_VERSION = (
-          process.env.NEXT_PUBLIC_API_VERSION || "v2"
-        ).trim();
-        const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URLV2 ?? "").replace(
-          /\/+$/,
-          "",
-        );
-
-        const res = await fetch(
-          `${API_BASE_URL}/api/${API_VERSION}/properties/${endpoint}`,
-          {
-            headers: { Authorization: `Bearer ${jwt.jwt}` },
-          },
-        );
-
-        if (!res.ok) {
-          setProperties([]);
-          return;
+        if (!process.env.NEXT_PUBLIC_API_URLV2) {
+          throw new Error("API base URL not set");
         }
 
-        const data: any[] = await res.json();
-        setProperties(data.map(parseProperty));
-      } catch {
-        setProperties([]);
+        let url = `${process.env.NEXT_PUBLIC_API_URLV2}/api/v2/properties/${endpoint}`;
+        const params = new URLSearchParams();
+
+        if (filters.location) params.append("location", filters.location);
+        if (filters.type) params.append("subType", filters.type);
+        if (filters.minPrice)
+          params.append("minPrice", filters.minPrice.toString());
+        if (filters.maxPrice)
+          params.append("maxPrice", filters.maxPrice.toString());
+        if (filters.rooms) params.append("rooms", filters.rooms.toString());
+
+        if (params.toString()) url += `?${params.toString()}`;
+
+        const res = await fetch(url);
+        if (!res.ok)
+          throw new Error(`Failed to fetch properties (${res.status})`);
+
+        const data: Property[] = await res.json();
+        setProperties(data);
+      } catch (err: any) {
+        setError(err.message ?? "Failed to fetch properties");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProperties();
-  }, [endpoint]);
+    // Only fetch when filters change
+    if (Object.keys(filters).length > 0) {
+      fetchProperties();
+    }
+  }, [filters, endpoint]);
 
   return (
-    <main className="min-h-screen bg-base-200 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <header className="mb-6">
-          <h1 className="text-2xl font-extrabold">{displayTitle}</h1>
-          <p className="text-sm text-slate-600">{displaySubtitle}</p>
-        </header>
+    <div className="max-w-7xl mx-auto px-6 py-12">
+      <h1 className="text-4xl font-bold mb-8">{title}</h1>
+      <p className="mb-6 text-gray-600">{subtitle}</p>
 
-        {/* Loading State */}
-        {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="h-64 animate-pulse bg-gray-200 rounded-lg"
-              />
-            ))}
-          </div>
-        ) : properties.length === 0 ? (
-          <div className="p-6 text-center bg-white rounded-lg">
-            <h2 className="font-semibold">No listings found</h2>
-            <Link
-              href="/sell/new"
-              className="mt-4 inline-block text-blue-600 underline"
-            >
-              List a property
-            </Link>
-          </div>
-        ) : (
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {properties.map((p) => (
-              <article key={p.id} className="bg-white rounded-lg shadow">
-                <div className="h-40 bg-gray-100">
-                  {p.image && (
-                    <img
-                      src={p.image}
-                      alt={p.title}
-                      className="w-full h-full object-cover rounded-t-lg"
-                    />
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold truncate">{p.title}</h3>
-                  <p className="text-sm text-slate-600">
-                    {p.location} • {p.price}
-                  </p>
-                  <Link
-                    href={`/listings/${p.slug}`}
-                    className="text-blue-600 underline text-sm mt-2 inline-block"
-                  >
-                    View
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </section>
-        )}
+      {/* Filters */}
+      <PropertyFilters onFilterChange={setFilters} />
+
+      {/* Loading / Error */}
+      {loading && <p className="text-center py-6">Loading properties…</p>}
+      {error && <p className="text-center py-6 text-red-500">{error}</p>}
+
+      {/* Property Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        {properties.map((prop) => (
+          <PropertyCard key={prop.id} property={prop} />
+        ))}
       </div>
-    </main>
+
+      {/* Map */}
+      {properties.length > 0 && properties[0].lat && properties[0].lng && (
+        <div className="mt-10">
+          <PropertyMap coordinates={[properties[0].lat, properties[0].lng]} />
+        </div>
+      )}
+    </div>
   );
 }

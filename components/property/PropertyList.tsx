@@ -26,7 +26,8 @@ export default function PropertyList() {
           headers: { Authorization: `Bearer ${jwt}` },
         });
 
-        if (!res.ok) throw new Error(`Failed to fetch properties (${res.status})`);
+        if (!res.ok)
+          throw new Error(`Failed to fetch properties (${res.status})`);
 
         const data = await res.json();
 
@@ -47,6 +48,8 @@ export default function PropertyList() {
                 eastView: doc.eastView,
                 floorPlan: doc.floorPlan,
               },
+              lat: doc.lat ?? 0, // ✅ Add lat with default fallback
+              lng: doc.lng ?? 0, // ✅ Add lng with default fallback
             }))
           : [];
 
@@ -67,9 +70,14 @@ export default function PropertyList() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {loading
           ? [...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse bg-gray-200 h-72 rounded-lg" />
+              <div
+                key={i}
+                className="animate-pulse bg-gray-200 h-72 rounded-lg"
+              />
             ))
-          : properties.map((prop) => <PropertyCard key={prop.id} property={prop} />)}
+          : properties.map((prop) => (
+              <PropertyCard key={prop.id} property={prop} />
+            ))}
       </div>
     </section>
   );

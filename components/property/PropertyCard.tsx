@@ -35,9 +35,7 @@ function getAppwriteFileUrl(fileId: string | null) {
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
-  if (!endpoint || !bucketId || !projectId) {
-    return "/default-property.jpg";
-  }
+  if (!endpoint || !bucketId || !projectId) return "/default-property.jpg";
 
   const base = endpoint.endsWith("/v1")
     ? endpoint
@@ -64,25 +62,29 @@ function normalizePropertyType(type: string): PropertySubType {
 /* ------------------------------------------------------------------
   Types
 ------------------------------------------------------------------- */
-
 export type Property = {
   id: string;
   title: string;
   description: string;
-  price: string | number;
+  price: number;
   type: string;
   location: string;
   rooms: number;
   amenities: string[];
   images: {
-    frontElevation?: string | { $id: string } | null;
+    frontElevation?: string;
+    southView?: string;
+    westView?: string;
+    eastView?: string;
+    floorPlan?: string;
   };
+  lat: number; // ⚠ Required
+  lng: number; // ⚠ Required
 };
 
 /* ------------------------------------------------------------------
   Component
 ------------------------------------------------------------------- */
-
 export default function PropertyCard({ property }: { property: Property }) {
   const [liked, setLiked] = useState(false);
 
@@ -96,17 +98,17 @@ export default function PropertyCard({ property }: { property: Property }) {
     rooms,
     amenities = [],
     images,
+    lat,
+    lng,
   } = property;
 
   /* ---------------- Image ---------------- */
-
   const imageUrl = useMemo(() => {
     const fileId = resolveFileId(images?.frontElevation);
     return getAppwriteFileUrl(fileId);
   }, [images?.frontElevation]);
 
   /* ---------------- Amenities ---------------- */
-
   const normalizedType = normalizePropertyType(type);
 
   const amenityIcons = useMemo(() => {
@@ -129,7 +131,6 @@ export default function PropertyCard({ property }: { property: Property }) {
   const visibleAmenities = amenities.slice(0, 4);
 
   /* ------------------------------------------------------------------ */
-
   return (
     <div className="group rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Image */}
