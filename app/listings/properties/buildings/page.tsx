@@ -49,10 +49,12 @@ const API_BASE =
 
 export default function PropertyFilterPage() {
   const categories = Object.keys(PROPERTY_HIERARCHY) as PropertyCategory[];
+
   const [selectedCategory, setSelectedCategory] = useState<PropertyCategory>(
     categories[0],
   );
-  const [selectedSubType, setSelectedSubType] = useState<string>("");
+
+  const [selectedSubType, setSelectedSubType] = useState("");
   const [mapVisible, setMapVisible] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,27 +67,20 @@ export default function PropertyFilterPage() {
   // Fetch properties
   useEffect(() => {
     async function fetchProperties() {
-      setLoading(true);
-      setError(null);
-
       try {
         const res = await fetch(
           `${API_BASE}/api/${API_VERSION}/properties/all`,
         );
+
         if (!res.ok) {
-          let message = `Failed to fetch properties (${res.status})`;
-          try {
-            const json = await res.json();
-            message = json?.error || json?.message || message;
-          } catch {}
-          throw new Error(message);
+          throw new Error(`Failed to fetch properties (${res.status})`);
         }
 
         const data: Property[] = await res.json();
         setProperties(data);
       } catch (err: any) {
-        console.error("Fetch properties error:", err);
-        setError(err?.message || "Failed to fetch properties");
+        console.error(err);
+        setError(err?.message ?? "Failed to fetch properties");
       } finally {
         setLoading(false);
       }
@@ -94,12 +89,11 @@ export default function PropertyFilterPage() {
     fetchProperties();
   }, []);
 
-  const subTypes = useMemo<PropertySubType[]>(
-    () => PROPERTY_HIERARCHY[selectedCategory]?.subTypes || [],
-    [selectedCategory],
-  );
+  const subTypes = useMemo<PropertySubType[]>(() => {
+    return PROPERTY_HIERARCHY[selectedCategory]?.subTypes ?? [];
+  }, [selectedCategory]);
 
-  // Filter subtypes case-insensitively
+  // Case-insensitive filter ONLY for search
   const filteredSubTypes = useMemo(() => {
     if (!selectedSubType) return subTypes;
     return subTypes.filter((st) =>
@@ -115,40 +109,35 @@ export default function PropertyFilterPage() {
     );
   }, [properties, selectedCategory, selectedSubType]);
 
-  // Lazy load map when visible
+  // Lazy load map
   useEffect(() => {
     if (!mapWrapperRef.current) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setMapVisible(true);
-            obs.disconnect();
-          }
-        });
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setMapVisible(true);
+          observer.disconnect();
+        }
       },
       { threshold: 0.15 },
     );
-    obs.observe(mapWrapperRef.current);
-    return () => obs.disconnect();
+
+    observer.observe(mapWrapperRef.current);
+    return () => observer.disconnect();
   }, []);
 
-  // Initialize Leaflet map
+  // Init map
   useEffect(() => {
-    if (!mapVisible || filteredProperties.length === 0) return;
+    if (!mapVisible || !filteredProperties.length) return;
 
     const initMap = async () => {
       if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-      const L: typeof import("leaflet") = await import("leaflet");
-      mapInstanceRef.current = L.map(mapContainerRef.current, {
-        scrollWheelZoom: true,
-        zoomControl: true,
-      }).setView(
-        [
-          filteredProperties[0]?.lat || -17.304,
-          filteredProperties[0]?.lng || 31.523,
-        ],
+      const L = await import("leaflet");
+
+      mapInstanceRef.current = L.map(mapContainerRef.current).setView(
+        [filteredProperties[0].lat, filteredProperties[0].lng],
         7,
       );
 
@@ -156,18 +145,8 @@ export default function PropertyFilterPage() {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(mapInstanceRef.current);
 
-      const defaultIcon = L.icon({
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl:
-          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41],
-      });
-
       filteredProperties.forEach((prop) => {
-        L.marker([prop.lat, prop.lng], { icon: defaultIcon })
+        L.marker([prop.lat, prop.lng])
           .addTo(mapInstanceRef.current!)
           .bindPopup(
             `<a href="${prop.url}" class="font-bold text-indigo-600">${prop.title}</a><p>$${prop.price}</p>`,
@@ -178,38 +157,23 @@ export default function PropertyFilterPage() {
     initMap();
 
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      mapInstanceRef.current?.remove();
+      mapInstanceRef.current = null;
     };
   }, [mapVisible, filteredProperties]);
 
   if (loading)
-    return (
-      <div className="p-6 text-center text-gray-500">Loading properties...</div>
-    );
+    return <div className="p-6 text-center">Loading properties…</div>;
+
   if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
-      <motion.h1
-        className="text-4xl font-bold mb-8 dark:text-white text-gray-900"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        Explore Listings
-      </motion.h1>
+      <h1 className="text-4xl font-bold mb-8">Explore Listings</h1>
 
-      <motion.div
-        className="flex flex-col sm:flex-row gap-4 mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-      >
+      <div className="flex gap-4 mb-8">
         <select
-          className="p-3 border rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white transition-all hover:shadow-lg focus:scale-105"
+          className="p-3 border rounded-lg"
           value={selectedCategory}
           onChange={(e) => {
             setSelectedCategory(e.target.value as PropertyCategory);
@@ -224,84 +188,49 @@ export default function PropertyFilterPage() {
         </select>
 
         <input
-          type="text"
-          placeholder="Filter subtypes..."
-          className="p-3 border rounded-lg shadow-sm flex-1 dark:bg-gray-800 dark:border-gray-700 dark:text-white transition-all hover:shadow-lg focus:scale-105"
+          className="p-3 border rounded-lg flex-1"
+          placeholder="Filter subtypes…"
           value={selectedSubType}
           onChange={(e) => setSelectedSubType(e.target.value)}
         />
-      </motion.div>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AnimatePresence>
-          {filteredSubTypes.length > 0 ? (
-            filteredSubTypes.map((subType, i) => {
-              // ✅ Use lowercase in URL for routing, keep display title formatted
-              const href =
-                selectedCategory === "Land"
-                  ? `/listings/land/${subType.toLowerCase()}`
-                  : `/listings/properties/buildings/${selectedCategory.toLowerCase()}/${subType.toLowerCase()}`;
+          {filteredSubTypes.map((subType) => {
+            const href =
+              selectedCategory === "Land"
+                ? `/listings/land/${subType}`
+                : `/listings/properties/buildings/${selectedCategory}/${subType}`;
 
-              return (
-                <motion.div
-                  key={subType}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: i * 0.1 }}
+            const Icon = getCategoryIcon(selectedCategory);
+
+            return (
+              <motion.div key={subType} layout>
+                <Link
+                  href={href}
+                  className="block p-6 rounded-xl border hover:shadow-lg"
                 >
-                  <Link
-                    href={href}
-                    className="flex items-center gap-2 p-6 bg-white dark:bg-gray-800 shadow-md rounded-xl hover:shadow-xl transition transform hover:scale-105 border border-gray-100 dark:border-gray-700"
-                  >
-                    {(() => {
-                      const Icon = getCategoryIcon(selectedCategory);
-                      return (
-                        <Icon className="text-indigo-600 w-6 h-6 flex-shrink-0" />
-                      );
-                    })()}
+                  <div className="flex gap-3 items-center">
+                    <Icon className="text-indigo-600" />
                     <div>
-                      <h2 className="text-xl font-semibold mb-1 dark:text-white text-gray-900">
-                        {formatLabel(subType)}
-                      </h2>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        View listings under {formatLabel(subType)}
-                      </p>
+                      <h2 className="font-semibold">{formatLabel(subType)}</h2>
+                      <p className="text-sm text-gray-500">View listings</p>
                     </div>
-                  </Link>
-                </motion.div>
-              );
-            })
-          ) : (
-            <motion.p
-              className="col-span-full text-gray-500 dark:text-gray-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              No subtypes found.
-            </motion.p>
-          )}
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
 
-      <motion.div
+      <div
         ref={mapWrapperRef}
-        className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 h-[500px] w-full"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: mapVisible ? 1 : 0 }}
-        transition={{ duration: 1 }}
+        className="mt-10 h-[500px] border rounded-lg overflow-hidden"
       >
-        <div
-          ref={mapContainerRef}
-          className="h-full w-full bg-gray-100 dark:bg-gray-900 relative"
-        >
-          {!mapVisible && (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-900">
-              Map preview will load when visible
-            </div>
-          )}
-        </div>
-      </motion.div>
+        <div ref={mapContainerRef} className="h-full w-full" />
+      </div>
     </div>
   );
 }

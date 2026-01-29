@@ -15,20 +15,20 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   alternates: {
     ...baseAlternates,
-    canonical: `${SITE_URL}/listings/commercial/BusinessBuilding`,
+    canonical: `${SITE_URL}/listings/Commercial/BusinessBuilding`,
   },
   openGraph: {
     ...defaultOpenGraph,
     title: `Business Building • ${SITE_NAME}`,
     description:
       "Browse business buildings and office properties across Zimbabwe.",
-    url: `${SITE_URL}/listings/commercial/BusinessBuilding`,
+    url: `${SITE_URL}/listings/Commercial/BusinessBuilding`,
     images: [
       {
         url: "/og/business.jpg",
         width: 1200,
         height: 630,
-        alt: "Business Building",
+        alt: "Business Buildings",
       },
     ],
   },
@@ -46,7 +46,7 @@ export default function BusinessBuildingPage() {
     <ListingsPageClient
       title="Business Buildings"
       subtitle="Browse office and commercial buildings across Zimbabwe."
-      endpoint="commercial/BusinessBuilding"
+      endpoint="Commercial/BusinessBuilding"
     />
   );
 }
