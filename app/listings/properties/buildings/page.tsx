@@ -12,18 +12,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Home, MapPin, Layers } from "lucide-react";
 
 /* =========================
-   TYPES
+   TYPES (MATCH BACKEND)
 ========================= */
 interface Property {
-  id: string;
+  $id: string; // ✅ Appwrite ID
   title: string;
-  type: PropertyCategory; // ✅ FIXED (was category)
+  type: PropertyCategory;
   subType: PropertySubType;
   price: number;
   lat: number;
   lng: number;
   status: string;
-  agentId?: string;
 }
 
 /* =========================
@@ -48,12 +47,10 @@ function getCategoryIcon(category: PropertyCategory) {
    API CONFIG
 ========================= */
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
-const API_BASE_V1 =
-  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
-const API_BASE_V2 =
-  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
 const API_BASE =
-  API_VERSION === "v2" && API_BASE_V2 ? API_BASE_V2 : API_BASE_V1;
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ??
+  process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ??
+  "";
 
 /* =========================
    COMPONENT
@@ -75,7 +72,7 @@ export default function PropertyFilterPage() {
   const mapInstanceRef = useRef<Map | null>(null);
 
   /* =========================
-     FETCH BY TYPE ✅
+     FETCH BY TYPE ✅ FIXED
   ========================= */
   useEffect(() => {
     async function fetchProperties() {
@@ -84,11 +81,11 @@ export default function PropertyFilterPage() {
         setError(null);
 
         const res = await fetch(
-          `${API_BASE}/api/${API_VERSION}/properties/type/${selectedCategory}`,
+          `${API_BASE}/api/${API_VERSION}/properties/type/${selectedCategory.toLowerCase()}`,
         );
 
         if (!res.ok) {
-          throw new Error(`Failed to fetch properties (${res.status})`);
+          throw new Error(`Failed to fetch (${res.status})`);
         }
 
         const data: Property[] = await res.json();
@@ -118,11 +115,11 @@ export default function PropertyFilterPage() {
   }, [subTypes, selectedSubType]);
 
   /* =========================
-     FILTER PROPERTIES (SUBTYPE ONLY)
+     FILTER PROPERTIES
   ========================= */
   const filteredProperties = useMemo(() => {
     if (!selectedSubType) return properties;
-    return properties.filter((prop) => prop.subType === selectedSubType);
+    return properties.filter((p) => p.subType === selectedSubType);
   }, [properties, selectedSubType]);
 
   /* =========================
@@ -169,10 +166,10 @@ export default function PropertyFilterPage() {
         L.marker([prop.lat, prop.lng])
           .addTo(mapInstanceRef.current!)
           .bindPopup(
-            `<a href="/listings/properties/${prop.id}" class="font-bold text-indigo-600">
-               ${prop.title}
-             </a>
-             <p>$${prop.price}</p>`,
+            `<a href="/listings/properties/${prop.$id}" class="font-bold text-indigo-600">
+              ${prop.title}
+            </a>
+            <p>$${prop.price}</p>`,
           );
       });
     };
