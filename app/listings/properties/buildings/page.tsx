@@ -53,7 +53,6 @@ export default function PropertyFilterPage() {
   const [selectedCategory, setSelectedCategory] = useState<PropertyCategory>(
     categories[0],
   );
-
   const [selectedSubType, setSelectedSubType] = useState("");
   const [mapVisible, setMapVisible] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -64,7 +63,7 @@ export default function PropertyFilterPage() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<Map | null>(null);
 
-  // Fetch properties
+  /* ---------------- FETCH ---------------- */
   useEffect(() => {
     async function fetchProperties() {
       try {
@@ -79,7 +78,6 @@ export default function PropertyFilterPage() {
         const data: Property[] = await res.json();
         setProperties(data);
       } catch (err: any) {
-        console.error(err);
         setError(err?.message ?? "Failed to fetch properties");
       } finally {
         setLoading(false);
@@ -89,11 +87,11 @@ export default function PropertyFilterPage() {
     fetchProperties();
   }, []);
 
+  /* ---------------- FILTERS ---------------- */
   const subTypes = useMemo<PropertySubType[]>(() => {
     return PROPERTY_HIERARCHY[selectedCategory]?.subTypes ?? [];
   }, [selectedCategory]);
 
-  // Case-insensitive filter ONLY for search
   const filteredSubTypes = useMemo(() => {
     if (!selectedSubType) return subTypes;
     return subTypes.filter((st) =>
@@ -109,7 +107,7 @@ export default function PropertyFilterPage() {
     );
   }, [properties, selectedCategory, selectedSubType]);
 
-  // Lazy load map
+  /* ---------------- MAP LAZY LOAD ---------------- */
   useEffect(() => {
     if (!mapWrapperRef.current) return;
 
@@ -127,7 +125,6 @@ export default function PropertyFilterPage() {
     return () => observer.disconnect();
   }, []);
 
-  // Init map
   useEffect(() => {
     if (!mapVisible || !filteredProperties.length) return;
 
@@ -164,9 +161,9 @@ export default function PropertyFilterPage() {
 
   if (loading)
     return <div className="p-6 text-center">Loading properties…</div>;
-
   if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
 
+  /* ---------------- RENDER ---------------- */
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold mb-8">Explore Listings</h1>
@@ -200,8 +197,8 @@ export default function PropertyFilterPage() {
           {filteredSubTypes.map((subType) => {
             const href =
               selectedCategory === "Land"
-                ? `/listings/land/${subType}`
-                : `/listings/properties/buildings/${selectedCategory}/${subType}`;
+                ? `/listings/land/${subType.toLowerCase()}`
+                : `/listings/properties/buildings/${selectedCategory.toLowerCase()}/${subType.toLowerCase()}`;
 
             const Icon = getCategoryIcon(selectedCategory);
 
