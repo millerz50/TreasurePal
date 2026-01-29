@@ -11,19 +11,24 @@ import type Map from "leaflet";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, MapPin, Layers } from "lucide-react";
 
+/* =========================
+   TYPES
+========================= */
 interface Property {
   id: string;
   title: string;
-  category: PropertyCategory;
+  type: PropertyCategory; // ✅ FIXED (was category)
   subType: PropertySubType;
   price: number;
   lat: number;
   lng: number;
-  url: string;
   status: string;
   agentId?: string;
 }
 
+/* =========================
+   HELPERS
+========================= */
 function formatLabel(label: string) {
   return label.replace(/([A-Z])/g, " $1").trim();
 }
@@ -39,6 +44,9 @@ function getCategoryIcon(category: PropertyCategory) {
   }
 }
 
+/* =========================
+   API CONFIG
+========================= */
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
 const API_BASE_V1 =
   process.env.NEXT_PUBLIC_API_URLV1?.replace(/\/+$/, "") ?? "";
@@ -47,6 +55,9 @@ const API_BASE_V2 =
 const API_BASE =
   API_VERSION === "v2" && API_BASE_V2 ? API_BASE_V2 : API_BASE_V1;
 
+/* =========================
+   COMPONENT
+========================= */
 export default function PropertyFilterPage() {
   const categories = Object.keys(PROPERTY_HIERARCHY) as PropertyCategory[];
 
@@ -54,21 +65,26 @@ export default function PropertyFilterPage() {
     categories[0],
   );
   const [selectedSubType, setSelectedSubType] = useState("");
-  const [mapVisible, setMapVisible] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [mapVisible, setMapVisible] = useState(false);
   const mapWrapperRef = useRef<HTMLDivElement | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<Map | null>(null);
 
-  /* ---------------- FETCH ---------------- */
+  /* =========================
+     FETCH BY TYPE ✅
+  ========================= */
   useEffect(() => {
     async function fetchProperties() {
       try {
+        setLoading(true);
+        setError(null);
+
         const res = await fetch(
-          `${API_BASE}/api/${API_VERSION}/properties/all`,
+          `${API_BASE}/api/${API_VERSION}/properties/type/${selectedCategory}`,
         );
 
         if (!res.ok) {
@@ -85,9 +101,11 @@ export default function PropertyFilterPage() {
     }
 
     fetchProperties();
-  }, []);
+  }, [selectedCategory]);
 
-  /* ---------------- FILTERS ---------------- */
+  /* =========================
+     SUB TYPES
+  ========================= */
   const subTypes = useMemo<PropertySubType[]>(() => {
     return PROPERTY_HIERARCHY[selectedCategory]?.subTypes ?? [];
   }, [selectedCategory]);
@@ -99,15 +117,17 @@ export default function PropertyFilterPage() {
     );
   }, [subTypes, selectedSubType]);
 
+  /* =========================
+     FILTER PROPERTIES (SUBTYPE ONLY)
+  ========================= */
   const filteredProperties = useMemo(() => {
-    return properties.filter(
-      (prop) =>
-        prop.category === selectedCategory &&
-        (selectedSubType ? prop.subType === selectedSubType : true),
-    );
-  }, [properties, selectedCategory, selectedSubType]);
+    if (!selectedSubType) return properties;
+    return properties.filter((prop) => prop.subType === selectedSubType);
+  }, [properties, selectedSubType]);
 
-  /* ---------------- MAP LAZY LOAD ---------------- */
+  /* =========================
+     MAP LAZY LOAD
+  ========================= */
   useEffect(() => {
     if (!mapWrapperRef.current) return;
 
@@ -125,6 +145,9 @@ export default function PropertyFilterPage() {
     return () => observer.disconnect();
   }, []);
 
+  /* =========================
+     MAP INIT
+  ========================= */
   useEffect(() => {
     if (!mapVisible || !filteredProperties.length) return;
 
@@ -146,7 +169,10 @@ export default function PropertyFilterPage() {
         L.marker([prop.lat, prop.lng])
           .addTo(mapInstanceRef.current!)
           .bindPopup(
-            `<a href="${prop.url}" class="font-bold text-indigo-600">${prop.title}</a><p>$${prop.price}</p>`,
+            `<a href="/listings/properties/${prop.id}" class="font-bold text-indigo-600">
+               ${prop.title}
+             </a>
+             <p>$${prop.price}</p>`,
           );
       });
     };
@@ -159,11 +185,16 @@ export default function PropertyFilterPage() {
     };
   }, [mapVisible, filteredProperties]);
 
+  /* =========================
+     STATES
+  ========================= */
   if (loading)
     return <div className="p-6 text-center">Loading properties…</div>;
   if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
 
-  /* ---------------- RENDER ---------------- */
+  /* =========================
+     RENDER
+  ========================= */
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold mb-8">Explore Listings</h1>
