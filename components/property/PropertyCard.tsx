@@ -16,8 +16,6 @@ import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
 /* ------------------------------------------------------------------
   Helpers
 -------------------------------------------------------------------*/
-
-// Resolve Appwrite file id safely
 function resolveFileId(
   file: string | { $id: string } | null | undefined,
 ): string | null {
@@ -27,7 +25,6 @@ function resolveFileId(
   return null;
 }
 
-// Build Appwrite public image URL
 function getAppwriteFileUrl(fileId: string | null) {
   if (!fileId) return "/default-property.jpg";
 
@@ -44,7 +41,6 @@ function getAppwriteFileUrl(fileId: string | null) {
   return `${base}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
 
-// Normalize property type → PropertySubType key
 function normalizePropertyType(type: string): PropertySubType {
   const map: Record<string, PropertySubType> = {
     industrial: "Industrial",
@@ -78,8 +74,8 @@ export type Property = {
     eastView?: string;
     floorPlan?: string;
   };
-  lat: number; // ⚠ Required
-  lng: number; // ⚠ Required
+  lat: number;
+  lng: number;
 };
 
 /* ------------------------------------------------------------------
@@ -98,8 +94,6 @@ export default function PropertyCard({ property }: { property: Property }) {
     rooms,
     amenities = [],
     images,
-    lat,
-    lng,
   } = property;
 
   /* ---------------- Image ---------------- */
@@ -119,57 +113,57 @@ export default function PropertyCard({ property }: { property: Property }) {
 
     Object.values(categories).forEach((items) => {
       items.forEach((item: AmenityItem) => {
-        if (typeof item.icon === "function") {
-          out[item.name] = item.icon;
-        }
+        if (typeof item.icon === "function")
+          out[item.name.toLowerCase()] = item.icon;
       });
     });
 
     return out;
   }, [normalizedType]);
 
-  const visibleAmenities = amenities.slice(0, 4);
+  const visibleAmenities = amenities.slice(0, 4); // show max 4
 
-  /* ------------------------------------------------------------------ */
   return (
-    <div className="group rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <div className="group relative rounded-xl bg-card text-card-foreground shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-1 w-full sm:max-w-sm md:max-w-xs lg:max-w-sm">
       {/* Image */}
-      <div className="relative aspect-video overflow-hidden rounded-t-xl">
+      <div className="relative aspect-video rounded-t-xl overflow-hidden">
         <img
           src={imageUrl}
           alt={title}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src = "/default-property.jpg";
-          }}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => (e.currentTarget.src = "/default-property.jpg")}
         />
-
         {/* Like button */}
         <button
           type="button"
           onClick={() => setLiked((v) => !v)}
           aria-label="Like property"
-          className="absolute right-3 top-3 rounded-full bg-background/90 p-2 shadow backdrop-blur transition hover:scale-110"
+          className="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:scale-110 transition"
         >
           {liked ? (
-            <SolidHeart className="h-5 w-5 text-red-500" />
+            <SolidHeart className="h-4 w-4 text-red-500" />
           ) : (
-            <OutlineHeart className="h-5 w-5 text-muted-foreground" />
+            <OutlineHeart className="h-4 w-4 text-gray-500" />
           )}
         </button>
       </div>
 
       {/* Content */}
-      <div className="space-y-3 p-4">
-        <h3 className="line-clamp-1 text-base font-semibold">{title}</h3>
+      <div className="p-3 space-y-2">
+        <h3 className="text-sm font-semibold line-clamp-1 sm:text-sm md:text-base">
+          {title}
+        </h3>
 
-        <p className="line-clamp-2 text-xs text-muted-foreground">
+        {/* Animated Description */}
+        <p className="text-xs text-gray-500 dark:text-gray-300 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 ease-in-out sm:text-xs md:text-sm">
           {description}
         </p>
 
-        <div className="grid grid-cols-2 gap-2 text-xs">
+        {/* Info Grid */}
+        <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs md:text-sm text-gray-700 dark:text-gray-300 mt-1">
           <div>
-            <span className="font-medium">Price:</span> {price}
+            <span className="font-medium">Price:</span> $
+            {price.toLocaleString()}
           </div>
           <div>
             <span className="font-medium">Type:</span> {type}
@@ -184,16 +178,16 @@ export default function PropertyCard({ property }: { property: Property }) {
 
         {/* Amenities */}
         {visibleAmenities.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {visibleAmenities.map((item) => {
-              const Icon = amenityIcons[item];
+          <div className="flex flex-wrap gap-1 mt-1">
+            {visibleAmenities.map((name) => {
+              const Icon = amenityIcons[name.toLowerCase()];
               return (
                 <div
-                  key={item}
-                  className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
+                  key={name}
+                  className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] px-2 py-0.5 rounded-full"
                 >
-                  {Icon && <Icon className="h-3.5 w-3.5" />}
-                  <span>{item}</span>
+                  {Icon && <Icon className="h-3 w-3" />}
+                  <span>{name}</span>
                 </div>
               );
             })}
@@ -201,8 +195,8 @@ export default function PropertyCard({ property }: { property: Property }) {
         )}
 
         {/* CTA */}
-        <Link href={`/property/${id}`} className="block pt-2">
-          <Button className="w-full transition hover:bg-primary/90">
+        <Link href={`/property/${id}`} className="block mt-2">
+          <Button className="w-full py-1 text-sm sm:text-sm md:text-base">
             View Details
           </Button>
         </Link>
