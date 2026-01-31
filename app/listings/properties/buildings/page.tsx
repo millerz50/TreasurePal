@@ -53,7 +53,28 @@ export default async function PropertyFilterPage() {
     );
 
     if (!res.ok) throw new Error("Failed to load properties");
-    properties = await res.json();
+
+    // ✅ IMPORTANT: map $id → id before passing to client
+    const raw = await res.json();
+    properties = raw.map((p: any) => ({
+      id: p.$id,
+      title: p.title,
+      description: p.description,
+      price: p.price,
+      type: p.type,
+      location: p.location,
+      rooms: p.rooms,
+      amenities: p.amenities ?? [],
+      images: {
+        frontElevation: p.frontElevation ?? null,
+        southView: p.southView ?? null,
+        westView: p.westView ?? null,
+        eastView: p.eastView ?? null,
+        floorPlan: p.floorPlan ?? null,
+      },
+      lat: p.lat ?? 0,
+      lng: p.lng ?? 0,
+    }));
   } catch (err: any) {
     error = err?.message ?? "Something went wrong";
   }
