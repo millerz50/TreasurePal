@@ -1,77 +1,133 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertyHierarchy";
+import type {
+  PropertyCategory,
+  PropertySubType,
+} from "@/components/property/PropertyMapping/propertyTypes";
 
-export interface Filters {
+export type Filters = {
+  search?: string;
+  category?: PropertyCategory;
+  subType?: PropertySubType;
   location?: string;
+
+  // additional filters used elsewhere
   type?: string;
   minPrice?: number;
   maxPrice?: number;
   rooms?: number;
-}
+};
 
-interface PropertyFiltersProps {
+type Props = {
   onFilterChange: (filters: Filters) => void;
-}
+};
 
-const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange }) => {
-  const [filters, setFilters] = useState<Filters>({});
+export default function PropertyFilters({ onFilterChange }: Props) {
+  const categories = useMemo(
+    () => Object.keys(PROPERTY_HIERARCHY) as PropertyCategory[],
+    [],
+  );
 
-  const handleChange = (key: keyof Filters, value: any) => {
-    const updated = { ...filters, [key]: value };
-    setFilters(updated);
-    onFilterChange(updated);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<PropertyCategory>(categories[0]);
+  const [subType, setSubType] = useState<PropertySubType>(
+    PROPERTY_HIERARCHY[categories[0]].subTypes[0],
+  );
+  const [location, setLocation] = useState<string>("");
+
+  const subTypes = useMemo(() => {
+    return PROPERTY_HIERARCHY[category]?.subTypes ?? [];
+  }, [category]);
+
+  useEffect(() => {
+    // Update subType when category changes
+    setSubType(PROPERTY_HIERARCHY[category]?.subTypes[0] ?? "");
+  }, [category]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    onFilterChange({
+      search: search.trim() || undefined,
+      category,
+      subType,
+      location: location.trim() || undefined,
+    });
   };
 
   return (
-    <div className="bg-base-100 py-6 px-4 sm:px-6 lg:px-8 rounded-lg shadow-md mb-8">
-      <h3 className="text-lg font-semibold mb-4">Filter Properties</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <input
-          type="text"
-          placeholder="Location"
-          className="input input-bordered w-full"
-          onChange={(e) => handleChange("location", e.target.value)}
-        />
+    <section className="bg-white rounded-lg shadow p-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Search */}
+        <div className="flex items-center gap-3">
+          <input
+            className="flex-1 border rounded px-3 py-2"
+            placeholder="Search properties (e.g. Bulawayo North)"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Search
+          </button>
+        </div>
 
-        <select
-          className="select select-bordered w-full"
-          onChange={(e) => handleChange("type", e.target.value)}
-        >
-          <option value="">Property Type</option>
-          <option value="house">House</option>
-          <option value="apartment">Apartment</option>
-          <option value="land">Land</option>
-        </select>
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Category
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as PropertyCategory)}
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <input
-          type="number"
-          placeholder="Min Price"
-          className="input input-bordered w-full"
-          onChange={(e) => handleChange("minPrice", Number(e.target.value))}
-        />
+          {/* SubType */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              SubType
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2"
+              value={subType}
+              onChange={(e) => setSubType(e.target.value as PropertySubType)}
+            >
+              {subTypes.map((st) => (
+                <option key={st} value={st}>
+                  {st}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <input
-          type="number"
-          placeholder="Max Price"
-          className="input input-bordered w-full"
-          onChange={(e) => handleChange("maxPrice", Number(e.target.value))}
-        />
-
-        <select
-          className="select select-bordered w-full"
-          onChange={(e) => handleChange("rooms", Number(e.target.value))}
-        >
-          <option value="">Rooms</option>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              {n}+
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
+          {/* Location */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Location
+            </label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              placeholder="Bulawayo North"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+          </div>
+        </div>
+      </form>
+    </section>
   );
-};
-
-export default PropertyFilters;
+}

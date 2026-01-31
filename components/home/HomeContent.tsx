@@ -1,16 +1,30 @@
-// app/components/home/HomeContent.tsx
 "use client";
 
 import React from "react";
-import PropertyFilters, { Filters } from "@/components/property/PropertyFilters";
+import { useRouter } from "next/navigation";
+import PropertyFilters, {
+  Filters,
+} from "@/components/property/PropertyFilters";
 import BlogSection from "@/components/landing/Blog";
 import FaqFull from "@/components/landing/FaqFull";
 import AgencySection from "@/components/user/AgencySection";
 import JoinHero from "@/components/user/JoinHero";
 
 export default function HomeContent() {
+  const router = useRouter();
+
   const handleFilterChange = (filters: Filters) => {
-    console.log("Filters changed:", filters);
+    // Example: filters = { location: "Bulawayo North", category: "Residential" }
+
+    const params = new URLSearchParams();
+
+    if (filters.location) params.set("location", filters.location);
+    if (filters.category) params.set("category", filters.category);
+    if (filters.subType) params.set("subType", filters.subType);
+    if (filters.search) params.set("q", filters.search);
+
+    // Redirect to property filter page with query params
+    router.push(`/property-filter?${params.toString()}`);
   };
 
   return (
