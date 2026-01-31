@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 
 import { AMENITIES } from "@/components/amenities/AMENITIES";
@@ -96,6 +96,17 @@ export default function PropertyCard({ property }: { property: Property }) {
     images,
   } = property;
 
+  // ------------------ DEBUG LOGS ------------------
+  useEffect(() => {
+    console.log("[PropertyCard] property object:", property);
+    console.log("[PropertyCard] id value:", id);
+    console.log(
+      "[PropertyCard] $id value (if exists):",
+      (property as any)?.$id,
+    );
+  }, [property, id]);
+  // ------------------------------------------------
+
   const imageUrl = useMemo(() => {
     const fileId = resolveFileId(images?.frontElevation);
     return getAppwriteFileUrl(fileId);
@@ -170,9 +181,9 @@ export default function PropertyCard({ property }: { property: Property }) {
           </div>
         </div>
 
-        {/* ✅ CORRECT INTERNAL LINK */}
+        {/* CORRECT INTERNAL LINK */}
         <Link
-          href={`/listings/properties/buildings/property/${id}`}
+          href={`/app/listings/properties/buildings/property/${id}`}
           className="block mt-2"
         >
           <Button className="w-full py-1">View Details</Button>
