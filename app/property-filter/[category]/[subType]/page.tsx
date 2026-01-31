@@ -1,12 +1,12 @@
 // app/property-filter/page.tsx
-import PropertyFilterClient from "../listings/properties/PropertyFilterClient";
+import PropertyFilterClient from "../../../listings/properties/PropertyFilterClient";
 import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertyHierarchy";
 import type {
   PropertyCategory,
   PropertySubType,
 } from "@/components/property/PropertyMapping/propertyTypes";
 import type { Metadata } from "next";
-import type { Property } from "../listings/properties/PropertyFilterClient";
+import type { Property } from "../../../listings/properties/PropertyFilterClient";
 
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
 const API_BASE =
@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const defaultSubType = PROPERTY_HIERARCHY[defaultCategory].subTypes[0];
 
   return {
-    title: `${defaultCategory} - ${defaultSubType} Properties | YourSiteName`,
+    title: `${defaultCategory} - ${defaultSubType} Properties | Treasurepal`,
     description: `Browse the latest ${defaultSubType} properties in the ${defaultCategory} category.`,
     robots: {
       index: true,
