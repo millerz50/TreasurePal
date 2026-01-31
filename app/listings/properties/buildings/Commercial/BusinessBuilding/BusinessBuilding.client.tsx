@@ -37,8 +37,14 @@ export default function BusinessBuildingClient({
           throw new Error(`Failed to fetch properties (${res.status})`);
         }
 
-        const data: Property[] = await res.json();
-        setProperties(data);
+        const rawData = await res.json();
+
+        const mappedData: Property[] = rawData.map((p: any) => ({
+          ...p,
+          id: p.$id, // <-- FIX
+        }));
+
+        setProperties(mappedData);
       } catch (err: any) {
         setError(err.message ?? "Failed to fetch properties");
       } finally {
