@@ -3,23 +3,10 @@ import { SITE_NAME, SITE_URL } from "@/lib/site";
 import PropertyCard from "@/components/property/PropertyCard";
 import { mapProperty } from "@/lib/propertyMapper";
 
-/* =========================
-   ISR
-========================= */
 export const revalidate = 60;
 
-/* =========================
-   Types
-========================= */
-type Params = {
-  params: {
-    id: string;
-  };
-};
+type Params = { params: { id: string } };
 
-/* =========================
-   Helpers
-========================= */
 type AppwriteFile = string | { $id: string };
 
 function resolveFileId(file?: AppwriteFile | null): string | null {
@@ -64,14 +51,10 @@ function getPrimaryImageUrl(images: {
   return getAppwriteFileUrl(resolveFileId(file));
 }
 
-/* =========================
-   Metadata (SEO / Social)
-========================= */
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URLV2}/api/v2/properties/${params.id}`,
   );
-
   const raw = await res.json();
   const property = mapProperty(raw);
 
@@ -84,13 +67,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       title: property.title,
       description: property.description,
       url: `${SITE_URL}/properties/${params.id}`,
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-        },
-      ],
+      images: [{ url: imageUrl, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
@@ -101,9 +78,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   };
 }
 
-/* =========================
-   Page
-========================= */
 export default async function PropertyDetailPage({ params }: Params) {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URLV2}/api/v2/properties/${params.id}`,
