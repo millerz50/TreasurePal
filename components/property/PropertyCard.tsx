@@ -59,7 +59,7 @@ function normalizePropertyType(type: string): PropertySubType {
  Types
 -------------------------------------------------------------------*/
 export type Property = {
-  id: string;
+  id: string; // MUST be the Appwrite $id when passed in
   title: string;
   description: string;
   price: number;
@@ -96,13 +96,11 @@ export default function PropertyCard({ property }: { property: Property }) {
     images,
   } = property;
 
-  /* ---------------- Image ---------------- */
   const imageUrl = useMemo(() => {
     const fileId = resolveFileId(images?.frontElevation);
     return getAppwriteFileUrl(fileId);
   }, [images?.frontElevation]);
 
-  /* ---------------- Amenities ---------------- */
   const normalizedType = normalizePropertyType(type);
 
   const amenityIcons = useMemo(() => {
@@ -124,9 +122,6 @@ export default function PropertyCard({ property }: { property: Property }) {
 
   const visibleAmenities = amenities.slice(0, 4);
 
-  const PROPERTY_BASE_URL =
-    "https://www.treasurepal.co.zw/listings/properties/buildings/property/";
-
   return (
     <div className="group relative rounded-xl bg-card text-card-foreground shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-1 w-full sm:max-w-sm md:max-w-xs lg:max-w-sm">
       {/* Image */}
@@ -138,7 +133,6 @@ export default function PropertyCard({ property }: { property: Property }) {
           onError={(e) => (e.currentTarget.src = "/default-property.jpg")}
         />
 
-        {/* Like button */}
         <button
           type="button"
           onClick={() => setLiked((v) => !v)}
@@ -155,55 +149,33 @@ export default function PropertyCard({ property }: { property: Property }) {
 
       {/* Content */}
       <div className="p-3 space-y-2">
-        <h3 className="text-sm font-semibold line-clamp-1 sm:text-sm md:text-base">
-          {title}
-        </h3>
+        <h3 className="text-sm font-semibold line-clamp-1">{title}</h3>
 
-        {/* Description */}
-        <p className="text-xs text-gray-500 dark:text-gray-300 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 ease-in-out sm:text-xs md:text-sm">
+        <p className="text-xs text-gray-500 line-clamp-2 group-hover:line-clamp-none">
           {description}
         </p>
 
-        {/* Info */}
-        <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs md:text-sm text-gray-700 dark:text-gray-300 mt-1">
+        <div className="grid grid-cols-2 gap-1 text-xs text-gray-700 mt-1">
           <div>
-            <span className="font-medium">Price:</span> $
-            {price.toLocaleString()}
+            <b>Price:</b> ${price.toLocaleString()}
           </div>
           <div>
-            <span className="font-medium">Type:</span> {type}
+            <b>Type:</b> {type}
           </div>
           <div>
-            <span className="font-medium">Location:</span> {location}
+            <b>Location:</b> {location}
           </div>
           <div>
-            <span className="font-medium">Rooms:</span> {rooms}
+            <b>Rooms:</b> {rooms}
           </div>
         </div>
 
-        {/* Amenities */}
-        {visibleAmenities.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1">
-            {visibleAmenities.map((name) => {
-              const Icon = amenityIcons[name.toLowerCase()];
-              return (
-                <div
-                  key={name}
-                  className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] px-2 py-0.5 rounded-full"
-                >
-                  {Icon && <Icon className="h-3 w-3" />}
-                  <span>{name}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* CTA */}
-        <Link href={`${PROPERTY_BASE_URL}${id}`} className="block mt-2">
-          <Button className="w-full py-1 text-sm sm:text-sm md:text-base">
-            View Details
-          </Button>
+        {/* ✅ CORRECT INTERNAL LINK */}
+        <Link
+          href={`/listings/properties/buildings/property/${id}`}
+          className="block mt-2"
+        >
+          <Button className="w-full py-1">View Details</Button>
         </Link>
       </div>
     </div>
