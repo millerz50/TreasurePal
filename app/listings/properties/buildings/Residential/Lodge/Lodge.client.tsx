@@ -18,6 +18,8 @@ export default function LodgeClient({ title, subtitle, endpoint }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchProperties = async () => {
       try {
         setLoading(true);
@@ -27,20 +29,31 @@ export default function LodgeClient({ title, subtitle, endpoint }: Props) {
         if (!API_BASE) throw new Error("API base URL not configured");
 
         const res = await fetch(`${API_BASE}/api/v2/properties/${endpoint}`);
+
         if (!res.ok)
           throw new Error(`Failed to fetch properties (${res.status})`);
 
         const data: Property[] = await res.json();
-        setProperties(data);
+
+        if (isMounted) setProperties(data);
       } catch (err: any) {
-        setError(err.message ?? "Failed to fetch properties");
+        if (isMounted) setError(err.message ?? "Failed to fetch properties");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchProperties();
+
+    return () => {
+      isMounted = false;
+    };
   }, [endpoint]);
+
+  // Find the first property that has valid coordinates
+  const firstWithCoords = properties.find(
+    (p) => typeof p.lat === "number" && typeof p.lng === "number",
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
@@ -60,9 +73,11 @@ export default function LodgeClient({ title, subtitle, endpoint }: Props) {
         ))}
       </div>
 
-      {properties[0]?.lat && properties[0]?.lng && (
+      {firstWithCoords && (
         <div className="mt-12">
-          <PropertyMap coordinates={[properties[0].lat, properties[0].lng]} />
+          <PropertyMap
+            coordinates={[firstWithCoords.lat, firstWithCoords.lng]}
+          />
         </div>
       )}
     </div>

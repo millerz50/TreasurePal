@@ -5,6 +5,7 @@ import PropertyCard, {
   type Property,
 } from "@/components/property/PropertyCard";
 import PropertyMap from "@/components/property/PropertyMap";
+import { mapProperties } from "@/lib/propertyMapper";
 
 type Props = {
   title: string;
@@ -38,8 +39,12 @@ export default function EventBuildingClient({
           throw new Error(`Failed to fetch properties (${res.status})`);
         }
 
-        const data: Property[] = await res.json();
-        setProperties(data);
+        const rawData = await res.json();
+
+        // MAP $id → id
+        const mappedData: Property[] = mapProperties(rawData);
+
+        setProperties(mappedData);
       } catch (err: any) {
         setError(err.message ?? "Failed to fetch properties");
       } finally {

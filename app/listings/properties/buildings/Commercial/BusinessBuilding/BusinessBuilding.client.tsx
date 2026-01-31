@@ -1,4 +1,3 @@
-// src/app/listings/Commercial/BusinessBuilding/BusinessBuilding.client.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import PropertyCard, {
   type Property,
 } from "@/components/property/PropertyCard";
 import PropertyMap from "@/components/property/PropertyMap";
+import { mapProperties } from "@/lib/propertyMapper";
 
 type Props = {
   title: string;
@@ -38,11 +38,7 @@ export default function BusinessBuildingClient({
         }
 
         const rawData = await res.json();
-
-        const mappedData: Property[] = rawData.map((p: any) => ({
-          ...p,
-          id: p.$id, // <-- FIX
-        }));
+        const mappedData: Property[] = mapProperties(rawData);
 
         setProperties(mappedData);
       } catch (err: any) {

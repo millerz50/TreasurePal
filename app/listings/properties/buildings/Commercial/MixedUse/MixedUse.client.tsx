@@ -1,4 +1,3 @@
-// src/app/listings/Commercial/MixedUse/MixedUse.client.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import PropertyCard, {
   type Property,
 } from "@/components/property/PropertyCard";
 import PropertyMap from "@/components/property/PropertyMap";
+import { mapProperties } from "@/lib/propertyMapper";
 
 type Props = {
   title: string;
@@ -25,9 +25,7 @@ export default function MixedUseClient({ title, subtitle, endpoint }: Props) {
         setError(null);
 
         const API_BASE = process.env.NEXT_PUBLIC_API_URLV2;
-        if (!API_BASE) {
-          throw new Error("API base URL not configured");
-        }
+        if (!API_BASE) throw new Error("API base URL not configured");
 
         const res = await fetch(`${API_BASE}/api/v2/properties/${endpoint}`);
 
@@ -35,8 +33,10 @@ export default function MixedUseClient({ title, subtitle, endpoint }: Props) {
           throw new Error(`Failed to fetch properties (${res.status})`);
         }
 
-        const data: Property[] = await res.json();
-        setProperties(data);
+        const rawData = await res.json();
+        const mappedData: Property[] = mapProperties(rawData);
+
+        setProperties(mappedData);
       } catch (err: any) {
         setError(err.message ?? "Failed to fetch properties");
       } finally {

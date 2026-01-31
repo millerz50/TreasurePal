@@ -18,6 +18,8 @@ export default function OneRoomClient({ title, subtitle, endpoint }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchProperties = async () => {
       try {
         setLoading(true);
@@ -31,16 +33,26 @@ export default function OneRoomClient({ title, subtitle, endpoint }: Props) {
           throw new Error(`Failed to fetch properties (${res.status})`);
 
         const data: Property[] = await res.json();
-        setProperties(data);
+
+        if (isMounted) setProperties(data);
       } catch (err: any) {
-        setError(err.message ?? "Failed to fetch properties");
+        if (isMounted) setError(err.message ?? "Failed to fetch properties");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchProperties();
+
+    return () => {
+      isMounted = false;
+    };
   }, [endpoint]);
+
+  // Find first property with valid coordinates
+  const firstWithCoords = properties.find(
+    (p) => typeof p.lat === "number" && typeof p.lng === "number",
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
@@ -49,6 +61,7 @@ export default function OneRoomClient({ title, subtitle, endpoint }: Props) {
 
       {loading && <p className="py-10 text-center">Loading properties…</p>}
       {error && <p className="py-10 text-center text-red-500">{error}</p>}
+
       {!loading && !error && properties.length === 0 && (
         <p className="py-10 text-center text-gray-500">No properties found.</p>
       )}
@@ -59,9 +72,11 @@ export default function OneRoomClient({ title, subtitle, endpoint }: Props) {
         ))}
       </div>
 
-      {properties[0]?.lat && properties[0]?.lng && (
+      {firstWithCoords && (
         <div className="mt-12">
-          <PropertyMap coordinates={[properties[0].lat, properties[0].lng]} />
+          <PropertyMap
+            coordinates={[firstWithCoords.lat, firstWithCoords.lng]}
+          />
         </div>
       )}
     </div>

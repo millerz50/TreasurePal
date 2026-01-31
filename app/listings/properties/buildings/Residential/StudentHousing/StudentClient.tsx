@@ -5,7 +5,6 @@ import PropertyCard, {
   type Property,
 } from "@/components/property/PropertyCard";
 import PropertyMap from "@/components/property/PropertyMap";
-import { mapProperties } from "@/lib/propertyMapper";
 
 type Props = {
   title: string;
@@ -13,51 +12,52 @@ type Props = {
   endpoint: string;
 };
 
-export default function FullHouseClient({ title, subtitle, endpoint }: Props) {
+export default function StudentClient({ title, subtitle, endpoint }: Props) {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchProperties = async () => {
       try {
         setLoading(true);
         setError(null);
 
         const API_BASE = process.env.NEXT_PUBLIC_API_URLV2;
-        if (!API_BASE) {
-          throw new Error("API base URL not configured");
-        }
+        if (!API_BASE) throw new Error("API base URL not configured");
 
         const res = await fetch(`${API_BASE}/api/v2/properties/${endpoint}`);
-
-        if (!res.ok) {
+        if (!res.ok)
           throw new Error(`Failed to fetch properties (${res.status})`);
-        }
 
-        const rawData = await res.json();
-
-        // 🔥 MAP $id -> id
-        const mappedData: Property[] = mapProperties(rawData);
-
-        setProperties(mappedData);
+        const data: Property[] = await res.json();
+        if (isMounted) setProperties(data);
       } catch (err: any) {
-        setError(err.message ?? "Failed to fetch properties");
+        if (isMounted) setError(err.message ?? "Failed to fetch properties");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchProperties();
+
+    return () => {
+      isMounted = false;
+    };
   }, [endpoint]);
+
+  const firstWithCoords = properties.find(
+    (p: any) => typeof p.lat === "number" && typeof p.lng === "number",
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
-      <h1 className="text-4xl font-bold mb-2">{title}</h1>
+      <h1 className="text-4xl font-bold mb-4">{title}</h1>
       <p className="text-gray-600 mb-8">{subtitle}</p>
 
       {loading && <p className="py-10 text-center">Loading properties…</p>}
-
       {error && <p className="py-10 text-center text-red-500">{error}</p>}
 
       {!loading && !error && properties.length === 0 && (
@@ -70,9 +70,11 @@ export default function FullHouseClient({ title, subtitle, endpoint }: Props) {
         ))}
       </div>
 
-      {properties[0]?.lat && properties[0]?.lng && (
+      {firstWithCoords && (
         <div className="mt-12">
-          <PropertyMap coordinates={[properties[0].lat, properties[0].lng]} />
+          <PropertyMap
+            coordinates={[firstWithCoords.lat, firstWithCoords.lng]}
+          />
         </div>
       )}
     </div>

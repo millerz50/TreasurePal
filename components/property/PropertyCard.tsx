@@ -183,7 +183,7 @@ export default function PropertyCard({ property }: { property: Property }) {
 
         {/* CORRECT INTERNAL LINK */}
         <Link
-          href={`/app/listings/properties/buildings/property/${id}`}
+          href={`/listings/properties/buildings/property/${id}`}
           className="block mt-2"
         >
           <Button className="w-full py-1">View Details</Button>
