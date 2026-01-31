@@ -49,7 +49,7 @@ export interface PropertyFilterClientProps {
 
 /* =========================
    HELPERS
-========================= */
+======================== */
 const formatLabel = (v: string) => v.replace(/([A-Z])/g, " $1").trim();
 
 const getCategoryIcon = (category: PropertyCategory) =>
@@ -57,7 +57,7 @@ const getCategoryIcon = (category: PropertyCategory) =>
 
 /* =========================
    API
-========================= */
+======================== */
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ??
@@ -66,7 +66,7 @@ const API_BASE =
 
 /* =========================
    COMPONENT
-========================= */
+======================== */
 export default function PropertyFilterClient({
   categories,
   defaultCategory,
@@ -221,7 +221,108 @@ export default function PropertyFilterClient({
         </motion.header>
 
         {/* FILTERS */}
-        {/* (unchanged UI code below — already correct) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid md:grid-cols-2 gap-6"
+        >
+          {/* CATEGORY SELECT */}
+          <div className="relative">
+            <label className="block mb-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+              Property Category
+            </label>
+            <div className="relative rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 transition">
+              <select
+                value={selectedCategory}
+                onChange={(e) => {
+                  const v = e.target.value as PropertyCategory;
+                  setSelectedCategory(v);
+                  setSelectedSubType(PROPERTY_HIERARCHY[v].subTypes[0]);
+                }}
+                className="w-full appearance-none bg-transparent px-5 py-4 pr-12 text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {PROPERTY_HIERARCHY[c].label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* SUBTYPE SELECT */}
+          <div className="relative">
+            <label className="block mb-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+              Property Type
+            </label>
+            <div className="relative rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 transition">
+              <select
+                value={selectedSubType}
+                onChange={(e) =>
+                  setSelectedSubType(e.target.value as PropertySubType)
+                }
+                className="w-full appearance-none bg-transparent px-5 py-4 pr-12 text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
+              >
+                {subTypes.map((s) => (
+                  <option key={s} value={s}>
+                    {formatLabel(s)}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* CARDS */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <AnimatePresence>
+            {subTypes.map((st) => {
+              const Icon = getCategoryIcon(selectedCategory);
+              return (
+                <motion.div
+                  key={st}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <Link
+                    href={`/listings/properties/buildings/${selectedCategory}/${st}`}
+                    className="group relative bg-white dark:bg-slate-900 rounded-3xl p-7 shadow-xl hover:-translate-y-1 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-4">
+                        <div className="p-3 rounded-2xl bg-indigo-500/10 text-indigo-600">
+                          <Icon size={22} />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-900 dark:text-white">
+                            {formatLabel(st)}
+                          </h3>
+                          <p className="text-sm text-slate-500">
+                            View listings
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="text-slate-400 group-hover:text-indigo-600 transition" />
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+        {/* MAP */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            Property Locations
+          </h2>
+          <div className="h-[520px] rounded-3xl overflow-hidden shadow-2xl">
+            <div ref={mapContainerRef} className="h-full w-full" />
+          </div>
+        </section>
       </div>
     </div>
   );
