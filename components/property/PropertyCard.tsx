@@ -14,7 +14,7 @@ import { HeartIcon as OutlineHeart } from "@heroicons/react/24/outline";
 import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
 
 /* ------------------------------------------------------------------
-  Helpers
+ Helpers
 -------------------------------------------------------------------*/
 function resolveFileId(
   file: string | { $id: string } | null | undefined,
@@ -56,8 +56,8 @@ function normalizePropertyType(type: string): PropertySubType {
 }
 
 /* ------------------------------------------------------------------
-  Types
-------------------------------------------------------------------- */
+ Types
+-------------------------------------------------------------------*/
 export type Property = {
   id: string;
   title: string;
@@ -79,8 +79,8 @@ export type Property = {
 };
 
 /* ------------------------------------------------------------------
-  Component
-------------------------------------------------------------------- */
+ Component
+-------------------------------------------------------------------*/
 export default function PropertyCard({ property }: { property: Property }) {
   const [liked, setLiked] = useState(false);
 
@@ -113,15 +113,19 @@ export default function PropertyCard({ property }: { property: Property }) {
 
     Object.values(categories).forEach((items) => {
       items.forEach((item: AmenityItem) => {
-        if (typeof item.icon === "function")
+        if (typeof item.icon === "function") {
           out[item.name.toLowerCase()] = item.icon;
+        }
       });
     });
 
     return out;
   }, [normalizedType]);
 
-  const visibleAmenities = amenities.slice(0, 4); // show max 4
+  const visibleAmenities = amenities.slice(0, 4);
+
+  const PROPERTY_BASE_URL =
+    "https://www.treasurepal.co.zw/listings/properties/buildings/property/";
 
   return (
     <div className="group relative rounded-xl bg-card text-card-foreground shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-1 w-full sm:max-w-sm md:max-w-xs lg:max-w-sm">
@@ -133,6 +137,7 @@ export default function PropertyCard({ property }: { property: Property }) {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => (e.currentTarget.src = "/default-property.jpg")}
         />
+
         {/* Like button */}
         <button
           type="button"
@@ -154,12 +159,12 @@ export default function PropertyCard({ property }: { property: Property }) {
           {title}
         </h3>
 
-        {/* Animated Description */}
+        {/* Description */}
         <p className="text-xs text-gray-500 dark:text-gray-300 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 ease-in-out sm:text-xs md:text-sm">
           {description}
         </p>
 
-        {/* Info Grid */}
+        {/* Info */}
         <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs md:text-sm text-gray-700 dark:text-gray-300 mt-1">
           <div>
             <span className="font-medium">Price:</span> $
@@ -195,7 +200,7 @@ export default function PropertyCard({ property }: { property: Property }) {
         )}
 
         {/* CTA */}
-        <Link href={`/property/${id}`} className="block mt-2">
+        <Link href={`${PROPERTY_BASE_URL}${id}`} className="block mt-2">
           <Button className="w-full py-1 text-sm sm:text-sm md:text-base">
             View Details
           </Button>
