@@ -6,7 +6,7 @@ export const revalidate = 60;
 
 export default async function ListingsPage() {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URLV2}/api/v2/properties`,
+    `${process.env.NEXT_PUBLIC_API_URLV2}/api/v2/properties/all`,
     { cache: "force-cache" },
   );
 
