@@ -16,9 +16,9 @@ import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
 /* ------------------------------------------------------------------
  Helpers
 -------------------------------------------------------------------*/
-function resolveFileId(
-  file: string | { $id: string } | null | undefined,
-): string | null {
+type AppwriteFile = string | { $id: string };
+
+function resolveFileId(file: AppwriteFile | null | undefined): string | null {
   if (!file) return null;
   if (typeof file === "string") return file;
   if (typeof file === "object" && "$id" in file) return file.$id;
@@ -58,8 +58,16 @@ function normalizePropertyType(type: string): PropertySubType {
 /* ------------------------------------------------------------------
  Types
 -------------------------------------------------------------------*/
+export type PropertyImages = {
+  frontElevation?: AppwriteFile;
+  southView?: AppwriteFile;
+  westView?: AppwriteFile;
+  eastView?: AppwriteFile;
+  floorPlan?: AppwriteFile;
+};
+
 export type Property = {
-  id: string; // MUST be the Appwrite $id when passed in
+  id: string; // MUST be the Appwrite $id
   title: string;
   description: string;
   price: number;
@@ -67,13 +75,7 @@ export type Property = {
   location: string;
   rooms: number;
   amenities: string[];
-  images: {
-    frontElevation?: string;
-    southView?: string;
-    westView?: string;
-    eastView?: string;
-    floorPlan?: string;
-  };
+  images: PropertyImages;
   lat: number;
   lng: number;
 };
@@ -100,17 +102,13 @@ export default function PropertyCard({ property }: { property: Property }) {
   useEffect(() => {
     console.log("[PropertyCard] property object:", property);
     console.log("[PropertyCard] id value:", id);
-    console.log(
-      "[PropertyCard] $id value (if exists):",
-      (property as any)?.$id,
-    );
   }, [property, id]);
   // ------------------------------------------------
 
   const imageUrl = useMemo(() => {
-    const fileId = resolveFileId(images?.frontElevation);
+    const fileId = resolveFileId(images.frontElevation);
     return getAppwriteFileUrl(fileId);
-  }, [images?.frontElevation]);
+  }, [images.frontElevation]);
 
   const normalizedType = normalizePropertyType(type);
 
@@ -181,7 +179,6 @@ export default function PropertyCard({ property }: { property: Property }) {
           </div>
         </div>
 
-        {/* CORRECT INTERNAL LINK */}
         <Link
           href={`/listings/properties/buildings/property/${id}`}
           className="block mt-2"
