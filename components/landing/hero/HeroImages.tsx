@@ -1,21 +1,58 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Building2, Home, Store } from "lucide-react";
 import Image from "next/image";
+import { Building2, Home, Store } from "lucide-react";
 import FloatingBadge from "./FloatingBadge";
+import { useEffect, useState } from "react";
+
+type Property = {
+  id: string;
+  title: string;
+  type: string;
+  images: { frontElevation?: string };
+};
 
 export default function HeroImages() {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ------------------ Fetch API ------------------
+  useEffect(() => {
+    async function fetchProperties() {
+      try {
+        const res = await fetch("/api/properties?limit=3"); // Fetch top 3 featured
+        if (!res.ok) throw new Error("Failed to fetch properties");
+
+        const data: Property[] = await res.json();
+        setProperties(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProperties();
+  }, []);
+
+  // ------------------ Fallback images ------------------
+  const heroMain = properties[0]?.images.frontElevation || "/heroimg.jpg";
+  const heroSecondary =
+    properties[1]?.images.frontElevation || "/heroimg-2.jpg";
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8 }}
-      className="relative h-[440px]">
+      className="relative h-[440px]"
+    >
+      {/* Main Hero */}
       <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl">
         <Image
-          src="/heroimg.jpg"
-          alt="Modern property"
+          src={heroMain}
+          alt={properties[0]?.title || "Modern property"}
           fill
           priority
           className="object-cover"
@@ -23,19 +60,22 @@ export default function HeroImages() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
       </div>
 
+      {/* Secondary Hero */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="absolute -bottom-10 -left-10 w-52 h-36 rounded-2xl overflow-hidden shadow-xl border bg-background">
+        className="absolute -bottom-10 -left-10 w-52 h-36 rounded-2xl overflow-hidden shadow-xl border bg-background"
+      >
         <Image
-          src="/heroimg-2.jpg"
-          alt="Secondary property"
+          src={heroSecondary}
+          alt={properties[1]?.title || "Secondary property"}
           fill
           className="object-cover"
         />
       </motion.div>
 
+      {/* Floating badges */}
       <FloatingBadge icon={Home} text="Rentals" className="top-6 left-6" />
       <FloatingBadge
         icon={Building2}

@@ -2,6 +2,8 @@
 
 import React, { useEffect, useId, useMemo, useState } from "react";
 
+/* ================= TYPES ================= */
+
 export type FaqItem = {
   id?: string;
   q: string;
@@ -16,6 +18,8 @@ export type FaqProps = {
   defaultOpenIndex?: number | null;
 };
 
+/* ================= DATA ================= */
+
 const DEFAULT_ITEMS: FaqItem[] = [
   {
     q: "What is TreasurePal?",
@@ -29,7 +33,8 @@ const DEFAULT_ITEMS: FaqItem[] = [
         Click{" "}
         <a
           className="text-blue-600 underline dark:text-blue-400"
-          href="/auth/signup">
+          href="/auth/signup"
+        >
           Sign up
         </a>{" "}
         and complete the short registration form.
@@ -46,10 +51,11 @@ const DEFAULT_ITEMS: FaqItem[] = [
     q: "How can I join TreasurePal as an agent?",
     a: (
       <>
-        Visit the Join page and complete the agent application or click{" "}
+        Visit the Join page or{" "}
         <a
           className="text-blue-600 underline dark:text-blue-400"
-          href="/auth/signup">
+          href="/auth/signup"
+        >
           Join Us
         </a>
         .
@@ -57,168 +63,191 @@ const DEFAULT_ITEMS: FaqItem[] = [
     ),
     updatedAt: "2025-03-01",
   },
+  {
+    q: "What is our WhatsApp channel?",
+    a: (
+      <a
+        href="https://www.whatsapp.com/channel/0029VbBYnEc9WtC1xlxVZe2K"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 underline dark:text-blue-400"
+      >
+        Follow our WhatsApp channel here
+      </a>
+    ),
+    updatedAt: "2025-04-01",
+  },
+  {
+    q: "Who is the CEO?",
+    a: "The CEO of TreasurePal is Johannes Zemba.",
+    updatedAt: "2025-04-05",
+  },
+  {
+    q: "Is TreasurePal available in other countries?",
+    a: (
+      <>
+        Yes, you can also access it on{" "}
+        <a
+          href="https://www.treasureprops.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline dark:text-blue-400"
+        >
+          treasureprops.com
+        </a>
+        .
+      </>
+    ),
+    updatedAt: "2025-04-10",
+  },
+  {
+    q: "Can I contribute as a developer?",
+    a: (
+      <>
+        Yes! You can contribute to TreasurePal’s development on{" "}
+        <a
+          href="https://github.com/millerz50/TreasurePal"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline dark:text-blue-400"
+        >
+          GitHub
+        </a>
+        .
+      </>
+    ),
+    updatedAt: "2025-04-15",
+  },
+  {
+    q: "Do I need an agent as a house owner?",
+    a: "No, you don't need an agent. You can become your own agent and manage listings directly.",
+    updatedAt: "2025-04-20",
+  },
+  {
+    q: "Can I invest through TreasurePal?",
+    a: "Yes, TreasurePal is forward-looking for investment opportunities. You can explore and invest in various property projects.",
+    updatedAt: "2025-04-25",
+  },
 ];
+
+/* ================= COMPONENT ================= */
 
 const FaqFull: React.FC<FaqProps> = ({
   items,
   includeSchema = true,
   storageKey = "treasurepal.faq.open",
-  defaultOpenIndex = 0,
+  defaultOpenIndex = null, // ⬅ SSR-safe default
 }) => {
   const idBase = useId();
-  const list = items && items.length ? items : DEFAULT_ITEMS;
+  const list = items?.length ? items : DEFAULT_ITEMS;
 
-  const prefersReducedMotion = usePrefersReducedMotion();
+  /* 🔒 SSR-SAFE initial state */
+  const [openIndex, setOpenIndex] = useState<number | null>(defaultOpenIndex);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
-  const getInitialOpenIndex = (): number | null => {
-    if (typeof window === "undefined") {
-      return defaultOpenIndex ?? null;
-    }
-    if (!storageKey) {
-      return defaultOpenIndex ?? null;
-    }
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      if (raw === null) {
-        return defaultOpenIndex ?? null;
-      }
-      const parsed = Number(raw);
-      if (!Number.isNaN(parsed) && parsed >= 0 && parsed < list.length) {
-        return parsed;
-      } else {
-        return null;
-      }
-    } catch {
-      return defaultOpenIndex ?? null;
-    }
-  };
-
-  const [openIndex, setOpenIndex] = useState<number | null>(
-    getInitialOpenIndex()
-  );
-
+  /* ✅ Client-only hydration logic */
   useEffect(() => {
-    if (!storageKey) {
-      return;
+    // restore open index
+    if (storageKey) {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        const parsed = raw !== null ? Number(raw) : null;
+        if (parsed !== null && parsed >= 0 && parsed < list.length) {
+          setOpenIndex(parsed);
+        }
+      } catch {}
     }
+
+    // reduced motion
     try {
-      if (openIndex === null) {
-        window.localStorage.removeItem(storageKey);
-      } else {
-        window.localStorage.setItem(storageKey, String(openIndex));
-      }
-    } catch {
-      // ignore storage errors
-    }
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      setReducedMotion(mq.matches);
+    } catch {}
+  }, [storageKey, list.length]);
+
+  /* persist state */
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      if (openIndex === null) localStorage.removeItem(storageKey);
+      else localStorage.setItem(storageKey, String(openIndex));
+    } catch {}
   }, [openIndex, storageKey]);
 
-  const headerRefs: React.RefObject<HTMLButtonElement | null>[] = useMemo(
+  const headerRefs = useMemo(
     () =>
-      Array.from({ length: list.length }).map(() =>
-        React.createRef<HTMLButtonElement>()
+      Array.from({ length: list.length }, () =>
+        React.createRef<HTMLButtonElement>(),
       ),
-    [list.length]
+    [list.length],
   );
 
   const toggleIndex = (i: number) => {
     setOpenIndex((prev) => (prev === i ? null : i));
   };
 
+  /* ================= SCHEMA ================= */
+
   const faqSchema = useMemo(() => {
     if (!includeSchema) return null;
-    const mainEntity = list.map((it) => ({
-      "@type": "Question",
-      name: it.q,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: typeof it.a === "string" ? it.a : stripTextFromNode(it.a),
-      },
-    }));
     return {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity,
-    } as Record<string, unknown>;
+      mainEntity: list.map((it) => ({
+        "@type": "Question",
+        name: it.q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: typeof it.a === "string" ? it.a : stripTextFromNode(it.a),
+        },
+      })),
+    };
   }, [includeSchema, list]);
+
+  /* ================= RENDER ================= */
 
   return (
     <section
       aria-labelledby={`${idBase}-faq-heading`}
-      className="max-w-4xl mx-auto px-4 py-12">
-      <h2
-        id={`${idBase}-faq-heading`}
-        className="text-3xl font-extrabold text-primary dark:text-accent mb-6">
+      className="max-w-4xl mx-auto px-4 py-12"
+    >
+      <h2 id={`${idBase}-faq-heading`} className="text-3xl font-extrabold mb-6">
         Frequently asked questions
       </h2>
 
       <div className="space-y-3">
         {list.map((it, i) => {
+          const isOpen = openIndex === i;
           const headerId = `${idBase}-faq-${i}-header`;
           const panelId = `${idBase}-faq-${i}-panel`;
-          const isOpen = i === openIndex;
-          const maxHClass = isOpen ? "max-h-[40rem]" : "max-h-0";
 
           return (
-            <div
-              key={it.id ?? i}
-              className="border border-primary/30 dark:border-accent/40 rounded-lg overflow-hidden bg-base-100 dark:bg-slate-800 shadow-md">
+            <div key={it.id ?? i} className="border rounded-lg overflow-hidden">
               <h3>
                 <button
+                  ref={headerRefs[i]}
                   id={headerId}
-                  ref={headerRefs[i] as React.RefObject<HTMLButtonElement>}
                   aria-controls={panelId}
                   aria-expanded={isOpen}
                   onClick={() => toggleIndex(i)}
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowDown") {
-                      e.preventDefault();
-                      focusHeader(headerRefs, i + 1);
-                    } else if (e.key === "ArrowUp") {
-                      e.preventDefault();
-                      focusHeader(headerRefs, i - 1);
-                    } else if (e.key === "Home") {
-                      e.preventDefault();
-                      focusHeader(headerRefs, 0);
-                    } else if (e.key === "End") {
-                      e.preventDefault();
-                      focusHeader(headerRefs, list.length - 1);
-                    }
-                  }}
-                  className="w-full text-left px-4 sm:px-5 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-accent transition-colors">
-                  <span className="text-lg sm:text-xl font-semibold text-base-content dark:text-slate-100">
-                    {it.q}
-                  </span>
+                  className="w-full px-4 py-4 flex justify-between items-center"
+                >
+                  <span className="font-semibold">{it.q}</span>
 
-                  <div className="flex items-center gap-3">
-                    {it.updatedAt ? (
-                      <time
-                        className="text-xs text-gray-400 hidden sm:inline dark:text-slate-400"
-                        dateTime={it.updatedAt}
-                        aria-hidden={!it.updatedAt}>
-                        Updated {new Date(it.updatedAt).toLocaleDateString()}
-                      </time>
-                    ) : null}
-
-                    <svg
-                      className={`w-5 h-5 transform transition-transform duration-200 ${
-                        prefersReducedMotion
-                          ? ""
-                          : isOpen
-                          ? "rotate-180"
-                          : "rotate-0"
-                      } text-primary dark:text-accent`}
-                      viewBox="0 0 20 20"
-                      fill="none"
+                  <svg
+                    className={`w-5 h-5 transition-transform ${
+                      reducedMotion ? "" : isOpen ? "rotate-180" : "rotate-0"
+                    }`}
+                    viewBox="0 0 20 20"
+                    aria-hidden
+                  >
+                    <path
+                      d="M6 8l4 4 4-4"
                       stroke="currentColor"
-                      aria-hidden="true">
-                      <path
-                        d="M6 8l4 4 4-4"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
+                      strokeWidth="1.7"
+                      fill="none"
+                    />
+                  </svg>
                 </button>
               </h3>
 
@@ -226,110 +255,35 @@ const FaqFull: React.FC<FaqProps> = ({
                 id={panelId}
                 role="region"
                 aria-labelledby={headerId}
-                className={`px-4 sm:px-5 pb-5 transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden ${maxHClass} ${
-                  isOpen ? "opacity-100" : "opacity-0"
-                }`}>
-                <div className="pt-3 text-base-content dark:text-slate-200 text-sm sm:text-base break-words whitespace-pre-wrap">
-                  {it.a}
-                </div>
+                className={`px-4 pb-4 transition-all ${
+                  isOpen ? "max-h-[40rem] opacity-100" : "max-h-0 opacity-0"
+                } overflow-hidden`}
+              >
+                <div className="pt-3">{it.a}</div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {list.length === 0 && (
-        <div className="mt-6 text-center">
-          <p className="text-base-content dark:text-slate-300">
-            No FAQs available yet.
-          </p>
-          <a
-            href="/contact"
-            className="mt-3 inline-block text-primary underline dark:text-accent">
-            Contact us
-          </a>
-        </div>
-      )}
-
-      {faqSchema ? (
+      {faqSchema && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
-      ) : null}
+      )}
     </section>
   );
 };
 
 export default FaqFull;
 
-/* Helpers */
-
-function focusHeader(
-  refs: React.RefObject<HTMLButtonElement | null>[],
-  index: number
-) {
-  const clamped = Math.max(0, Math.min(refs.length - 1, index));
-  const ref = refs[clamped];
-  if (ref?.current) ref.current.focus();
-}
+/* ================= HELPERS ================= */
 
 function stripTextFromNode(node: React.ReactNode): string {
   if (node == null) return "";
   if (typeof node === "string" || typeof node === "number") return String(node);
-  if (typeof node === "boolean" || typeof node === "bigint") return "";
   if (Array.isArray(node)) return node.map(stripTextFromNode).join(" ");
-  if (React.isValidElement(node)) {
-    const element = node as React.ReactElement<{ children?: React.ReactNode }>;
-    return stripTextFromNode(element.props.children);
-  }
-
-  if (isIterable(node)) {
-    try {
-      return Array.from(node as Iterable<unknown>)
-        .map((n) => stripTextFromNode(n as React.ReactNode))
-        .join(" ");
-    } catch {
-      return "";
-    }
-  }
-
+  if (React.isValidElement(node)) return stripTextFromNode(node.props.children);
   return "";
-}
-
-function isIterable(u: unknown): u is Iterable<unknown> {
-  return (
-    typeof u === "object" && u !== null && Symbol.iterator in (u as object)
-  );
-}
-
-function usePrefersReducedMotion(): boolean {
-  const getInitial = (): boolean => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    } catch {
-      return false;
-    }
-  };
-
-  const [reduced, setReduced] = useState<boolean>(getInitial);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-      const onChange = () => setReduced(mq.matches);
-      if (mq.addEventListener) mq.addEventListener("change", onChange);
-      else mq.addListener(onChange);
-      return () => {
-        if (mq.removeEventListener) mq.removeEventListener("change", onChange);
-        else mq.removeListener(onChange);
-      };
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  return reduced;
 }
