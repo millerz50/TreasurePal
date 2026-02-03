@@ -142,18 +142,12 @@ const FAQ_ITEMS: FaqItem[] = [
 
 /* ================= PAGE ================= */
 
-export default function FaqPage({ items }: { items: FaqItem[] }) {
+// App Router supports async server components
+export default async function FaqPage() {
+  // In future, you can fetch FAQs from an API:
+  // const items: FaqItem[] = await fetch('https://api.example.com/faqs').then(res => res.json());
+
+  const items: FaqItem[] = FAQ_ITEMS;
+
   return <FaqFull items={items} defaultOpenIndex={0} />;
-}
-
-/* ================= SSG ================= */
-
-export async function getStaticProps() {
-  // In future, you can fetch FAQs from CMS or database here
-  return {
-    props: {
-      items: FAQ_ITEMS,
-    },
-    revalidate: 86400, // Rebuild at most once per day
-  };
 }
