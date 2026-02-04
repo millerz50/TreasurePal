@@ -1,186 +1,106 @@
 "use client";
 
-import type { ComponentType } from "react";
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import { Building2, Home, Store } from "lucide-react";
+import FloatingBadge from "./FloatingBadge"; // Correct path
+import { useEffect, useState } from "react";
 
-import { AMENITIES } from "@/components/amenities/AMENITIES";
-import type {
-  AmenityItem,
-  PropertySubType,
-} from "@/components/property/PropertyMapping/propertyTypes";
-import { Button } from "@/components/ui/button";
-import { HeartIcon as OutlineHeart } from "@heroicons/react/24/outline";
-import { HeartIcon as SolidHeart } from "@heroicons/react/24/solid";
-
-/* ------------------------------------------------------------------
- Helpers
--------------------------------------------------------------------*/
-type AppwriteFile = string | { $id: string };
-
-function resolveFileId(file?: AppwriteFile | null): string | null {
-  if (!file) return null;
-  if (typeof file === "string") return file;
-  if (typeof file === "object" && "$id" in file) return file.$id;
-  return null;
-}
-
-function getAppwriteFileUrl(fileId: string | null) {
-  if (!fileId) return "/default-property.jpg";
-
-  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID;
-  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
-
-  if (!endpoint || !bucketId || !projectId) {
-    return "/default-property.jpg";
-  }
-
-  const base = endpoint.endsWith("/v1")
-    ? endpoint
-    : `${endpoint.replace(/\/+$/, "")}/v1`;
-
-  return `${base}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
-}
-
-function normalizePropertyType(type: string): PropertySubType {
-  const map: Record<string, PropertySubType> = {
-    industrial: "Industrial",
-    commercial: "BusinessBuilding",
-    residential: "FullHouse",
-    land: "ResidentialStand",
-    hospitality: "Hotel",
-    recreational: "RecreationalFacility",
-    agricultural: "AgriculturalLand",
-  };
-
-  return map[type.toLowerCase()] ?? (type as PropertySubType);
-}
-
-/* ------------------------------------------------------------------
- Types
--------------------------------------------------------------------*/
-export type PropertyImages = {
-  frontElevation?: AppwriteFile;
-  southView?: AppwriteFile;
-  westView?: AppwriteFile;
-  eastView?: AppwriteFile;
-  floorPlan?: AppwriteFile;
-};
-
-export type Property = {
-  id: string; // Appwrite document $id
+/* ----------------------------
+   TYPES
+---------------------------- */
+type Property = {
+  id: string;
   title: string;
-  description: string;
-  price: number;
   type: string;
-  location: string;
-  rooms: number;
-  amenities?: string[];
-  images?: PropertyImages;
-  lat?: number;
-  lng?: number;
+  images?: { frontElevation?: string };
 };
 
-/* ------------------------------------------------------------------
- Component
--------------------------------------------------------------------*/
-export default function PropertyCard({ property }: { property: Property }) {
-  const [liked, setLiked] = useState(false);
+/* ----------------------------
+   COMPONENT
+---------------------------- */
+export default function HeroImages() {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const {
-    id,
-    title,
-    description,
-    price,
-    type,
-    location,
-    rooms,
-    amenities = [],
-    images,
-  } = property;
+  /* ----------------------------
+     FETCH PROPERTIES
+  ---------------------------- */
+  useEffect(() => {
+    async function fetchProperties() {
+      try {
+        const res = await fetch("/api/properties?limit=3"); // Fetch top 3 featured
+        if (!res.ok) throw new Error("Failed to fetch properties");
 
-  const imageUrl = useMemo(() => {
-    const fileId = resolveFileId(images?.frontElevation);
-    return getAppwriteFileUrl(fileId);
-  }, [images?.frontElevation]);
+        const data: Property[] = await res.json();
+        setProperties(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("HeroImages fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const normalizedType = normalizePropertyType(type);
+    fetchProperties();
+  }, []);
 
-  const amenityIcons = useMemo(() => {
-    const out: Record<string, ComponentType<{ className?: string }>> = {};
-    const categories = AMENITIES[normalizedType];
+  /* ----------------------------
+     IMAGE HELPERS
+  ---------------------------- */
+  const heroMain: string =
+    properties[0]?.images?.frontElevation ?? "/heroimg.jpg";
+  const heroSecondary: string =
+    properties[1]?.images?.frontElevation ?? "/heroimg-2.jpg";
 
-    if (!categories) return out;
-
-    Object.values(categories).forEach((items) => {
-      items.forEach((item: AmenityItem) => {
-        if (typeof item.icon === "function") {
-          out[item.name.toLowerCase()] = item.icon;
-        }
-      });
-    });
-
-    return out;
-  }, [normalizedType]);
-
+  /* ----------------------------
+     UI
+  ---------------------------- */
   return (
-    <div className="group relative w-full sm:max-w-sm md:max-w-xs lg:max-w-sm rounded-xl bg-card text-card-foreground shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-1">
-      {/* Image */}
-      <div className="relative aspect-video rounded-t-xl overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src = "/default-property.jpg";
-          }}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.8 }}
+      className="relative h-[440px]"
+    >
+      {/* Main Hero */}
+      <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl">
+        <Image
+          src={heroMain}
+          alt={properties[0]?.title ?? "Featured property"}
+          fill
+          priority
+          className="object-cover"
         />
-
-        <button
-          type="button"
-          onClick={() => setLiked((v) => !v)}
-          aria-label="Like property"
-          className="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:scale-110 transition"
-        >
-          {liked ? (
-            <SolidHeart className="h-4 w-4 text-red-500" />
-          ) : (
-            <OutlineHeart className="h-4 w-4 text-gray-500" />
-          )}
-        </button>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
       </div>
 
-      {/* Content */}
-      <div className="p-3 space-y-2">
-        <h3 className="text-sm font-semibold line-clamp-1">{title}</h3>
+      {/* Secondary Hero */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="absolute -bottom-10 -left-10 w-52 h-36 rounded-2xl overflow-hidden shadow-xl border bg-background"
+      >
+        <Image
+          src={heroSecondary}
+          alt={properties[1]?.title ?? "Secondary property"}
+          fill
+          className="object-cover"
+        />
+      </motion.div>
 
-        <p className="text-xs text-gray-500 line-clamp-2 group-hover:line-clamp-none">
-          {description}
-        </p>
-
-        <div className="grid grid-cols-2 gap-1 text-xs text-gray-700 mt-1">
-          <div>
-            <b>Price:</b> ${price.toLocaleString()}
-          </div>
-          <div>
-            <b>Type:</b> {type}
-          </div>
-          <div>
-            <b>Location:</b> {location}
-          </div>
-          <div>
-            <b>Rooms:</b> {rooms}
-          </div>
-        </div>
-
-        <Link
-          href={`/listings/properties/buildings/property/${id}`}
-          className="block mt-2"
-        >
-          <Button className="w-full py-1">View Details</Button>
-        </Link>
-      </div>
-    </div>
+      {/* Floating badges */}
+      <FloatingBadge icon={Home} text="Rentals" className="top-6 left-6" />
+      <FloatingBadge
+        icon={Building2}
+        text="Buy"
+        className="bottom-12 left-14"
+      />
+      <FloatingBadge
+        icon={Store}
+        text="Marketplace"
+        className="top-1/2 right-6"
+      />
+    </motion.div>
   );
 }
