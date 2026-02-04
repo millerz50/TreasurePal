@@ -7,6 +7,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /* =========================
+   DEBUG FLAG
+========================= */
+const DEBUG = true;
+
+/* =========================
    TYPES (MATCH API SCHEMA)
 ========================= */
 type Property = {
@@ -14,7 +19,7 @@ type Property = {
   title: string;
   type: string;
   subType: string;
-  property_status: string; // pending | approved | rejected | etc
+  property_status: string;
   price: number | null;
   location: string | null;
   address: string | null;
@@ -39,8 +44,12 @@ const getAccountIdFromToken = (): string | null => {
     if (!token) return null;
 
     const payload = JSON.parse(atob(token.split(".")[1]));
+
+    DEBUG && console.log("🪪 JWT payload:", payload);
+
     return payload.accountId ?? payload.sub ?? null;
-  } catch {
+  } catch (err) {
+    console.error("❌ Token parse failed", err);
     return null;
   }
 };
@@ -80,6 +89,9 @@ export default function ManageListings() {
       if (!res.ok) throw new Error("Failed to fetch listings");
 
       const data = await res.json();
+
+      DEBUG && console.log("📦 Raw API properties:", data);
+
       setProperties(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("❌ Fetch error", err);
@@ -116,20 +128,38 @@ export default function ManageListings() {
      EFFECTS
   ========================= */
   useEffect(() => {
-    setAccountId(getAccountIdFromToken());
+    const id = getAccountIdFromToken();
+    setAccountId(id);
+
+    DEBUG && console.log("👤 accountId set to:", id);
+
     fetchListings();
   }, [fetchListings]);
 
   /* =========================
-     FILTER (ALL STATUSES)
-     👉 ONLY filter by owner + search
+     FILTER (SAFE + DEBUGGED)
   ========================= */
   const filtered = useMemo(() => {
+    if (!accountId) {
+      DEBUG && console.warn("⏳ accountId not ready yet");
+      return [];
+    }
+
     const q = search.toLowerCase();
 
     return properties.filter((p) => {
-      const matchesOwner = !accountId || p.accountId === accountId;
+      const matchesOwner = p.accountId === accountId;
       const matchesSearch = p.title?.toLowerCase().includes(q);
+
+      DEBUG &&
+        console.log("🔎 Filter check", {
+          id: p.$id,
+          title: p.title,
+          propertyAccountId: p.accountId,
+          accountId,
+          matchesOwner,
+          matchesSearch,
+        });
 
       return matchesOwner && matchesSearch;
     });
@@ -184,7 +214,7 @@ export default function ManageListings() {
         </p>
       )}
 
-      {!loading && filtered.length === 0 && (
+      {!loading && accountId && filtered.length === 0 && (
         <p className="text-center py-12 text-muted-foreground">
           No properties found.
         </p>
