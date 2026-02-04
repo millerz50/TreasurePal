@@ -6,28 +6,51 @@ import { Building2, Home, Store } from "lucide-react";
 import FloatingBadge from "./FloatingBadge";
 import { useEffect, useState } from "react";
 
+/* ----------------------------
+   ENV
+---------------------------- */
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
+
+const APPWRITE_ENDPOINT =
+  process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
+const APPWRITE_BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ?? "";
+
+/* ----------------------------
+   TYPES
+---------------------------- */
 type Property = {
-  id: string;
+  $id: string;
   title: string;
   type: string;
-  images: { frontElevation?: string };
+  images?: {
+    frontElevation?: string;
+  };
 };
 
 export default function HeroImages() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ------------------ Fetch API ------------------
+  /* ----------------------------
+     FETCH PROPERTIES
+  ---------------------------- */
   useEffect(() => {
     async function fetchProperties() {
       try {
-        const res = await fetch("/api/properties?limit=3"); // Fetch top 3 featured
-        if (!res.ok) throw new Error("Failed to fetch properties");
+        const res = await fetch(
+          `${API_BASE_URL}/api/${API_VERSION}/properties/all?limit=3`,
+        );
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch properties (${res.status})`);
+        }
 
         const data: Property[] = await res.json();
-        setProperties(data);
+        setProperties(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(err);
+        console.error("HeroImages fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -36,11 +59,27 @@ export default function HeroImages() {
     fetchProperties();
   }, []);
 
-  // ------------------ Fallback images ------------------
-  const heroMain = properties[0]?.images.frontElevation || "/heroimg.jpg";
-  const heroSecondary =
-    properties[1]?.images.frontElevation || "/heroimg-2.jpg";
+  /* ----------------------------
+     IMAGE HELPERS
+  ---------------------------- */
+  const buildImage = (fileId?: string, fallback = "/heroimg.jpg"): string => {
+    if (!fileId) return fallback;
+    return `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${fileId}/view`;
+  };
 
+  const heroMain: string = buildImage(
+    properties[0]?.images?.frontElevation,
+    "/heroimg.jpg",
+  );
+
+  const heroSecondary: string = buildImage(
+    properties[1]?.images?.frontElevation,
+    "/heroimg-2.jpg",
+  );
+
+  /* ----------------------------
+     UI
+  ---------------------------- */
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}
@@ -52,7 +91,7 @@ export default function HeroImages() {
       <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl">
         <Image
           src={heroMain}
-          alt={properties[0]?.title || "Modern property"}
+          alt={properties[0]?.title ?? "Featured property"}
           fill
           priority
           className="object-cover"
@@ -69,7 +108,7 @@ export default function HeroImages() {
       >
         <Image
           src={heroSecondary}
-          alt={properties[1]?.title || "Secondary property"}
+          alt={properties[1]?.title ?? "Secondary property"}
           fill
           className="object-cover"
         />
