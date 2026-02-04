@@ -3,16 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/Separator";
+import { useAuth } from "@/context/AuthContext";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /* =========================
-   DEBUG FLAG
-========================= */
-const DEBUG = true;
-
-/* =========================
-   TYPES (MATCH API SCHEMA)
+   TYPES
 ========================= */
 type Property = {
   $id: string;
@@ -36,34 +32,15 @@ type Property = {
 };
 
 /* =========================
-   JWT HELPER
-========================= */
-const getAccountIdFromToken = (): string | null => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-
-    const payload = JSON.parse(atob(token.split(".")[1]));
-
-    DEBUG && console.log("🪪 JWT payload:", payload);
-
-    return payload.accountId ?? payload.sub ?? null;
-  } catch (err) {
-    console.error("❌ Token parse failed", err);
-    return null;
-  }
-};
-
-/* =========================
    COMPONENT
 ========================= */
 export default function ManageListings() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [accountId, setAccountId] = useState<string | null>(null);
 
   /* =========================
      API CONFIG
@@ -77,21 +54,17 @@ export default function ManageListings() {
      FETCH LISTINGS
   ========================= */
   const fetchListings = useCallback(async () => {
+    if (!user) return;
+
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Not authenticated");
-
       const res = await fetch(`${API_BASE}/properties/all`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include", // ✅ Appwrite session cookie
       });
 
       if (!res.ok) throw new Error("Failed to fetch listings");
 
       const data = await res.json();
-
-      DEBUG && console.log("📦 Raw API properties:", data);
-
       setProperties(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("❌ Fetch error", err);
@@ -99,7 +72,7 @@ export default function ManageListings() {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE]);
+  }, [API_BASE, user]);
 
   /* =========================
      DELETE PROPERTY
@@ -108,12 +81,9 @@ export default function ManageListings() {
     if (!confirm("Delete this listing?")) return;
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Not authenticated");
-
       const res = await fetch(`${API_BASE}/properties/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Delete failed");
@@ -128,42 +98,22 @@ export default function ManageListings() {
      EFFECTS
   ========================= */
   useEffect(() => {
-    const id = getAccountIdFromToken();
-    setAccountId(id);
-
-    DEBUG && console.log("👤 accountId set to:", id);
-
-    fetchListings();
-  }, [fetchListings]);
+    if (user) fetchListings();
+  }, [user, fetchListings]);
 
   /* =========================
-     FILTER (SAFE + DEBUGGED)
+     FILTER
   ========================= */
   const filtered = useMemo(() => {
-    if (!accountId) {
-      DEBUG && console.warn("⏳ accountId not ready yet");
-      return [];
-    }
+    if (!user) return [];
 
     const q = search.toLowerCase();
 
-    return properties.filter((p) => {
-      const matchesOwner = p.accountId === accountId;
-      const matchesSearch = p.title?.toLowerCase().includes(q);
-
-      DEBUG &&
-        console.log("🔎 Filter check", {
-          id: p.$id,
-          title: p.title,
-          propertyAccountId: p.accountId,
-          accountId,
-          matchesOwner,
-          matchesSearch,
-        });
-
-      return matchesOwner && matchesSearch;
-    });
-  }, [properties, search, accountId]);
+    return properties.filter(
+      (p) =>
+        p.accountId === user.accountid && p.title?.toLowerCase().includes(q),
+    );
+  }, [properties, search, user]);
 
   /* =========================
      STATUS STYLES
@@ -184,6 +134,22 @@ export default function ManageListings() {
   /* =========================
      RENDER
   ========================= */
+  if (authLoading) {
+    return (
+      <p className="text-center py-12 text-muted-foreground">
+        Checking authentication…
+      </p>
+    );
+  }
+
+  if (!user) {
+    return (
+      <p className="text-center py-12 text-muted-foreground">
+        Please sign in to view your listings.
+      </p>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div>
@@ -214,13 +180,13 @@ export default function ManageListings() {
         </p>
       )}
 
-      {!loading && accountId && filtered.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <p className="text-center py-12 text-muted-foreground">
           No properties found.
         </p>
       )}
 
-      {!loading && filtered.length > 0 && (
+      {filtered.length > 0 && (
         <div className="rounded-lg border overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
