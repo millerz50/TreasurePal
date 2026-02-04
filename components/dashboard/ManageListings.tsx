@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /* =========================
-   TYPES
+   TYPES (MATCH DB SCHEMA)
 ========================= */
 type Property = {
   $id: string;
@@ -16,17 +16,21 @@ type Property = {
   type: string;
   subType: string;
   property_status: string;
+
   price: number | null;
   location: string | null;
   address: string | null;
   rooms: number | null;
   description: string | null;
   country: string | null;
-  accountId?: string | null;
+
+  agentId: string | null; // ✅ OWNER FIELD
   companyId?: string | null;
+
   published: boolean;
   approvedBy?: string | null;
   approvedAt?: string | null;
+
   $createdAt: string;
   $updatedAt: string;
 };
@@ -59,7 +63,7 @@ export default function ManageListings() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/properties/all`, {
-        credentials: "include", // ✅ Appwrite session cookie
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Failed to fetch listings");
@@ -102,7 +106,7 @@ export default function ManageListings() {
   }, [user, fetchListings]);
 
   /* =========================
-     FILTER
+     FILTER (FIXED)
   ========================= */
   const filtered = useMemo(() => {
     if (!user) return [];
@@ -111,7 +115,8 @@ export default function ManageListings() {
 
     return properties.filter(
       (p) =>
-        p.accountId === user.accountid && p.title?.toLowerCase().includes(q),
+        p.agentId === user.accountid && // ✅ CORRECT FIELD
+        p.title.toLowerCase().includes(q),
     );
   }, [properties, search, user]);
 
