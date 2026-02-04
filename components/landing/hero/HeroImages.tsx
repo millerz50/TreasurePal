@@ -65,7 +65,7 @@ export default function HeroImages() {
   useEffect(() => {
     async function fetchProperties() {
       try {
-        const url = `${API_BASE_URL}/api/${API_VERSION}/properties?limit=3`;
+        const url = `${API_BASE_URL}/api/${API_VERSION}/properties/all?limit=3`;
         const res = await fetch(url);
         if (!res.ok)
           throw new Error(`Failed to fetch properties: ${res.status}`);
