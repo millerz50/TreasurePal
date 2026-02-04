@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Building2, Home, Store } from "lucide-react";
-import FloatingBadge from "./FloatingBadge"; // Make sure this path is correct
+import FloatingBadge from "./FloatingBadge";
 import { useEffect, useState } from "react";
 
 /* ----------------------------
@@ -34,18 +34,22 @@ type Property = {
 /* ----------------------------
    HELPERS
 ---------------------------- */
-function getAppwriteFileUrl(file: AppwriteFile | undefined | null) {
-  if (!file) return "/heroimg.jpg"; // fallback image
+function resolveFileId(file: AppwriteFile | null | undefined): string | null {
+  if (!file) return null;
   if (typeof file === "string") return file;
+  if (typeof file === "object" && "$id" in file) return file.$id;
+  return null;
+}
 
-  if (!APPWRITE_ENDPOINT || !APPWRITE_PROJECT_ID || !APPWRITE_BUCKET_ID)
+function getAppwriteFileUrl(fileId: string | null) {
+  if (!fileId) return "/heroimg.jpg"; // fallback
+  if (!APPWRITE_ENDPOINT || !APPWRITE_BUCKET_ID || !APPWRITE_PROJECT_ID)
     return "/heroimg.jpg";
 
   const base = APPWRITE_ENDPOINT.endsWith("/v1")
     ? APPWRITE_ENDPOINT
     : `${APPWRITE_ENDPOINT}/v1`;
-
-  return `${base}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${file.$id}/view?project=${APPWRITE_PROJECT_ID}`;
+  return `${base}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${fileId}/view?project=${APPWRITE_PROJECT_ID}`;
 }
 
 /* ----------------------------
@@ -55,12 +59,16 @@ export default function HeroImages() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
+  /* ----------------------------
+     FETCH PROPERTIES
+  ---------------------------- */
   useEffect(() => {
     async function fetchProperties() {
       try {
         const url = `${API_BASE_URL}/api/${API_VERSION}/properties?limit=3`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch properties");
+        if (!res.ok)
+          throw new Error(`Failed to fetch properties: ${res.status}`);
 
         const data: Property[] = await res.json();
         setProperties(Array.isArray(data) ? data : []);
@@ -74,9 +82,14 @@ export default function HeroImages() {
     fetchProperties();
   }, []);
 
-  const heroMain = getAppwriteFileUrl(properties[0]?.images?.frontElevation);
+  /* ----------------------------
+     IMAGE HELPERS
+  ---------------------------- */
+  const heroMain = getAppwriteFileUrl(
+    resolveFileId(properties[0]?.images?.frontElevation),
+  );
   const heroSecondary = getAppwriteFileUrl(
-    properties[1]?.images?.frontElevation,
+    resolveFileId(properties[1]?.images?.frontElevation),
   );
 
   if (loading) {
@@ -95,7 +108,10 @@ export default function HeroImages() {
       className="relative h-[440px]"
     >
       {/* Main Hero */}
-      <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl">
+      <motion.div
+        whileHover={{ scale: 1.02, y: -5 }}
+        className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl"
+      >
         <Image
           src={heroMain}
           alt={properties[0]?.title || "Featured property"}
@@ -104,12 +120,13 @@ export default function HeroImages() {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-      </div>
+      </motion.div>
 
       {/* Secondary Hero */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.05, x: -5, y: -5 }}
         transition={{ delay: 0.6 }}
         className="absolute -bottom-10 -left-10 w-52 h-36 rounded-2xl overflow-hidden shadow-xl border bg-background"
       >
