@@ -42,13 +42,15 @@ function resolveFileId(file: AppwriteFile | null | undefined): string | null {
 }
 
 function getAppwriteFileUrl(fileId: string | null) {
-  if (!fileId) return "/heroimg.jpg"; // fallback
+  if (!fileId) return null; // Do not return any placeholder
+
   if (!APPWRITE_ENDPOINT || !APPWRITE_BUCKET_ID || !APPWRITE_PROJECT_ID)
-    return "/heroimg.jpg";
+    return null;
 
   const base = APPWRITE_ENDPOINT.endsWith("/v1")
     ? APPWRITE_ENDPOINT
     : `${APPWRITE_ENDPOINT}/v1`;
+
   return `${base}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${fileId}/view?project=${APPWRITE_PROJECT_ID}`;
 }
 
@@ -82,16 +84,6 @@ export default function HeroImages() {
     fetchProperties();
   }, []);
 
-  /* ----------------------------
-     IMAGE HELPERS
-  ---------------------------- */
-  const heroMain = getAppwriteFileUrl(
-    resolveFileId(properties[0]?.images?.frontElevation),
-  );
-  const heroSecondary = getAppwriteFileUrl(
-    resolveFileId(properties[1]?.images?.frontElevation),
-  );
-
   if (loading) {
     return (
       <div className="relative h-[440px] flex items-center justify-center">
@@ -99,6 +91,14 @@ export default function HeroImages() {
       </div>
     );
   }
+
+  const heroMainUrl = getAppwriteFileUrl(
+    resolveFileId(properties[0]?.images?.frontElevation),
+  );
+
+  const heroSecondaryUrl = getAppwriteFileUrl(
+    resolveFileId(properties[1]?.images?.frontElevation),
+  );
 
   return (
     <motion.div
@@ -108,35 +108,39 @@ export default function HeroImages() {
       className="relative h-[440px]"
     >
       {/* Main Hero */}
-      <motion.div
-        whileHover={{ scale: 1.02, y: -5 }}
-        className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl"
-      >
-        <Image
-          src={heroMain}
-          alt={properties[0]?.title || "Featured property"}
-          fill
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-      </motion.div>
+      {heroMainUrl && (
+        <motion.div
+          whileHover={{ scale: 1.02, y: -5 }}
+          className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl"
+        >
+          <Image
+            src={heroMainUrl}
+            alt={properties[0]?.title || "Featured property"}
+            fill
+            priority
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+        </motion.div>
+      )}
 
       {/* Secondary Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ scale: 1.05, x: -5, y: -5 }}
-        transition={{ delay: 0.6 }}
-        className="absolute -bottom-10 -left-10 w-52 h-36 rounded-2xl overflow-hidden shadow-xl border bg-background"
-      >
-        <Image
-          src={heroSecondary}
-          alt={properties[1]?.title || "Secondary property"}
-          fill
-          className="object-cover"
-        />
-      </motion.div>
+      {heroSecondaryUrl && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.05, x: -5, y: -5 }}
+          transition={{ delay: 0.6 }}
+          className="absolute -bottom-10 -left-10 w-52 h-36 rounded-2xl overflow-hidden shadow-xl border bg-background"
+        >
+          <Image
+            src={heroSecondaryUrl}
+            alt={properties[1]?.title || "Secondary property"}
+            fill
+            className="object-cover"
+          />
+        </motion.div>
+      )}
 
       {/* Floating badges */}
       <FloatingBadge icon={Home} text="Rentals" className="top-6 left-6" />
