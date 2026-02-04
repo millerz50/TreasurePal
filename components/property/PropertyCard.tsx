@@ -26,13 +26,14 @@ function resolveFileId(file: AppwriteFile | null | undefined): string | null {
 }
 
 function getAppwriteFileUrl(fileId: string | null) {
-  if (!fileId) return "/default-property.jpg";
+  // Use placeholder.png if no file
+  if (!fileId) return "/placeholder.png";
 
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
-  if (!endpoint || !bucketId || !projectId) return "/default-property.jpg";
+  if (!endpoint || !bucketId || !projectId) return "/placeholder.png";
 
   const base = endpoint.endsWith("/v1")
     ? endpoint
@@ -140,7 +141,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           src={imageUrl}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => (e.currentTarget.src = "/default-property.jpg")}
+          onError={(e) => (e.currentTarget.src = "/placeholder.png")}
         />
 
         <button
