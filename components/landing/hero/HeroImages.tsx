@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Building2, Home, Store } from "lucide-react";
-import FloatingBadge from "./FloatingBadge"; // Ensure the path is correct
+import FloatingBadge from "./FloatingBadge"; // Make sure this path is correct
 import { useEffect, useState } from "react";
 
 /* ----------------------------
@@ -15,18 +15,38 @@ const API_BASE_URL =
 const APPWRITE_ENDPOINT =
   process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace(/\/+$/, "") ?? "";
 const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
+const APPWRITE_BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ?? "";
 
 /* ----------------------------
    TYPES
 ---------------------------- */
+type AppwriteFile = string | { $id: string };
+
 type Property = {
   id: string;
   title: string;
   type: string;
   images?: {
-    frontElevation?: string;
+    frontElevation?: AppwriteFile;
   };
 };
+
+/* ----------------------------
+   HELPERS
+---------------------------- */
+function getAppwriteFileUrl(file: AppwriteFile | undefined | null) {
+  if (!file) return "/heroimg.jpg"; // fallback image
+  if (typeof file === "string") return file;
+
+  if (!APPWRITE_ENDPOINT || !APPWRITE_PROJECT_ID || !APPWRITE_BUCKET_ID)
+    return "/heroimg.jpg";
+
+  const base = APPWRITE_ENDPOINT.endsWith("/v1")
+    ? APPWRITE_ENDPOINT
+    : `${APPWRITE_ENDPOINT}/v1`;
+
+  return `${base}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${file.$id}/view?project=${APPWRITE_PROJECT_ID}`;
+}
 
 /* ----------------------------
    COMPONENT
@@ -35,9 +55,6 @@ export default function HeroImages() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /* ----------------------------
-     FETCH PROPERTIES
-  ---------------------------- */
   useEffect(() => {
     async function fetchProperties() {
       try {
@@ -57,16 +74,11 @@ export default function HeroImages() {
     fetchProperties();
   }, []);
 
-  /* ----------------------------
-     IMAGE HELPERS
-  ---------------------------- */
-  const heroMain = properties[0]?.images?.frontElevation || "/heroimg.jpg";
-  const heroSecondary =
-    properties[1]?.images?.frontElevation || "/heroimg-2.jpg";
+  const heroMain = getAppwriteFileUrl(properties[0]?.images?.frontElevation);
+  const heroSecondary = getAppwriteFileUrl(
+    properties[1]?.images?.frontElevation,
+  );
 
-  /* ----------------------------
-     UI
-  ---------------------------- */
   if (loading) {
     return (
       <div className="relative h-[440px] flex items-center justify-center">
