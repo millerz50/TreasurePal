@@ -26,7 +26,7 @@ export default function NavLinksDesktop() {
                 <Icon className="h-4 w-4" />
                 {item.label}
                 <ChevronDown
-                  className={`h-4 w-4 transition ${
+                  className={`h-4 w-4 transition-transform ${
                     openDropdown === item.label ? "rotate-180" : ""
                   }`}
                 />
@@ -38,7 +38,7 @@ export default function NavLinksDesktop() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 12 }}
-                    className="absolute left-0 top-full mt-3 w-56 rounded-2xl border bg-background shadow-xl z-50"
+                    className="absolute left-0 top-full mt-3 w-56 rounded-2xl bg-background shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-50"
                   >
                     <div className="p-2 space-y-1">
                       {item.dropdown.map((sub) => (

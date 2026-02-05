@@ -13,9 +13,6 @@ import Footer from "@/components/landing/footer/Footer";
 import { Hreflang } from "@/components/seo/Hreflang";
 import LogoLoader from "@/components/ui/LogoLoader";
 
-import AdsLoader from "@/components/AdsLoader";
-import AdsCarousel from "@/components/AdsCarousel";
-
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -87,23 +84,13 @@ export default function RootLayout({
       </head>
 
       <body className="bg-base-100 text-base-content font-sans">
-        {/* Global loader */}
+        {/* Global app loader */}
         <LogoLoader />
 
         <Providers>
-          {/* Splash ad (once per session) */}
-          <AdsLoader />
-
           <Navbar />
 
-          <main className="min-h-screen pt-20">
-            {children}
-
-            {/* Inline rotating ad */}
-            <div className="my-8">
-              <AdsCarousel />
-            </div>
-          </main>
+          <main className="min-h-screen pt-20">{children}</main>
         </Providers>
 
         <ContactChannels />

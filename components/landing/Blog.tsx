@@ -12,8 +12,15 @@ type BlogPost = {
   title: string;
   excerpt: string;
   date: string;
-  image: string;
+  image?: string; // optional now
 };
+
+/* ----------------------------
+   ENV VARIABLES
+---------------------------- */
+const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v2").trim();
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URLV2?.replace(/\/+$/, "") ?? "";
 
 export default function BlogSection() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -21,33 +28,27 @@ export default function BlogSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPosts = async (): Promise<void> => {
+    const fetchPosts = async () => {
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${API_BASE}/api/blogs`, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (!res.ok) {
-          throw new Error(`Failed to fetch blog posts: ${res.status}`);
-        }
+        const res = await fetch(`${API_BASE_URL}/api/${API_VERSION}/blogs`);
+        if (!res.ok) throw new Error(`Failed to fetch blogs: ${res.status}`);
         const data: BlogPost[] = await res.json();
         setBlogPosts(data);
-        if (data.length > 0) {
-          setActivePostId(data[0].id);
-        }
-      } catch (error) {
-        console.error("❌ Error fetching blog posts:", error);
-        setBlogPosts([]); // fallback to empty list
+        if (data.length > 0) setActivePostId(data[0].id);
+      } catch (err) {
+        console.error("❌ Error fetching blog posts:", err);
+        setBlogPosts([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchPosts();
   }, []);
 
   const activePost = blogPosts.find((post) => post.id === activePostId);
+
+  const getImageUrl = (url?: string) => url || "/placeholder.png";
 
   return (
     <section className="py-16 px-6 sm:px-10 max-w-screen-xl mx-auto">
@@ -75,8 +76,9 @@ export default function BlogSection() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.5 }}>
-                  <BlogArticle post={activePost} />
+                  transition={{ duration: 0.5 }}
+                >
+                  <BlogArticle post={activePost} getImageUrl={getImageUrl} />
                 </motion.div>
               </AnimatePresence>
             )}
@@ -84,13 +86,15 @@ export default function BlogSection() {
 
           {/* Sidebar Blog Links */}
           <aside className="sticky top-20 space-y-5 max-h-[600px] overflow-y-auto">
-            <h4 className="text-xl font-semibold text-accent">🗂 Other Posts</h4>
+            <h4 className="text-xl font-semibold text-accent">
+              🗂 Other Posts
+            </h4>
             <ul className="space-y-5">
               {blogPosts.map((post) => (
                 <li key={post.id} className="flex gap-3 items-start group">
                   <div className="w-16 h-16 relative rounded-md border-2 border-primary/30 overflow-hidden shadow-sm">
                     <Image
-                      src={post.image}
+                      src={getImageUrl(post.image)}
                       alt={post.title}
                       fill
                       className="object-cover"
@@ -105,8 +109,9 @@ export default function BlogSection() {
                         "text-sm text-left w-full transition font-semibold",
                         post.id === activePostId
                           ? "text-primary"
-                          : "text-base-content group-hover:text-white"
-                      )}>
+                          : "text-base-content group-hover:text-white",
+                      )}
+                    >
                       {post.title}
                     </button>
                     <p className="text-xs text-gray-500">{post.date}</p>
@@ -121,16 +126,23 @@ export default function BlogSection() {
   );
 }
 
-function BlogArticle({ post }: { post: BlogPost }) {
+function BlogArticle({
+  post,
+  getImageUrl,
+}: {
+  post: BlogPost;
+  getImageUrl: (url?: string) => string;
+}) {
   const [liked, setLiked] = useState(false);
 
   return (
     <article className="space-y-6">
       <motion.div
         layout
-        className="relative aspect-video overflow-hidden rounded-xl shadow-xl border-4 border-accent/40 group">
+        className="relative aspect-video overflow-hidden rounded-xl shadow-xl border-4 border-accent/40 group"
+      >
         <Image
-          src={post.image}
+          src={getImageUrl(post.image)}
           alt={post.title}
           fill
           className="object-cover"
@@ -149,15 +161,15 @@ function BlogArticle({ post }: { post: BlogPost }) {
             "btn btn-sm btn-circle absolute top-4 right-4 transition shadow-md",
             liked
               ? "bg-red-600 text-white hover:bg-red-700"
-              : "bg-white text-red-600 hover:bg-red-100"
-          )}>
+              : "bg-white text-red-600 hover:bg-red-100",
+          )}
+        >
           {liked ? (
             <SolidHeart className="h-5 w-5" />
           ) : (
             <OutlineHeart className="h-5 w-5" />
           )}
         </button>
-        {/* Hover reveal text */}
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-transparent group-hover:text-white text-xl font-bold transition duration-300">
             {post.title}

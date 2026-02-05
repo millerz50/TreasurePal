@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useId, useMemo, useState } from "react";
+import { Plus, Minus } from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -24,7 +25,6 @@ const DEFAULT_ITEMS: FaqItem[] = [
   {
     q: "What is TreasurePal?",
     a: "TreasurePal is a platform that connects local businesses with customers via listings, bookings and a network of local agents.",
-    updatedAt: "2025-01-01",
   },
   {
     q: "How do I sign up?",
@@ -32,20 +32,18 @@ const DEFAULT_ITEMS: FaqItem[] = [
       <>
         Click{" "}
         <a
-          className="text-blue-600 underline dark:text-blue-400"
           href="/auth/signup"
+          className="text-primary underline underline-offset-4"
         >
           Sign up
         </a>{" "}
         and complete the short registration form.
       </>
     ),
-    updatedAt: "2025-01-03",
   },
   {
     q: "Is my data secure?",
     a: "We use industry practices for encryption and secure storage. Sensitive tokens are stored in HttpOnly cookies on the server.",
-    updatedAt: "2025-02-11",
   },
   {
     q: "How can I join TreasurePal as an agent?",
@@ -53,15 +51,14 @@ const DEFAULT_ITEMS: FaqItem[] = [
       <>
         Visit the Join page or{" "}
         <a
-          className="text-blue-600 underline dark:text-blue-400"
           href="/auth/signup"
+          className="text-primary underline underline-offset-4"
         >
           Join Us
         </a>
         .
       </>
     ),
-    updatedAt: "2025-03-01",
   },
   {
     q: "What is our WhatsApp channel?",
@@ -70,63 +67,57 @@ const DEFAULT_ITEMS: FaqItem[] = [
         href="https://www.whatsapp.com/channel/0029VbBYnEc9WtC1xlxVZe2K"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-blue-600 underline dark:text-blue-400"
+        className="text-primary underline underline-offset-4"
       >
-        Follow our WhatsApp channel here
+        Follow our WhatsApp channel
       </a>
     ),
-    updatedAt: "2025-04-01",
   },
   {
     q: "Who is the CEO?",
     a: "The CEO of TreasurePal is Johannes Zemba.",
-    updatedAt: "2025-04-05",
   },
   {
     q: "Is TreasurePal available in other countries?",
     a: (
       <>
-        Yes, you can also access it on{" "}
+        Yes — also available on{" "}
         <a
           href="https://www.treasureprops.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 underline dark:text-blue-400"
+          className="text-primary underline underline-offset-4"
         >
           treasureprops.com
         </a>
         .
       </>
     ),
-    updatedAt: "2025-04-10",
   },
   {
     q: "Can I contribute as a developer?",
     a: (
       <>
-        Yes! You can contribute to TreasurePal’s development on{" "}
+        Yes! Contribute on{" "}
         <a
           href="https://github.com/millerz50/TreasurePal"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 underline dark:text-blue-400"
+          className="text-primary underline underline-offset-4"
         >
           GitHub
         </a>
         .
       </>
     ),
-    updatedAt: "2025-04-15",
   },
   {
     q: "Do I need an agent as a house owner?",
-    a: "No, you don't need an agent. You can become your own agent and manage listings directly.",
-    updatedAt: "2025-04-20",
+    a: "No. You can manage listings yourself and act as your own agent.",
   },
   {
     q: "Can I invest through TreasurePal?",
-    a: "Yes, TreasurePal is forward-looking for investment opportunities. You can explore and invest in various property projects.",
-    updatedAt: "2025-04-25",
+    a: "Yes. TreasurePal is expanding toward curated investment opportunities.",
   },
 ];
 
@@ -136,57 +127,24 @@ const FaqFull: React.FC<FaqProps> = ({
   items,
   includeSchema = true,
   storageKey = "treasurepal.faq.open",
-  defaultOpenIndex = null, // ⬅ SSR-safe default
+  defaultOpenIndex = null,
 }) => {
   const idBase = useId();
   const list = items?.length ? items : DEFAULT_ITEMS;
 
-  /* 🔒 SSR-SAFE initial state */
   const [openIndex, setOpenIndex] = useState<number | null>(defaultOpenIndex);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  /* ✅ Client-only hydration logic */
   useEffect(() => {
-    // restore open index
-    if (storageKey) {
-      try {
-        const raw = localStorage.getItem(storageKey);
-        const parsed = raw !== null ? Number(raw) : null;
-        if (parsed !== null && parsed >= 0 && parsed < list.length) {
-          setOpenIndex(parsed);
-        }
-      } catch {}
-    }
-
-    // reduced motion
     try {
       const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
       setReducedMotion(mq.matches);
     } catch {}
-  }, [storageKey, list.length]);
-
-  /* persist state */
-  useEffect(() => {
-    if (!storageKey) return;
-    try {
-      if (openIndex === null) localStorage.removeItem(storageKey);
-      else localStorage.setItem(storageKey, String(openIndex));
-    } catch {}
-  }, [openIndex, storageKey]);
-
-  const headerRefs = useMemo(
-    () =>
-      Array.from({ length: list.length }, () =>
-        React.createRef<HTMLButtonElement>(),
-      ),
-    [list.length],
-  );
+  }, []);
 
   const toggleIndex = (i: number) => {
     setOpenIndex((prev) => (prev === i ? null : i));
   };
-
-  /* ================= SCHEMA ================= */
 
   const faqSchema = useMemo(() => {
     if (!includeSchema) return null;
@@ -204,62 +162,62 @@ const FaqFull: React.FC<FaqProps> = ({
     };
   }, [includeSchema, list]);
 
-  /* ================= RENDER ================= */
-
   return (
     <section
       aria-labelledby={`${idBase}-faq-heading`}
-      className="max-w-4xl mx-auto px-4 py-12"
+      className="max-w-4xl mx-auto px-4 py-14"
     >
-      <h2 id={`${idBase}-faq-heading`} className="text-3xl font-extrabold mb-6">
+      <h2
+        id={`${idBase}-faq-heading`}
+        className="text-3xl md:text-4xl font-bold mb-10"
+      >
         Frequently asked questions
       </h2>
 
-      <div className="space-y-3">
+      <div className="space-y-5">
         {list.map((it, i) => {
           const isOpen = openIndex === i;
-          const headerId = `${idBase}-faq-${i}-header`;
-          const panelId = `${idBase}-faq-${i}-panel`;
 
           return (
-            <div key={it.id ?? i} className="border rounded-lg overflow-hidden">
-              <h3>
-                <button
-                  ref={headerRefs[i]}
-                  id={headerId}
-                  aria-controls={panelId}
-                  aria-expanded={isOpen}
-                  onClick={() => toggleIndex(i)}
-                  className="w-full px-4 py-4 flex justify-between items-center"
-                >
-                  <span className="font-semibold">{it.q}</span>
+            <div
+              key={it.id ?? i}
+              className={`
+                rounded-2xl
+                bg-background/70
+                backdrop-blur-xl
+                shadow-sm
+                transition
+                hover:shadow-md
+              `}
+            >
+              <button
+                aria-expanded={isOpen}
+                onClick={() => toggleIndex(i)}
+                className="w-full px-6 py-5 flex items-center justify-between text-left"
+              >
+                <span className="text-base md:text-lg font-semibold">
+                  {it.q}
+                </span>
 
-                  <svg
-                    className={`w-5 h-5 transition-transform ${
-                      reducedMotion ? "" : isOpen ? "rotate-180" : "rotate-0"
-                    }`}
-                    viewBox="0 0 20 20"
-                    aria-hidden
-                  >
-                    <path
-                      d="M6 8l4 4 4-4"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      fill="none"
-                    />
-                  </svg>
-                </button>
-              </h3>
+                <span className="ml-4 flex-shrink-0 text-muted-foreground">
+                  {isOpen ? (
+                    <Minus className="h-5 w-5" />
+                  ) : (
+                    <Plus className="h-5 w-5" />
+                  )}
+                </span>
+              </button>
 
               <div
-                id={panelId}
-                role="region"
-                aria-labelledby={headerId}
-                className={`px-4 pb-4 transition-all ${
-                  isOpen ? "max-h-[40rem] opacity-100" : "max-h-0 opacity-0"
-                } overflow-hidden`}
+                className={`px-6 overflow-hidden transition-all ${
+                  isOpen
+                    ? "max-h-[40rem] opacity-100 pb-5"
+                    : "max-h-0 opacity-0"
+                }`}
               >
-                <div className="pt-3">{it.a}</div>
+                <div className="text-muted-foreground leading-relaxed pt-1">
+                  {it.a}
+                </div>
               </div>
             </div>
           );
