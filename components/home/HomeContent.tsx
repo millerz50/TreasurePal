@@ -18,9 +18,15 @@ import FaqFull from "@/components/landing/FaqFull";
 import AgencySection from "@/components/user/AgencySection";
 import JoinHero from "@/components/user/JoinHero";
 
+/* ==================================================
+   HOME PAGE CONTENT
+   - Fully theme-aware (light/dark mode)
+   - Includes property search, blog, FAQ, agencies, and join sections
+================================================== */
 export default function HomeContent() {
   const router = useRouter();
 
+  // Handle filter changes and navigate to property-filter page with query params
   const handleFilterChange = (filters: Filters) => {
     const params = new URLSearchParams();
 
@@ -34,7 +40,7 @@ export default function HomeContent() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 space-y-28">
-      {/* PROPERTY SEARCH */}
+      {/* PROPERTY SEARCH SECTION */}
       <section className="space-y-6">
         <SectionHeader
           icon={MagnifyingGlassIcon}
@@ -44,7 +50,7 @@ export default function HomeContent() {
         <PropertyFilters onFilterChange={handleFilterChange} />
       </section>
 
-      {/* BLOG */}
+      {/* BLOG SECTION */}
       <section className="space-y-6">
         <SectionHeader
           icon={NewspaperIcon}
@@ -54,7 +60,7 @@ export default function HomeContent() {
         <BlogSection />
       </section>
 
-      {/* FAQ */}
+      {/* FAQ SECTION */}
       <section className="space-y-6">
         <SectionHeader
           icon={QuestionMarkCircleIcon}
@@ -64,7 +70,7 @@ export default function HomeContent() {
         <FaqFull includeSchema storageKey="faq.home.open" />
       </section>
 
-      {/* AGENCIES */}
+      {/* AGENCIES SECTION */}
       <section className="space-y-6">
         <SectionHeader
           icon={BuildingOffice2Icon}
@@ -74,7 +80,7 @@ export default function HomeContent() {
         <AgencySection />
       </section>
 
-      {/* JOIN */}
+      {/* JOIN SECTION */}
       <section className="space-y-6">
         <SectionHeader
           icon={UserPlusIcon}
@@ -87,10 +93,11 @@ export default function HomeContent() {
   );
 }
 
-/* ===============================
-   SECTION HEADER (REUSABLE & THEME-AWARE)
-================================ */
-
+/* ==================================================
+   REUSABLE SECTION HEADER
+   - Theme-aware icon and text
+   - Works for all sections
+================================================== */
 function SectionHeader({
   icon: Icon,
   title,
@@ -102,10 +109,16 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-4">
-      <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+      {/* Icon container */}
+      <div
+        className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl 
+                      bg-gray-200 text-gray-900 
+                      dark:bg-gray-800 dark:text-gray-100"
+      >
         <Icon className="h-5 w-5" />
       </div>
 
+      {/* Text content */}
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
           {title}

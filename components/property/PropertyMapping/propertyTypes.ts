@@ -77,3 +77,28 @@ export interface PropertySetupMap {
   label: string;
   subTypes: Record<PropertySubType, AmenityCategory | undefined>;
 }
+
+/* ----------------------------------
+   PROPERTY MODEL
+----------------------------------- */
+export interface Property {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  type: PropertyCategory;
+  subType: PropertySubType;
+  location: string;
+  rooms?: number;
+  lat: number;
+  lng: number;
+  status: string;
+
+  images: {
+    frontElevation?: string;
+    southView?: string;
+    westView?: string;
+    eastView?: string;
+    floorPlan?: string;
+  };
+}

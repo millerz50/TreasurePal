@@ -1,16 +1,14 @@
-// app/layout.tsx
 import "@/app/globals.css";
 import "leaflet/dist/leaflet.css";
 
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 
-import Providers from "./providers";
+import Providers from "@/provider/providers";
 
 import ContactChannels from "@/components/landing/ContactChannels";
 import Navbar from "@/components/landing/Navbar/ssrWrapperNav/Navbar";
 import Footer from "@/components/landing/footer/Footer";
-import { Hreflang } from "@/components/seo/Hreflang";
 import LogoLoader from "@/components/ui/LogoLoader";
 
 const poppins = Poppins({
@@ -78,23 +76,16 @@ export default function RootLayout({
       className={poppins.variable}
       suppressHydrationWarning
     >
-      <head>
-        <link rel="icon" type="image/svg+xml" href="/logo/TREASURE.svg" />
-        <Hreflang path="" />
-      </head>
-
       <body className="bg-base-100 text-base-content font-sans">
         {/* Global app loader */}
         <LogoLoader />
 
         <Providers>
           <Navbar />
-
           <main className="min-h-screen pt-20">{children}</main>
+          <ContactChannels />
+          <Footer />
         </Providers>
-
-        <ContactChannels />
-        <Footer />
       </body>
     </html>
   );
