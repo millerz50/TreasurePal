@@ -1,4 +1,4 @@
-import type { ICON_MAP } from "@/components/icons/maps/ICON_MAP";
+import { ICON_MAP } from "@/components/icons/maps/ICON_MAP";
 
 /* ----------------------------------
    PROPERTY CATEGORIES
@@ -52,7 +52,7 @@ export type PropertySubType =
   | "CommercialStand"
   | "IndustrialStand"
 
-  // Additional subtypes for categories without existing subtypes
+  // Additional subtypes
   | "RecreationalFacility" // Recreational
   | "AgriculturalLand"; // Agricultural
 
@@ -93,7 +93,6 @@ export interface Property {
   lat: number;
   lng: number;
   status: string;
-
   images: {
     frontElevation?: string;
     southView?: string;
