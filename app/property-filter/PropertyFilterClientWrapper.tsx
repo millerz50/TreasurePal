@@ -1,10 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import PropertyFilterClient from "@/app/listings/properties/PropertyFilterClient";
 import { PROPERTY_HIERARCHY } from "@/components/property/PropertyMapping/propertyHierarchy";
-import type { PropertyCategory } from "@/components/property/PropertyMapping/propertyTypes";
-import { useEffect, useState } from "react";
+import {
+  type Property,
+  type PropertyCategory,
+} from "@/components/property/PropertyMapping/propertyTypes";
 
 const API_VERSION = (process.env.NEXT_PUBLIC_API_VERSION || "v1").trim();
 const API_BASE =
@@ -14,6 +17,7 @@ const API_BASE =
 
 export default function PropertyFilterClientWrapper() {
   const { user, loading } = useAuth();
+
   const categories = Object.keys(PROPERTY_HIERARCHY) as PropertyCategory[];
   const defaultCategory = categories[0];
   const defaultSubType = PROPERTY_HIERARCHY[defaultCategory].subTypes[0];
@@ -22,7 +26,7 @@ export default function PropertyFilterClientWrapper() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return; // only fetch if logged in
+    if (!user) return;
 
     const fetchProperties = async () => {
       try {
@@ -31,7 +35,7 @@ export default function PropertyFilterClientWrapper() {
           {
             cache: "no-store",
             headers: {
-              Authorization: `Bearer ${user.accountid}`, // or JWT from AuthProvider
+              Authorization: `Bearer ${user.accountid}`,
             },
           },
         );
