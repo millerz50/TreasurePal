@@ -1,60 +1,61 @@
 import { ICON_MAP } from "@/components/icons/maps/ICON_MAP";
 
 /* ----------------------------------
-   PROPERTY CATEGORIES
+   PROPERTY CATEGORIES (RUNTIME + TYPE)
 ----------------------------------- */
-export type PropertyCategory =
-  | "Residential"
-  | "Commercial"
-  | "Hospitality"
-  | "Institutional"
-  | "Recreational"
-  | "Agricultural"
-  | "Land"
-  | "SpecialPurpose";
+export const PROPERTY_CATEGORIES = [
+  "Residential",
+  "Commercial",
+  "Hospitality",
+  "Institutional",
+  "Recreational",
+  "Agricultural",
+  "Land",
+  "SpecialPurpose",
+] as const;
+
+export type PropertyCategory = (typeof PROPERTY_CATEGORIES)[number];
 
 /* ----------------------------------
-   PROPERTY SUB TYPES
+   PROPERTY SUB TYPES (GROUPED)
+----------------------------------- */
+export const PROPERTY_SUBTYPES = {
+  Residential: [
+    "FullHouse",
+    "Apartment",
+    "OneRoom",
+    "Bedsitter",
+    "StudentHousing",
+  ],
+  Commercial: [
+    "BusinessBuilding",
+    "OfficeBlock",
+    "RetailShop",
+    "ShoppingMall",
+    "MixedUse",
+    "Industrial",
+    "Warehouse",
+    "Factory",
+  ],
+  Hospitality: [
+    "Hotel",
+    "GuestHouse",
+    "Lodge",
+    "BookingHouse",
+    "EventBuilding",
+  ],
+  Institutional: ["School", "Hospital", "GovernmentBuilding"],
+  Recreational: ["RecreationalFacility"],
+  Agricultural: ["AgriculturalLand"],
+  Land: ["ResidentialStand", "CommercialStand", "IndustrialStand"],
+  SpecialPurpose: ["SpecialPurposeProperty"],
+} as const;
+
+/* ----------------------------------
+   SUBTYPE TYPE (CATEGORY-SAFE)
 ----------------------------------- */
 export type PropertySubType =
-  // Residential
-  | "FullHouse"
-  | "Apartment"
-  | "OneRoom"
-  | "Bedsitter"
-  | "StudentHousing"
-  | "Lodge"
-  | "BookingHouse"
-  | "SpecialPurposeProperty"
-
-  // Commercial
-  | "BusinessBuilding"
-  | "OfficeBlock"
-  | "RetailShop"
-  | "ShoppingMall"
-  | "MixedUse"
-  | "Industrial"
-  | "Warehouse"
-  | "Factory"
-
-  // Hospitality
-  | "Hotel"
-  | "GuestHouse"
-  | "EventBuilding"
-
-  // Institutional
-  | "School"
-  | "Hospital"
-  | "GovernmentBuilding"
-
-  // Land
-  | "ResidentialStand"
-  | "CommercialStand"
-  | "IndustrialStand"
-
-  // Additional subtypes
-  | "RecreationalFacility" // Recreational
-  | "AgriculturalLand"; // Agricultural
+  (typeof PROPERTY_SUBTYPES)[PropertyCategory][number];
 
 /* ----------------------------------
    AMENITIES TYPES
@@ -67,16 +68,8 @@ export interface AmenityItem {
 export type AmenityCategory = Record<string, AmenityItem[]>;
 
 export type AmenityMap = {
-  [key in PropertySubType]?: AmenityCategory;
+  [K in PropertySubType]?: AmenityCategory;
 };
-
-/* ----------------------------------
-   PROPERTY SETUP TYPES
------------------------------------ */
-export interface PropertySetupMap {
-  label: string;
-  subTypes: Record<PropertySubType, AmenityCategory | undefined>;
-}
 
 /* ----------------------------------
    PROPERTY MODEL
@@ -92,7 +85,7 @@ export interface Property {
   rooms?: number;
   lat: number;
   lng: number;
-  status: string;
+  status: "active" | "pending" | "sold";
   images: {
     frontElevation?: string;
     southView?: string;
@@ -101,3 +94,10 @@ export interface Property {
     floorPlan?: string;
   };
 }
+/* ----------------------------------
+   PROPERTY SETUP MAP (CATEGORY SAFE)
+----------------------------------- */
+export type PropertySetupMap = {
+  label: string;
+  subTypes: Partial<Record<PropertySubType, AmenityCategory>>;
+};
